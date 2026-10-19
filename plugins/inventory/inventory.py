@@ -19,12 +19,12 @@ description:
 extends_documentation_fragment:
   - constructed
   - inventory_cache
-  - patchmon.ansible.auth
+  - patchmon.core.auth
 options:
   plugin:
     description: FQCN of this inventory plugin.
     required: true
-    choices: ["patchmon.ansible.inventory"]
+    choices: ["patchmon.core.inventory"]
   include_stats:
     description:
       - When true, call the hosts endpoint with C(?include=stats) and expose PatchMon
@@ -63,13 +63,13 @@ author:
 
 EXAMPLES = r"""
 # Minimal inventory (backward compatible)
-plugin: patchmon.ansible.inventory
+plugin: patchmon.core.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
 
 # Rich metadata with auto groups and constructed selection
-plugin: patchmon.ansible.inventory
+plugin: patchmon.core.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 include_stats: true
 auto_groups: true
@@ -90,7 +90,7 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     PatchMonAPIError,
     PatchMonClient,
@@ -127,7 +127,7 @@ _REPORTING_STATE_GROUPS = {
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     """PatchMon Integration API inventory plugin."""
 
-    NAME = "patchmon.ansible.inventory"
+    NAME = "patchmon.core.inventory"
 
     def verify_file(self, path):
         valid = False
@@ -141,7 +141,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not HAS_REQUESTS:
             raise AnsibleParserError(
-                "patchmon.ansible requires the Python 'requests' library"
+                "patchmon.core requires the Python 'requests' library"
             )
 
         self._read_config_data(path)
@@ -180,7 +180,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             )
         except PatchMonAPIError as exc:
             raise AnsibleParserError(
-                "patchmon.ansible: {0}".format(to_native(exc))
+                "patchmon.core: {0}".format(to_native(exc))
             ) from exc
 
         return payload.get("hosts", [])

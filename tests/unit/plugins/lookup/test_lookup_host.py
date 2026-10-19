@@ -9,7 +9,7 @@ __metaclass__ = type
 import pytest
 from ansible.errors import AnsibleOptionsError
 
-from ansible_collections.patchmon.ansible.plugins.lookup import (
+from ansible_collections.patchmon.core.plugins.lookup import (
     host as lookup_mod,
 )
 

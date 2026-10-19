@@ -1,4 +1,4 @@
-# Migrating to patchmon.ansible 2.0.0
+# Migrating to patchmon.core 2.0.0
 
 This is a **breaking** upgrade from `patchmon.dynamic_inventory` **1.0.0**.
 There are no compatibility redirects — update installs and inventory YAML as below.
@@ -6,9 +6,9 @@ There are no compatibility redirects — update installs and inventory YAML as b
 ## 1. Install the new collection
 
 ```bash
-ansible-galaxy collection install patchmon.ansible
+ansible-galaxy collection install patchmon.core
 # or from a release tarball:
-# ansible-galaxy collection install ./patchmon-ansible-2.0.0.tar.gz
+# ansible-galaxy collection install ./patchmon-core-2.0.0.tar.gz
 ```
 
 You can remove the old collection if it is still installed:
@@ -21,21 +21,21 @@ ansible-galaxy collection remove patchmon.dynamic_inventory
 
 | 1.0.0 | 2.0.0 |
 |-------|-------|
-| Collection `patchmon.dynamic_inventory` | Collection `patchmon.ansible` |
-| `plugin: patchmon.dynamic_inventory.dynamic_inventory` | `plugin: patchmon.ansible.inventory` |
+| Collection `patchmon.dynamic_inventory` | Collection `patchmon.core` |
+| `plugin: patchmon.dynamic_inventory.dynamic_inventory` | `plugin: patchmon.core.inventory` |
 
 `ansible.cfg`:
 
 ```ini
 [inventory]
-enable_plugins = patchmon.ansible.inventory
+enable_plugins = patchmon.core.inventory
 ```
 
 Inventory file:
 
 ```yaml
 ---
-plugin: patchmon.ansible.inventory
+plugin: patchmon.core.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -49,14 +49,14 @@ should use the 2.0.0 FQCNs:
 
 | Kind | Use in 2.0.0 |
 |------|----------------|
-| Inventory | `patchmon.ansible.inventory` |
-| Module | `patchmon.ansible.host_info` |
-| Module | `patchmon.ansible.host_packages` |
-| Module | `patchmon.ansible.host` |
-| Module | `patchmon.ansible.host_token` |
-| Lookup | `lookup('patchmon.ansible.host', …)` |
-| Role | `patchmon.ansible.agent` |
-| Role | `patchmon.ansible.host` |
+| Inventory | `patchmon.core.inventory` |
+| Module | `patchmon.core.host_info` |
+| Module | `patchmon.core.host_packages` |
+| Module | `patchmon.core.host` |
+| Module | `patchmon.core.host_token` |
+| Lookup | `lookup('patchmon.core.host', …)` |
+| Role | `patchmon.core.agent` |
+| Role | `patchmon.core.host` |
 
 ## 4. Credentials (new in 2.0.0 write paths)
 
@@ -76,8 +76,8 @@ export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
 
 ansible-inventory -i inventories/patchmon.yml --graph
-ansible-doc patchmon.ansible.inventory
-ansible-doc patchmon.ansible.host_info
+ansible-doc patchmon.core.inventory
+ansible-doc patchmon.core.host_info
 ```
 
 Copy-paste examples: [examples/README.md](../examples/README.md).

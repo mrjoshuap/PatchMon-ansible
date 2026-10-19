@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible_collections.patchmon.ansible.plugins.modules import (
+from ansible_collections.patchmon.core.plugins.modules import (
     host_info as mod,
 )
 

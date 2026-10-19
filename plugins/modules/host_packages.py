@@ -14,7 +14,7 @@ description:
   - Retrieves installed packages (or only packages with available updates) for a PatchMon host.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
-  - patchmon.ansible.auth
+  - patchmon.core.auth
 options:
   host_id:
     description: PatchMon host UUID.
@@ -32,7 +32,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: List packages needing updates
-  patchmon.ansible.host_packages:
+  patchmon.core.host_packages:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"
@@ -71,7 +71,7 @@ security_updates_count:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

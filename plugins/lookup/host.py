@@ -14,7 +14,7 @@ description:
   - Queries a PatchMon per-host Integration API endpoint and returns the JSON payload.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
-  - patchmon.ansible.auth
+  - patchmon.core.auth
 options:
   _terms:
     description:
@@ -38,11 +38,11 @@ requirements:
 EXAMPLES = r"""
 - name: Get PatchMon system details for a host
   ansible.builtin.debug:
-    msg: "{{ lookup('patchmon.ansible.host', patchmon_id, resource='system') }}"
+    msg: "{{ lookup('patchmon.core.host', patchmon_id, resource='system') }}"
 
 - name: List packages needing updates
   ansible.builtin.set_fact:
-    pm_packages: "{{ lookup('patchmon.ansible.host', patchmon_id, resource='packages', updates_only=true) }}"
+    pm_packages: "{{ lookup('patchmon.core.host', patchmon_id, resource='packages', updates_only=true) }}"
 """
 
 RETURN = r"""
@@ -56,7 +56,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     PatchMonAPIError,
     PatchMonClient,
@@ -69,7 +69,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if not HAS_REQUESTS:
             raise AnsibleError(
-                "patchmon.ansible.host requires the Python 'requests' library"
+                "patchmon.core.host requires the Python 'requests' library"
             )
 
         self.set_options(var_options=variables, direct=kwargs)
@@ -103,7 +103,7 @@ class LookupModule(LookupBase):
         results = []
         for host_id in terms:
             display.vvvv(
-                "patchmon.ansible.host lookup: host_id={0} resource={1}".format(
+                "patchmon.core.host lookup: host_id={0} resource={1}".format(
                     host_id, resource
                 )
             )

@@ -29,7 +29,7 @@
       ansible.builtin.set_fact:
         patchmon_system: >-
           {{ lookup(
-               'patchmon.ansible.host',
+               'patchmon.core.host',
                patchmon_id,
                resource='system'
              ) }}

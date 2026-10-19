@@ -1,4 +1,4 @@
-# patchmon.ansible.agent
+# patchmon.core.agent
 
 Install, start, stop, report, or remove the PatchMon agent on managed Linux hosts.
 
@@ -29,7 +29,7 @@ See [docs/permissions.md](../../docs/permissions.md).
   hosts: linux
   become: true
   roles:
-    - role: patchmon.ansible.agent
+    - role: patchmon.core.agent
       vars:
         agent_state: present
         agent_server_url: https://patchmon.example.com

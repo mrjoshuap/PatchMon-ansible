@@ -3,7 +3,7 @@
 # Download and run the PatchMon auto-enrollment script (enrolls + installs agent).
 
 - name: Fetch enrollment script from PatchMon
-  patchmon.ansible.host_token:
+  patchmon.core.host_token:
     state: script
     server_url: "{{ agent_server_url }}"
     enrollment_key: "{{ agent_enrollment_key }}"

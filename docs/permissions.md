@@ -19,8 +19,8 @@ Scopes are explicit. `get` does **not** imply `delete`.
 
 | Scope | Capabilities in this collection |
 |-------|----------------------------------|
-| `host:get` | Inventory plugin, `host_info`, `host_packages`, `lookup('patchmon.ansible.host')`, existence checks before enroll |
-| `host:delete` | `patchmon.ansible.host` with `state=absent`, `roles/host` when `host_state=absent` |
+| `host:get` | Inventory plugin, `host_info`, `host_packages`, `lookup('patchmon.core.host')`, existence checks before enroll |
+| `host:delete` | `patchmon.core.host` with `state=absent`, `roles/host` when `host_state=absent` |
 
 There is **no** Integration `host:create` scope. Host creation uses the **Auto-Enrollment** API.
 
@@ -56,11 +56,11 @@ Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on 
 
 | Plugin / role | Minimum access |
 |---------------|----------------|
-| `patchmon.ansible.inventory` | Integration `host:get` |
-| `patchmon.ansible.host_info` / `host_packages` / lookup `host` | Integration `host:get` |
-| `patchmon.ansible.host` present | Auto-Enrollment token |
-| `patchmon.ansible.host` absent | Integration `host:delete` |
-| `patchmon.ansible.host_token` script | Auto-Enrollment token |
-| `patchmon.ansible.host_token` present/absent | Admin JWT (Manage Settings) |
-| `patchmon.ansible.agent` | Auto-Enrollment token (install) |
-| `patchmon.ansible.host` role | See table above by `host_state` |
+| `patchmon.core.inventory` | Integration `host:get` |
+| `patchmon.core.host_info` / `host_packages` / lookup `host` | Integration `host:get` |
+| `patchmon.core.host` present | Auto-Enrollment token |
+| `patchmon.core.host` absent | Integration `host:delete` |
+| `patchmon.core.host_token` script | Auto-Enrollment token |
+| `patchmon.core.host_token` present/absent | Admin JWT (Manage Settings) |
+| `patchmon.core.agent` | Auto-Enrollment token (install) |
+| `patchmon.core.host` role | See table above by `host_state` |

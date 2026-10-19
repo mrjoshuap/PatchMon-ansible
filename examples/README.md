@@ -1,6 +1,6 @@
 # Examples
 
-Ready-to-copy inventory YAML and playbooks for the `patchmon.ansible` collection.
+Ready-to-copy inventory YAML and playbooks for the `patchmon.core` collection.
 
 ### Inventory templates
 
@@ -41,7 +41,7 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
 
    ```ini
    [inventory]
-   enable_plugins = patchmon.ansible.inventory
+   enable_plugins = patchmon.core.inventory
    ```
 
 ---
@@ -209,9 +209,9 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 
 | Module / lookup | Role |
 |-----------------|------|
-| `patchmon.ansible.host_info` | Aggregate `/info`, `/stats`, `/system`, `/network`, `/integrations` via `gather_subset` |
-| `patchmon.ansible.host_packages` | List packages; `updates_only: true` for pending updates |
-| `lookup('patchmon.ansible.host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes` |
+| `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/system`, `/network`, `/integrations` via `gather_subset` |
+| `patchmon.core.host_packages` | List packages; `updates_only: true` for pending updates |
+| `lookup('patchmon.core.host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes` |
 
 `host_info` return shape: `host.info`, `host.stats`, `host.system`, …  
 `host_packages` return shape: `packages`, `total`, `security_updates_count`, `host`.
@@ -222,7 +222,7 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 
 | Symptom | What to check |
 |---------|----------------|
-| Plugin not found / ignored | Collection installed? `enable_plugins` includes `patchmon.ansible.inventory`? Filename ends in `.yml` / `.yaml`? |
+| Plugin not found / ignored | Collection installed? `enable_plugins` includes `patchmon.core.inventory`? Filename ends in `.yml` / `.yaml`? |
 | Auth / HTTP 401 or 403 | `PATCHMON_API_KEY` / `PATCHMON_API_SECRET`; credential has `host:get` |
 | Empty inventory | Hosts enrolled and active in PatchMon? `hostgroup` filter too narrow? |
 | Redirect / empty body errors | Prefer URL **without** a trailing slash that 302s; use `.../api/v1/api/hosts` |

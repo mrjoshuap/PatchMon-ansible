@@ -1,7 +1,7 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
 - name: Ensure PatchMon host entry is present
-  patchmon.ansible.host:
+  patchmon.core.host:
     state: present
     server_url: "{{ host_server_url }}"
     enrollment_key: "{{ host_enrollment_key }}"

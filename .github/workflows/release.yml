@@ -49,7 +49,7 @@ jobs:
               ;;
           esac
           VERSION="${TAG#v}"
-          TARBALL="patchmon-ansible-${VERSION}.tar.gz"
+          TARBALL="patchmon-core-${VERSION}.tar.gz"
           {
             echo "tag=${TAG}"
             echo "version=${VERSION}"
@@ -120,11 +120,11 @@ jobs:
           body = (
               match.group(1).strip()
               if match
-              else f"Release {version} of patchmon.ansible."
+              else f"Release {version} of patchmon.core."
           )
 
           notes_path.write_text(
-              f"""## patchmon.ansible {version}
+              f"""## patchmon.core {version}
 
           {body}
 
@@ -132,7 +132,7 @@ jobs:
 
           See [docs/migrating_to_2.0.md](https://github.com/{repo}/blob/v{version}/docs/migrating_to_2.0.md).
           This release does not provide FQCN redirects — update inventories to
-          `plugin: patchmon.ansible.inventory`.
+          `plugin: patchmon.core.inventory`.
 
           ### Offline install
 
@@ -160,7 +160,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: patchmon.ansible ${{ steps.meta.outputs.version }}
+          name: patchmon.core ${{ steps.meta.outputs.version }}
           body_path: ${{ steps.notes.outputs.path }}
           files: ${{ steps.meta.outputs.tarball }}
           fail_on_unmatched_files: true

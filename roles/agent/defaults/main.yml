@@ -1,6 +1,6 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Variables for patchmon.ansible.agent — all user-facing vars use agent_ prefix.
+# Variables for patchmon.core.agent — all user-facing vars use agent_ prefix.
 
 # Desired agent lifecycle: present (install+start), started, stopped, absent, report
 agent_state: present

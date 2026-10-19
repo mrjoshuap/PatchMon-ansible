@@ -1,5 +1,5 @@
 ---
-# Pull-request and main-branch validation for patchmon.ansible
+# Pull-request and main-branch validation for patchmon.core
 name: CI
 
 on:
@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p ~/.ansible/collections/ansible_collections/patchmon
           ln -sfn "$GITHUB_WORKSPACE" \
-            ~/.ansible/collections/ansible_collections/patchmon/ansible
+            ~/.ansible/collections/ansible_collections/patchmon/core
 
       - name: Lint example playbooks and collection playbooks
         run: ansible-lint examples/playbooks playbooks

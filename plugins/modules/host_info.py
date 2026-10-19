@@ -15,7 +15,7 @@ description:
   - Optionally aggregates info, stats, system, network, and integrations endpoints.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
-  - patchmon.ansible.auth
+  - patchmon.core.auth
 options:
   host_id:
     description: PatchMon host UUID.
@@ -37,7 +37,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: Gather PatchMon host info and system details
-  patchmon.ansible.host_info:
+  patchmon.core.host_info:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"
@@ -75,7 +75,7 @@ host:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

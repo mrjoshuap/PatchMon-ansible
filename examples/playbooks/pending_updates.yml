@@ -35,7 +35,7 @@
           examples/patchmon_inventory_stats.yml or set patchmon_id.
 
     - name: Fetch packages that need updates
-      patchmon.ansible.host_packages:
+      patchmon.core.host_packages:
         api_url: "{{ patchmon_api_url }}"
         api_key: "{{ patchmon_api_key }}"
         api_secret: "{{ patchmon_api_secret }}"

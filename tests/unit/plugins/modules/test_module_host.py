@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible_collections.patchmon.ansible.plugins.modules import host as mod
+from ansible_collections.patchmon.core.plugins.modules import host as mod
 
 
 def test_present_skips_when_host_listed(monkeypatch):

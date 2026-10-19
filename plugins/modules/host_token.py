@@ -91,7 +91,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: Fetch direct-host enrollment script
-  patchmon.ansible.host_token:
+  patchmon.core.host_token:
     state: script
     server_url: https://patchmon.example.com
     enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') }}"
@@ -102,7 +102,7 @@ EXAMPLES = r"""
   no_log: true
 
 - name: Create an auto-enrollment token (admin JWT)
-  patchmon.ansible.host_token:
+  patchmon.core.host_token:
     state: present
     server_url: https://patchmon.example.com
     admin_token: "{{ patchmon_admin_jwt }}"
@@ -129,7 +129,7 @@ message:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

@@ -3,7 +3,7 @@
 # Optional hand-off to the agent role on the managed host.
 - name: Install PatchMon agent after host enrollment
   ansible.builtin.include_role:
-    name: patchmon.ansible.agent
+    name: patchmon.core.agent
   vars:
     agent_state: present
     agent_server_url: "{{ host_server_url }}"

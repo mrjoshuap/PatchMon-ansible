@@ -4,16 +4,16 @@ All notable changes to this collection are documented in this file.
 
 ## [2.0.0] - 2026-10-19
 
-Collection renamed from `patchmon.dynamic_inventory` to `patchmon.ansible`.
-Install with `ansible-galaxy collection install patchmon.ansible`.
+Collection renamed from `patchmon.dynamic_inventory` to `patchmon.core`.
+Install with `ansible-galaxy collection install patchmon.core`.
 
 **This release is not backward compatible.** Update inventory `plugin:` values and
 FQCN references. See [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md).
 
 ### Breaking
 
-- Collection FQCN is now `patchmon.ansible` (was `patchmon.dynamic_inventory`).
-- Inventory plugin is `patchmon.ansible.inventory` (was
+- Collection FQCN is now `patchmon.core` (was `patchmon.dynamic_inventory`).
+- Inventory plugin is `patchmon.core.inventory` (was
   `patchmon.dynamic_inventory.dynamic_inventory`).
 - No FQCN redirects or shim collections are provided.
 

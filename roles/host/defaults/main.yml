@@ -1,6 +1,6 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Variables for patchmon.ansible.host — all user-facing vars use host_ prefix.
+# Variables for patchmon.core.host — all user-facing vars use host_ prefix.
 
 # present = enroll host entry; absent = delete via Integration API
 host_state: present

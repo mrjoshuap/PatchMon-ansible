@@ -24,7 +24,7 @@
 #        export PATCHMON_API_SECRET='<token secret>'
 #   4. Enable the plugin in ansible.cfg if needed:
 #        [inventory]
-#        enable_plugins = patchmon.ansible.inventory
+#        enable_plugins = patchmon.core.inventory
 #   5. List inventory:
 #        ansible-inventory -i patchmon_inventory.yml --list
 #   6. Target a PatchMon host group by name:
@@ -44,7 +44,7 @@
 # =============================================================================
 
 # Required: identify this file as the PatchMon inventory plugin
-plugin: patchmon.ansible.inventory
+plugin: patchmon.core.inventory
 
 # ---------------------------------------------------------------------------
 # Connection (required unless provided via env / ansible.cfg)

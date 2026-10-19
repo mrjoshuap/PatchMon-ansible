@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible_collections.patchmon.ansible.plugins.module_utils import (
+from ansible_collections.patchmon.core.plugins.module_utils import (
     patchmon_api as api,
 )
 

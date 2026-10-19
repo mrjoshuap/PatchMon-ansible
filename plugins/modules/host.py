@@ -87,7 +87,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: Enroll a new host via auto-enrollment
-  patchmon.ansible.host:
+  patchmon.core.host:
     state: present
     server_url: https://patchmon.example.com
     enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') }}"
@@ -98,7 +98,7 @@ EXAMPLES = r"""
   register: pm_host
 
 - name: Delete a host (requires host:delete)
-  patchmon.ansible.host:
+  patchmon.core.host:
     state: absent
     api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
@@ -127,7 +127,7 @@ already_exists:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

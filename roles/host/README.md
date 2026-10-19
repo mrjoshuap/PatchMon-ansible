@@ -1,4 +1,4 @@
-# patchmon.ansible.host
+# patchmon.core.host
 
 Create (auto-enroll) or delete PatchMon host entries.
 
@@ -21,7 +21,7 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
 | `host_friendly_name` | `inventory_hostname` | Display name for enrollment |
 | `host_enrollment_key` / `host_enrollment_secret` | env | Auto-enrollment token |
 | `host_api_key` / `host_api_secret` | env | Integration API (list + delete) |
-| `host_enroll_agent` | `false` | After present, run `patchmon.ansible.agent` |
+| `host_enroll_agent` | `false` | After present, run `patchmon.core.agent` |
 | `host_fetch_script` | `false` | Fetch installer script via `host_token` |
 
 ## Example
@@ -31,7 +31,7 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
   hosts: localhost
   gather_facts: false
   roles:
-    - role: patchmon.ansible.host
+    - role: patchmon.core.host
       vars:
         host_state: present
         host_server_url: https://patchmon.example.com

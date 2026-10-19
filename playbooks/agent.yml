@@ -1,6 +1,6 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Thin AAP-ready entry point for patchmon.ansible.agent
+# Thin AAP-ready entry point for patchmon.core.agent
 - name: Manage PatchMon agent
   hosts: all
   gather_facts: true
@@ -9,4 +9,4 @@
   tasks:
     - name: Run PatchMon agent role
       ansible.builtin.import_role:
-        name: patchmon.ansible.agent
+        name: patchmon.core.agent
