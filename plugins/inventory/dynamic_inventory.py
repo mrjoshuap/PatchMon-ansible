@@ -14,57 +14,17 @@ description:
   - Queries the PatchMon Integration API hosts endpoint and builds an Ansible inventory.
   - Optionally requests C(include=stats) for reboot, update, security, OS, and reporting metadata.
   - Supports constructed inventory features (compose, groups, keyed_groups).
+  - Prefer namespaced C(patchmon_*) hostvars. Unprefixed C(ip), C(hostname), and C(friendly_name)
+    are also set as compose aliases and may collide with user variables.
 extends_documentation_fragment:
   - constructed
   - inventory_cache
+  - patchmon.ansible.auth
 options:
   plugin:
     description: FQCN of this inventory plugin.
     required: true
     choices: ["patchmon.ansible.dynamic_inventory"]
-  api_url:
-    description:
-      - PatchMon hosts endpoint or instance root.
-      - Canonical form is C(https://patchmon.example.com/api/v1/api/hosts).
-    required: true
-    type: str
-    env:
-      - name: PATCHMON_API_URL
-    ini:
-      - section: patchmon
-        key: api_url
-  api_key:
-    description: PatchMon API Token Key (Basic Auth username).
-    required: true
-    type: str
-    env:
-      - name: PATCHMON_API_KEY
-    ini:
-      - section: patchmon
-        key: api_key
-  api_secret:
-    description: PatchMon API Token Secret (Basic Auth password).
-    required: true
-    type: str
-    no_log: true
-    env:
-      - name: PATCHMON_API_SECRET
-    ini:
-      - section: patchmon
-        key: api_secret
-  verify_ssl:
-    description: Verify the PatchMon TLS certificate.
-    type: bool
-    default: true
-    env:
-      - name: PATCHMON_VERIFY_SSL
-    ini:
-      - section: patchmon
-        key: verify_ssl
-  timeout:
-    description: HTTP timeout in seconds for PatchMon API requests.
-    type: int
-    default: 30
   include_stats:
     description:
       - When true, call the hosts endpoint with C(?include=stats) and expose PatchMon

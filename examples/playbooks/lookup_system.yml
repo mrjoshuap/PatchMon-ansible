@@ -37,9 +37,9 @@
     - name: Show reboot and kernel state
       ansible.builtin.debug:
         msg:
-          needs_reboot: "{{ patchmon_system.needs_reboot | default(false) }}"
-          reboot_reason: "{{ patchmon_system.reboot_reason | default('') }}"
-          kernel_version: "{{ patchmon_system.kernel_version | default('n/a') }}"
-          installed_kernel: "{{ patchmon_system.installed_kernel_version | default('n/a') }}"
-          architecture: "{{ patchmon_system.architecture | default('n/a') }}"
-          uptime: "{{ patchmon_system.system_uptime | default('n/a') }}"
+          needs_reboot: "{{ patchmon_system['needs_reboot'] | default(false) }}"
+          reboot_reason: "{{ patchmon_system['reboot_reason'] | default('') }}"
+          kernel_version: "{{ patchmon_system['kernel_version'] | default('n/a') }}"
+          installed_kernel: "{{ patchmon_system['installed_kernel_version'] | default('n/a') }}"
+          architecture: "{{ patchmon_system['architecture'] | default('n/a') }}"
+          uptime: "{{ patchmon_system['system_uptime'] | default('n/a') }}"

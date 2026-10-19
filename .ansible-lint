@@ -1,0 +1,15 @@
+---
+# ansible-lint for example playbooks (plugin collection; no roles).
+profile: basic
+exclude_paths:
+  - .git/
+  - .github/
+  - tests/
+  - .pytest_cache/
+  - .collections/
+  - .pytest_collections/
+skip_list:
+  # Examples intentionally demonstrate debug output.
+  - name[casing]
+warn_list:
+  - experimental

@@ -13,30 +13,9 @@ version_added: "1.1.0"
 description:
   - Retrieves detailed information for a PatchMon host via the Integration API.
   - Optionally aggregates info, stats, system, network, and integrations endpoints.
+extends_documentation_fragment:
+  - patchmon.ansible.auth
 options:
-  api_url:
-    description:
-      - PatchMon hosts endpoint or instance root
-        (for example C(https://patchmon.example.com/api/v1/api/hosts)).
-    type: str
-    required: true
-  api_key:
-    description: PatchMon API Token Key (Basic Auth username).
-    type: str
-    required: true
-  api_secret:
-    description: PatchMon API Token Secret (Basic Auth password).
-    type: str
-    required: true
-    no_log: true
-  verify_ssl:
-    description: Verify the PatchMon TLS certificate.
-    type: bool
-    default: true
-  timeout:
-    description: HTTP timeout in seconds.
-    type: int
-    default: 30
   host_id:
     description: PatchMon host UUID.
     type: str

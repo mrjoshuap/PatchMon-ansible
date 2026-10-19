@@ -51,8 +51,8 @@
     - name: Show combined report
       ansible.builtin.debug:
         msg:
-          info: "{{ patchmon_info.host.info }}"
-          stats: "{{ patchmon_info.host.stats }}"
-          system_needs_reboot: "{{ patchmon_info.host.system.needs_reboot | default(false) }}"
+          info: "{{ patchmon_info['host']['info'] }}"
+          stats: "{{ patchmon_info['host']['stats'] }}"
+          system_needs_reboot: "{{ patchmon_info['host']['system']['needs_reboot'] | default(false) }}"
           packages_needing_updates: "{{ pm_pkgs.total }}"
           security_updates: "{{ pm_pkgs.security_updates_count }}"

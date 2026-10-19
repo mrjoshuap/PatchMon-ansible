@@ -106,7 +106,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
-| `plugin` | yes | — | Must be `patchmon.ansible` |
+| `plugin` | yes | — | Must be `patchmon.ansible.dynamic_inventory` |
 | `api_url` | yes | — | Hosts endpoint or instance root (`PATCHMON_API_URL`) |
 | `api_key` | yes | — | Token Key (`PATCHMON_API_KEY`) |
 | `api_secret` | yes | — | Token Secret (`PATCHMON_API_SECRET`) |
@@ -148,6 +148,9 @@ groups:
 | `patchmon_needs_reboot` | boolean |
 | `patchmon_updates_count` / `patchmon_security_updates_count` / `patchmon_total_packages` | package counts |
 | `patchmon_last_update` | last agent report |
+
+Unprefixed compose aliases `ip`, `hostname`, and `friendly_name` are also set for Constructable expressions. Prefer `patchmon_*` names in playbooks to avoid collisions with user variables.
+
 
 #### Auto groups (when `include_stats` and `auto_groups`)
 
@@ -249,9 +252,12 @@ Host compliance status is **not** currently exposed on the scoped Integration AP
 ## Development
 
 ```bash
-pip install -r requirements.txt pytest
+pip install -r requirements.txt pytest ansible-lint
 pytest
+ansible-lint examples/playbooks
 ```
+
+Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-lint).
 
 ### Cutting a release
 

@@ -116,3 +116,15 @@ def test_auto_groups_disabled():
 
     assert "Production" in plugin.inventory.groups
     assert "patchmon_needs_reboot" not in plugin.inventory.groups
+
+
+def test_unprefixed_compose_aliases():
+    """Raw ip/hostname/friendly_name remain for Constructable compose."""
+    plugin = FakePlugin()
+    plugin._populate([SAMPLE_HOST])
+
+    hostvars = plugin.inventory.hosts["web01.example.com"]
+    assert hostvars["ip"] == "192.168.1.100"
+    assert hostvars["hostname"] == "web01.example.com"
+    assert hostvars["friendly_name"] == "web-server-01"
+    assert hostvars["patchmon_ip"] == "192.168.1.100"

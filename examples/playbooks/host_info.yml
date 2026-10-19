@@ -52,12 +52,12 @@
       ansible.builtin.debug:
         msg:
           inventory_hostname: "{{ inventory_hostname }}"
-          friendly_name: "{{ patchmon_info.host.info.friendly_name | default('n/a') }}"
+          friendly_name: "{{ patchmon_info['host']['info']['friendly_name'] | default('n/a') }}"
           os: >-
-            {{ patchmon_info.host.info.os_type | default('?') }}
-            {{ patchmon_info.host.info.os_version | default('') }}
-          outdated_packages: "{{ patchmon_info.host.stats.outdated_packages | default('n/a') }}"
-          security_updates: "{{ patchmon_info.host.stats.security_updates | default('n/a') }}"
-          needs_reboot: "{{ patchmon_info.host.system.needs_reboot | default('n/a') }}"
-          reboot_reason: "{{ patchmon_info.host.system.reboot_reason | default('') }}"
-          kernel: "{{ patchmon_info.host.system.kernel_version | default('n/a') }}"
+            {{ patchmon_info['host']['info']['os_type'] | default('?') }}
+            {{ patchmon_info['host']['info']['os_version'] | default('') }}
+          outdated_packages: "{{ patchmon_info['host']['stats']['outdated_packages'] | default('n/a') }}"
+          security_updates: "{{ patchmon_info['host']['stats']['security_updates'] | default('n/a') }}"
+          needs_reboot: "{{ patchmon_info['host']['system']['needs_reboot'] | default('n/a') }}"
+          reboot_reason: "{{ patchmon_info['host']['system']['reboot_reason'] | default('') }}"
+          kernel: "{{ patchmon_info['host']['system']['kernel_version'] | default('n/a') }}"

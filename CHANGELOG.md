@@ -2,6 +2,20 @@
 
 All notable changes to this collection are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Shared documentation fragment `patchmon.ansible.auth` for API connection options across inventory, modules, and lookup.
+- Unit tests for `patchmon_host_info`, `patchmon_host_packages`, and the `patchmon_host` lookup.
+- GitHub Actions CI workflow (pytest + ansible-lint on example playbooks).
+
+### Changed
+
+- README documents the correct inventory `plugin` value (`patchmon.ansible.dynamic_inventory`).
+- Inventory, modules, and lookup mark both `api_key` and `api_secret` as `no_log` via the auth fragment.
+- README and inventory docs clarify unprefixed compose aliases (`ip`, `hostname`, `friendly_name`) vs preferred `patchmon_*` hostvars.
+
 ## [1.1.0] - 2026-10-19
 
 ### Added

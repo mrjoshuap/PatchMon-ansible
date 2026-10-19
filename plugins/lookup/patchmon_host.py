@@ -12,39 +12,13 @@ short_description: Look up PatchMon host details via the Integration API
 version_added: "1.1.0"
 description:
   - Queries a PatchMon per-host Integration API endpoint and returns the JSON payload.
+extends_documentation_fragment:
+  - patchmon.ansible.auth
 options:
   _terms:
     description:
       - Host UUID to query.
     required: true
-  api_url:
-    description: PatchMon hosts endpoint or instance root.
-    type: str
-    required: true
-    env:
-      - name: PATCHMON_API_URL
-  api_key:
-    description: PatchMon API Token Key.
-    type: str
-    required: true
-    env:
-      - name: PATCHMON_API_KEY
-  api_secret:
-    description: PatchMon API Token Secret.
-    type: str
-    required: true
-    env:
-      - name: PATCHMON_API_SECRET
-  verify_ssl:
-    description: Verify the PatchMon TLS certificate.
-    type: bool
-    default: true
-    env:
-      - name: PATCHMON_VERIFY_SSL
-  timeout:
-    description: HTTP timeout in seconds.
-    type: int
-    default: 30
   resource:
     description: Per-host API resource to fetch.
     type: str
