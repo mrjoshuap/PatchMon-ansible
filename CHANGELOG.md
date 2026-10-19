@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.0-beta] - 2026-10-19
+
 ### Added
 
 - `agent` role: `agent_keep_failed_script` / `agent_failed_script_path` to retain
