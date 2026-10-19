@@ -1,6 +1,7 @@
 ---
 # Build and attach the Ansible collection tarball to a GitHub Release.
-# Trigger: push a tag matching vX.Y.Z (must equal galaxy.yml version).
+# Trigger: push a tag matching vX.Y.Z or pre-release (e.g. v2.0.0-alpha).
+# Tag without leading v must equal galaxy.yml version.
 name: Release collection
 
 on:
@@ -10,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (e.g. v2.0.0). Required for manual runs."
+        description: "Existing tag to release (e.g. v2.0.0 or v2.0.0-alpha). Required for manual runs."
         required: true
         type: string
 
@@ -44,18 +45,25 @@ jobs:
           case "${TAG}" in
             v[0-9]*.[0-9]*.[0-9]*) ;;
             *)
-              echo "Tag must look like vX.Y.Z (got: ${TAG})"
+              echo "Tag must look like vX.Y.Z or vX.Y.Z-alpha (got: ${TAG})"
               exit 1
               ;;
           esac
           VERSION="${TAG#v}"
           TARBALL="patchmon-core-${VERSION}.tar.gz"
+          PRERELEASE=false
+          case "${VERSION}" in
+            *-alpha*|*-beta*|*-rc*|*-a*|*-b*)
+              PRERELEASE=true
+              ;;
+          esac
           {
             echo "tag=${TAG}"
             echo "version=${VERSION}"
             echo "tarball=${TARBALL}"
+            echo "prerelease=${PRERELEASE}"
           } >> "${GITHUB_OUTPUT}"
-          echo "Releasing ${TAG} (version ${VERSION})"
+          echo "Releasing ${TAG} (version ${VERSION}, prerelease=${PRERELEASE})"
 
       - name: Verify galaxy.yml version matches tag
         env:
@@ -165,5 +173,6 @@ jobs:
           files: ${{ steps.meta.outputs.tarball }}
           fail_on_unmatched_files: true
           generate_release_notes: false
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
