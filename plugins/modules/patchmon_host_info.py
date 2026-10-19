@@ -57,7 +57,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: Gather PatchMon host info and system details
-  patchmon.dynamic_inventory.patchmon_host_info:
+  patchmon.ansible.patchmon_host_info:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"
@@ -95,7 +95,7 @@ host:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.dynamic_inventory.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

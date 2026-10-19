@@ -52,7 +52,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: List packages needing updates
-  patchmon.dynamic_inventory.patchmon_host_packages:
+  patchmon.ansible.patchmon_host_packages:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"
@@ -91,7 +91,7 @@ security_updates_count:
 
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible_collections.patchmon.dynamic_inventory.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     REQUESTS_IMPORT_ERROR,
     PatchMonAPIError,

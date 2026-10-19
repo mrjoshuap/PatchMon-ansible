@@ -1,21 +1,156 @@
 ---
-# Data-rich PatchMon inventory with stats, auto groups, and Constructable selection.
-plugin: patchmon.dynamic_inventory
+# =============================================================================
+# PatchMon dynamic inventory — full example (stats + Constructable)
+# =============================================================================
+#
+# Full walkthrough (prereqs, copy/configure, troubleshooting):
+#   examples/README.md
+#
+# WHAT THIS DOES
+#   Queries PatchMon's Integration API and builds an Ansible inventory.
+#   With include_stats: true, each host also gets patchmon_* hostvars
+#   (reboot needed, update/security counts, OS, reporting state, etc.) and
+#   optional auto groups you can --limit on.
+#
+# QUICK START
+#   1. Copy this file (e.g. inventories/patchmon.yml).
+#   2. Set api_url to your PatchMon hosts endpoint (or set PATCHMON_API_URL).
+#   3. Export credentials (recommended) or uncomment api_key / api_secret below:
+#        export PATCHMON_API_KEY='<token key>'
+#        export PATCHMON_API_SECRET='<token secret>'
+#   4. Enable the plugin in ansible.cfg if needed:
+#        [inventory]
+#        enable_plugins = patchmon.ansible.dynamic_inventory
+#   5. List inventory:
+#        ansible-inventory -i patchmon_inventory_stats.yml --list
+#   6. Target PatchMon-derived groups:
+#        ansible-playbook site.yml -i patchmon_inventory_stats.yml \
+#          --limit patchmon_security_required
+#        ansible-playbook reboot.yml -i patchmon_inventory_stats.yml \
+#          --limit patchmon_needs_reboot
+#
+# CREDENTIALS (pick one)
+#   - Environment: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#     (optional) PATCHMON_VERIFY_SSL=true|false
+#   - ansible.cfg [patchmon] api_url / api_key / api_secret / verify_ssl
+#   - Inline options below (avoid committing secrets)
+#
+# AUTO GROUPS (when include_stats + auto_groups)
+#   patchmon_needs_reboot, patchmon_security_required, patchmon_updates_pending,
+#   patchmon_up_to_date, patchmon_stale, patchmon_overdue, patchmon_inactive,
+#   patchmon_os_<os_type>
+#   Plus every PatchMon host_groups[].name as an Ansible group.
+#
+# HOSTVARS (with include_stats)
+#   patchmon_id, patchmon_hostname, patchmon_friendly_name, patchmon_ip,
+#   patchmon_os_type, patchmon_os_version, patchmon_status,
+#   patchmon_effective_status, patchmon_reporting_state, patchmon_update_state,
+#   patchmon_needs_reboot, patchmon_updates_count, patchmon_security_updates_count,
+#   patchmon_total_packages, patchmon_last_update, ansible_host
+#
+# =============================================================================
+
+# Required: identify this file as the PatchMon inventory plugin
+plugin: patchmon.ansible.dynamic_inventory
+
+# ---------------------------------------------------------------------------
+# Connection (required unless provided via env / ansible.cfg)
+# ---------------------------------------------------------------------------
+
+# Canonical hosts list URL. Instance root also works; the plugin appends
+# /api/v1/api/hosts when needed.
 api_url: https://patchmon.example.com/api/v1/api/hosts
+# api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+
+# Prefer env vars in real use. Uncomment only for local experiments.
+# api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+# api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+# api_key: your_token_key
+# api_secret: your_token_secret
+
+# TLS verification (default: true). Set false only for lab / self-signed certs.
+verify_ssl: true
+# verify_ssl: false
+
+# HTTP timeout in seconds (default: 30)
+# timeout: 30
+
+# ---------------------------------------------------------------------------
+# Stats & grouping (this example's main feature)
+# ---------------------------------------------------------------------------
+
+# Request ?include=stats and populate patchmon_* hostvars (default: false)
 include_stats: true
+
+# Create derived patchmon_* groups from stats (default: true when stats on)
 auto_groups: true
+# auto_groups: false
+
+# Inventory hostname source (default: hostname)
+#   hostname      — system hostname from PatchMon
+#   friendly_name — PatchMon display name (short names)
 inventory_hostname_prefer: hostname
-# Optional API-side filter (name or UUID; list = OR)
+# inventory_hostname_prefer: friendly_name
+
+# Limit the API query to one or more PatchMon host groups (OR logic).
+# Accepts names and/or UUIDs. Omit to return all hosts.
+# hostgroup: Production
 # hostgroup:
 #   - Production
-compose:
-  patchmon_has_security_updates: patchmon_security_updates_count | int > 0
-keyed_groups:
-  - key: patchmon_update_state
-    prefix: update_state
-  - key: patchmon_os_type
-    prefix: os
-groups:
-  reboot_and_security: >
-    patchmon_needs_reboot and (patchmon_security_updates_count | int > 0)
-strict: false
+#   - Development
+#   - 550e8400-e29b-41d4-a716-446655440000
+
+# ---------------------------------------------------------------------------
+# Constructable — compose hostvars from Jinja expressions
+# (Uses variables available after stats mapping. Uncomment to enable.)
+# ---------------------------------------------------------------------------
+
+# compose:
+#   # Boolean helper for when: / groups: conditions
+#   patchmon_has_security_updates: patchmon_security_updates_count | int > 0
+#   # Override connection address if needed (ip is also set as ansible_host)
+#   # ansible_host: patchmon_ip
+#   # ansible_user: patchmon_admin
+
+# ---------------------------------------------------------------------------
+# Constructable — keyed_groups (one Ansible group per distinct value)
+# ---------------------------------------------------------------------------
+
+# keyed_groups:
+#   # e.g. update_state_security_required, update_state_up_to_date
+#   - key: patchmon_update_state
+#     prefix: update_state
+#   # e.g. os_Ubuntu, os_Debian
+#   - key: patchmon_os_type
+#     prefix: os
+#   # e.g. reporting_state_stale
+#   - key: patchmon_reporting_state
+#     prefix: reporting_state
+
+# ---------------------------------------------------------------------------
+# Constructable — groups (Jinja conditionals → custom group names)
+# ---------------------------------------------------------------------------
+
+# groups:
+#   reboot_and_security: >
+#     patchmon_needs_reboot and (patchmon_security_updates_count | int > 0)
+#   needs_any_updates: patchmon_updates_count | int > 0
+#   ubuntu_security: >
+#     patchmon_os_type == 'Ubuntu' and patchmon_update_state == 'security_required'
+
+# Fail on compose/group expression errors (default: false)
+# strict: false
+# strict: true
+
+# Merge extra vars into compose/group evaluation (default: false)
+# use_extra_vars: false
+
+# ---------------------------------------------------------------------------
+# Inventory cache (optional; requires a configured cache plugin)
+# ---------------------------------------------------------------------------
+
+# cache: false
+# cache_plugin: memory
+# cache_timeout: 3600
+# cache_connection: /tmp/patchmon_inventory_cache
+# cache_prefix: patchmon_

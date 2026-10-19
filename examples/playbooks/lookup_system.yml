@@ -1,0 +1,45 @@
+---
+# Demonstrate the patchmon_host lookup plugin (system resource).
+#
+# Requires:
+#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Extra var: -e patchmon_id=<uuid>
+#
+# Example:
+#   ansible-playbook examples/playbooks/lookup_system.yml \
+#     -e patchmon_id=550e8400-e29b-41d4-a716-446655440000
+#
+# Other resource= values: info, stats, system, network, integrations, packages, notes
+# For packages with updates only, add updates_only=true to the lookup kwargs.
+
+- name: Lookup PatchMon system details
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Require patchmon_id extra var
+      ansible.builtin.assert:
+        that:
+          - patchmon_id is defined
+          - patchmon_id | length > 0
+        fail_msg: Pass -e patchmon_id=<PatchMon host UUID>
+
+    - name: Fetch /hosts/:id/system via lookup
+      ansible.builtin.set_fact:
+        patchmon_system: >-
+          {{ lookup(
+               'patchmon.ansible.patchmon_host',
+               patchmon_id,
+               resource='system'
+             ) }}
+
+    - name: Show reboot and kernel state
+      ansible.builtin.debug:
+        msg:
+          needs_reboot: "{{ patchmon_system.needs_reboot | default(false) }}"
+          reboot_reason: "{{ patchmon_system.reboot_reason | default('') }}"
+          kernel_version: "{{ patchmon_system.kernel_version | default('n/a') }}"
+          installed_kernel: "{{ patchmon_system.installed_kernel_version | default('n/a') }}"
+          architecture: "{{ patchmon_system.architecture | default('n/a') }}"
+          uptime: "{{ patchmon_system.system_uptime | default('n/a') }}"

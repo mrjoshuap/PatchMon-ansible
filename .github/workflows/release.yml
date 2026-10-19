@@ -49,7 +49,7 @@ jobs:
               ;;
           esac
           VERSION="${TAG#v}"
-          TARBALL="patchmon-dynamic_inventory-${VERSION}.tar.gz"
+          TARBALL="patchmon-ansible-${VERSION}.tar.gz"
           {
             echo "tag=${TAG}"
             echo "version=${VERSION}"
@@ -120,11 +120,11 @@ jobs:
           body = (
               match.group(1).strip()
               if match
-              else f"Release {version} of patchmon.dynamic_inventory."
+              else f"Release {version} of patchmon.ansible."
           )
 
           notes_path.write_text(
-              f"""## patchmon.dynamic_inventory {version}
+              f"""## patchmon.ansible {version}
 
           {body}
 
@@ -154,7 +154,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: patchmon.dynamic_inventory ${{ steps.meta.outputs.version }}
+          name: patchmon.ansible ${{ steps.meta.outputs.version }}
           body_path: ${{ steps.notes.outputs.path }}
           files: ${{ steps.meta.outputs.tarball }}
           fail_on_unmatched_files: true

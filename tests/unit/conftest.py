@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Make the collection importable as ansible_collections.patchmon.dynamic_inventory."""
+"""Make the collection importable as ansible_collections.patchmon.ansible."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -16,7 +16,7 @@ def pytest_configure(config):
     namespace_dir = os.path.join(
         collections_root, "ansible_collections", "patchmon"
     )
-    collection_link = os.path.join(namespace_dir, "dynamic_inventory")
+    collection_link = os.path.join(namespace_dir, "ansible")
 
     os.makedirs(namespace_dir, exist_ok=True)
     if os.path.lexists(collection_link):

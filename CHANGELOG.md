@@ -14,14 +14,20 @@ All notable changes to this collection are documented in this file.
 - Shared `module_utils.patchmon_api` client used by inventory, modules, and lookups.
 - Modules: `patchmon_host_info`, `patchmon_host_packages`.
 - Lookup: `patchmon_host`.
-- Example inventory files under `examples/`.
+- Example inventory files under `examples/` (`patchmon_inventory.yml` minimal; `patchmon_inventory_stats.yml` stats + Constructable).
+- Example playbooks under `examples/playbooks/` for `patchmon_host_info`, `patchmon_host_packages`, and the `patchmon_host` lookup (inventory-driven and UUID-only).
+- [`examples/README.md`](examples/README.md) walkthrough: prerequisites, inventory + playbook usage, minimal vs stats comparison, and troubleshooting.
+- GitHub Actions [Release collection](.github/workflows/release.yml) workflow: on `vX.Y.Z` tags, run tests, build the collection tarball, and attach it to a GitHub Release for offline installs.
 - Unit tests for API helpers and inventory population.
 
 ### Changed
 
+- **Collection renamed** from `patchmon.dynamic_inventory` to `patchmon.ansible` so modules and lookups are not namespaced under an inventory-only collection. Install with `ansible-galaxy collection install patchmon.ansible`. Module FQCNs are now `patchmon.ansible.patchmon_host_info` (and similarly for packages/lookup); the inventory plugin is `patchmon.ansible.dynamic_inventory`.
 - Inventory plugin now uses `_read_config_data` / `get_option` instead of a manual YAML load.
 - Group names are sanitized with Ansible's safe group name helper.
 - `requires_ansible` lowered to `>=2.15.0` to widen adoption while retaining constructed inventory features.
+- Example inventories expanded with guided comments (active minimal defaults; optional options commented).
+- README documents offline install from release assets, “Using the examples”, and how to cut a tagged release.
 
 ### Notes
 

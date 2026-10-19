@@ -1,4 +1,4 @@
-# Ansible Collection - patchmon.dynamic_inventory
+# Ansible Collection - patchmon.ansible
 
 Dynamic inventory, modules, and lookups for the [PatchMon](https://patchmon.net) Integration API.
 
@@ -8,12 +8,12 @@ The `dynamic_inventory` plugin turns PatchMon hosts and host groups into a live 
 
 Companion content:
 
-| Type | Name | Purpose |
+| Type | FQCN | Purpose |
 |------|------|---------|
-| Inventory | `patchmon.dynamic_inventory` | List hosts / groups / stats hostvars |
-| Module | `patchmon_host_info` | Aggregate `/info`, `/stats`, `/system`, … |
-| Module | `patchmon_host_packages` | List packages (optionally updates only) |
-| Lookup | `patchmon_host` | Ad-hoc per-host API lookups |
+| Inventory | `patchmon.ansible.dynamic_inventory` | List hosts / groups / stats hostvars |
+| Module | `patchmon.ansible.patchmon_host_info` | Aggregate `/info`, `/stats`, `/system`, … |
+| Module | `patchmon.ansible.patchmon_host_packages` | List packages (optionally updates only) |
+| Lookup | `patchmon.ansible.patchmon_host` | Ad-hoc per-host API lookups |
 
 ## Requirements
 
@@ -26,19 +26,19 @@ Companion content:
 ### Ansible Galaxy
 
 ```bash
-ansible-galaxy collection install patchmon.dynamic_inventory
+ansible-galaxy collection install patchmon.ansible
 ```
 
 ### Offline / air-gapped (GitHub Release tarball)
 
-Tagged releases publish `patchmon-dynamic_inventory-<version>.tar.gz` as a release asset:
+Tagged releases publish `patchmon-ansible-<version>.tar.gz` as a release asset:
 
 1. Download the tarball from the [Releases](https://github.com/PatchMon/PatchMon-ansible/releases) page (or your fork’s Releases).
 2. Copy it to the target system.
 3. Install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-dynamic_inventory-1.1.0.tar.gz
+ansible-galaxy collection install ./patchmon-ansible-1.1.0.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -46,7 +46,7 @@ Or install directly from a release URL when the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v1.1.0/patchmon-dynamic_inventory-1.1.0.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v1.1.0/patchmon-ansible-1.1.0.tar.gz
 ```
 
 ### From source
@@ -55,17 +55,44 @@ ansible-galaxy collection install \
 git clone https://github.com/PatchMon/PatchMon-ansible.git
 cd PatchMon-ansible
 ansible-galaxy collection build
-ansible-galaxy collection install patchmon-dynamic_inventory-*.tar.gz
+ansible-galaxy collection install patchmon-ansible-*.tar.gz
 pip install -r requirements.txt
+```
+
+## Using the examples
+
+Full walkthrough (inventory + playbooks, troubleshooting): **[examples/README.md](examples/README.md)**.
+
+| Example | Purpose |
+|---------|---------|
+| [`examples/patchmon_inventory.yml`](examples/patchmon_inventory.yml) | Minimal / backward-compatible inventory |
+| [`examples/patchmon_inventory_stats.yml`](examples/patchmon_inventory_stats.yml) | Stats inventory + optional Constructable |
+| [`examples/playbooks/host_info.yml`](examples/playbooks/host_info.yml) | `patchmon_host_info` over inventory hosts |
+| [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `patchmon_host_packages` (pending / security) |
+| [`examples/playbooks/host_info_by_id.yml`](examples/playbooks/host_info_by_id.yml) | Modules by UUID (no dynamic inventory) |
+| [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `patchmon_host` lookup |
+
+Quick path:
+
+```bash
+# After installing the collection and enabling the plugin (see examples/README.md)
+cp examples/patchmon_inventory_stats.yml inventories/patchmon.yml
+# Edit api_url; then:
+export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+export PATCHMON_API_KEY='...'
+export PATCHMON_API_SECRET='...'
+ansible-inventory -i inventories/patchmon.yml --graph
+ansible-playbook -i inventories/patchmon.yml examples/playbooks/pending_updates.yml \
+  --limit patchmon_security_required
 ```
 
 ## Inventory configuration
 
-Create an inventory file (for example `patchmon_inventory.yml`):
+Create an inventory file, or copy an example from [`examples/`](examples/) and edit `api_url`:
 
 ```yaml
 ---
-plugin: patchmon.dynamic_inventory
+plugin: patchmon.ansible.dynamic_inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -79,7 +106,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
-| `plugin` | yes | — | Must be `patchmon.dynamic_inventory` |
+| `plugin` | yes | — | Must be `patchmon.ansible` |
 | `api_url` | yes | — | Hosts endpoint or instance root (`PATCHMON_API_URL`) |
 | `api_key` | yes | — | Token Key (`PATCHMON_API_KEY`) |
 | `api_secret` | yes | — | Token Secret (`PATCHMON_API_SECRET`) |
@@ -92,13 +119,11 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 | `compose` / `groups` / `keyed_groups` | no | — | Ansible constructed inventory features |
 | `cache` | no | `false` | Enable inventory caching |
 
-See also [`examples/patchmon_inventory.yml`](examples/patchmon_inventory.yml) and [`examples/patchmon_inventory_stats.yml`](examples/patchmon_inventory_stats.yml).
-
 ### Data-rich inventory (`include_stats`)
 
 ```yaml
 ---
-plugin: patchmon.dynamic_inventory
+plugin: patchmon.ansible.dynamic_inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 include_stats: true
 compose:
@@ -152,14 +177,21 @@ ansible-inventory -i patchmon_inventory.yml --list
 # Enable the plugin globally
 # ansible.cfg:
 # [inventory]
-# enable_plugins = patchmon.dynamic_inventory.dynamic_inventory
+# enable_plugins = patchmon.ansible.dynamic_inventory
 ```
 
 ### Modules
 
+Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats inventory so `patchmon_id` is set, or pass the UUID with `-e patchmon_id=...`.
+
+| Module | Purpose |
+|--------|---------|
+| `patchmon.ansible.patchmon_host_info` | Aggregate host detail endpoints via `gather_subset` (`info`, `stats`, `system`, `network`, `integrations`, or `all`) |
+| `patchmon.ansible.patchmon_host_packages` | List packages; set `updates_only: true` for pending updates only |
+
 ```yaml
 - name: Gather PatchMon host details
-  patchmon.dynamic_inventory.patchmon_host_info:
+  patchmon.ansible.patchmon_host_info:
     api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -169,7 +201,7 @@ ansible-inventory -i patchmon_inventory.yml --list
   register: pm_info
 
 - name: List packages with updates
-  patchmon.dynamic_inventory.patchmon_host_packages:
+  patchmon.ansible.patchmon_host_packages:
     api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -177,15 +209,26 @@ ansible-inventory -i patchmon_inventory.yml --list
     updates_only: true
   delegate_to: localhost
   register: pm_pkgs
+
+- name: Show security updates
+  ansible.builtin.debug:
+    msg: "{{ item.name }}: {{ item.current_version }} -> {{ item.available_version }}"
+  loop: "{{ pm_pkgs.packages | selectattr('is_security_update') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
 ```
+
+Runnable copies: [`examples/playbooks/`](examples/playbooks/).
 
 ### Lookup
 
 ```yaml
 - name: Fetch system details
-  ansible.builtin.debug:
-    var: lookup('patchmon.dynamic_inventory.patchmon_host', patchmon_id, resource='system')
+  ansible.builtin.set_fact:
+    patchmon_system: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='system') }}"
 ```
+
+`resource` may be `info`, `stats`, `system`, `network`, `integrations`, `packages`, or `notes`. For packages with updates only, pass `updates_only=true`. See [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml).
 
 ## Authentication
 
@@ -216,7 +259,7 @@ pytest
 2. Tag the release commit (tag must match `galaxy.yml`, with a `v` prefix):
 
 ```bash
-git tag -a v1.1.0 -m "patchmon.dynamic_inventory 1.1.0"
+git tag -a v1.1.0 -m "patchmon.ansible 1.1.0"
 git push origin v1.1.0
 ```
 
@@ -235,6 +278,7 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ## Links
 
+- Examples guide: [examples/README.md](examples/README.md)
 - Repository: https://github.com/PatchMon/PatchMon-ansible
 - PatchMon Integration API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation
 - Changelog: [CHANGELOG.md](CHANGELOG.md)

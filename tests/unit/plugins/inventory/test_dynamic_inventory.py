@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from ansible_collections.patchmon.dynamic_inventory.plugins.inventory import (
+from ansible_collections.patchmon.ansible.plugins.inventory import (
     dynamic_inventory as inv,
 )
 

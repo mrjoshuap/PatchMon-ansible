@@ -1,4 +1,5 @@
 *.tar.gz
+.collections/
 .pytest_collections/
 .pytest_cache/
 __pycache__/

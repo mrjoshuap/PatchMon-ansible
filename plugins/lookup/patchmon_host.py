@@ -63,11 +63,11 @@ requirements:
 EXAMPLES = r"""
 - name: Get PatchMon system details for a host
   ansible.builtin.debug:
-    msg: "{{ lookup('patchmon.dynamic_inventory.patchmon_host', patchmon_id, resource='system') }}"
+    msg: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='system') }}"
 
 - name: List packages needing updates
   ansible.builtin.set_fact:
-    pm_packages: "{{ lookup('patchmon.dynamic_inventory.patchmon_host', patchmon_id, resource='packages', updates_only=true) }}"
+    pm_packages: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='packages', updates_only=true) }}"
 """
 
 RETURN = r"""
@@ -81,7 +81,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
-from ansible_collections.patchmon.dynamic_inventory.plugins.module_utils.patchmon_api import (
+from ansible_collections.patchmon.ansible.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     PatchMonAPIError,
     PatchMonClient,
@@ -94,7 +94,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if not HAS_REQUESTS:
             raise AnsibleError(
-                "patchmon.dynamic_inventory.patchmon_host requires the Python 'requests' library"
+                "patchmon.ansible.patchmon_host requires the Python 'requests' library"
             )
 
         self.set_options(var_options=variables, direct=kwargs)

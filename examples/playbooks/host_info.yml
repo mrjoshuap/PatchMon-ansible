@@ -1,0 +1,63 @@
+---
+# Gather PatchMon info / stats / system detail for inventory hosts.
+#
+# Requires:
+#   - Collection installed; inventory that sets patchmon_id (use include_stats
+#     or any inventory that maps the host UUID — stats inventory is easiest)
+#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/host_info.yml
+#
+# Limit to hosts that need a reboot:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/host_info.yml --limit patchmon_needs_reboot
+
+- name: Report PatchMon host details
+  hosts: all
+  gather_facts: false
+  vars:
+    patchmon_api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    patchmon_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+    patchmon_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+    patchmon_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+
+  tasks:
+    - name: Require PatchMon host UUID from inventory
+      ansible.builtin.assert:
+        that:
+          - patchmon_id is defined
+          - patchmon_id | length > 0
+        fail_msg: >-
+          Host {{ inventory_hostname }} has no patchmon_id. Use an inventory with
+          include_stats: true (examples/patchmon_inventory_stats.yml) or set
+          patchmon_id yourself.
+
+    - name: Gather PatchMon host info, stats, and system
+      patchmon.ansible.patchmon_host_info:
+        api_url: "{{ patchmon_api_url }}"
+        api_key: "{{ patchmon_api_key }}"
+        api_secret: "{{ patchmon_api_secret }}"
+        verify_ssl: "{{ patchmon_verify_ssl | bool }}"
+        host_id: "{{ patchmon_id }}"
+        gather_subset:
+          - info
+          - stats
+          - system
+      delegate_to: localhost
+      register: patchmon_info
+
+    - name: Show PatchMon summary for this host
+      ansible.builtin.debug:
+        msg:
+          inventory_hostname: "{{ inventory_hostname }}"
+          friendly_name: "{{ patchmon_info.host.info.friendly_name | default('n/a') }}"
+          os: >-
+            {{ patchmon_info.host.info.os_type | default('?') }}
+            {{ patchmon_info.host.info.os_version | default('') }}
+          outdated_packages: "{{ patchmon_info.host.stats.outdated_packages | default('n/a') }}"
+          security_updates: "{{ patchmon_info.host.stats.security_updates | default('n/a') }}"
+          needs_reboot: "{{ patchmon_info.host.system.needs_reboot | default('n/a') }}"
+          reboot_reason: "{{ patchmon_info.host.system.reboot_reason | default('') }}"
+          kernel: "{{ patchmon_info.host.system.kernel_version | default('n/a') }}"
