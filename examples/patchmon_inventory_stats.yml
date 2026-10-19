@@ -1,0 +1,21 @@
+---
+# Data-rich PatchMon inventory with stats, auto groups, and Constructable selection.
+plugin: patchmon.dynamic_inventory
+api_url: https://patchmon.example.com/api/v1/api/hosts
+include_stats: true
+auto_groups: true
+inventory_hostname_prefer: hostname
+# Optional API-side filter (name or UUID; list = OR)
+# hostgroup:
+#   - Production
+compose:
+  patchmon_has_security_updates: patchmon_security_updates_count | int > 0
+keyed_groups:
+  - key: patchmon_update_state
+    prefix: update_state
+  - key: patchmon_os_type
+    prefix: os
+groups:
+  reboot_and_security: >
+    patchmon_needs_reboot and (patchmon_security_updates_count | int > 0)
+strict: false

@@ -1,0 +1,7 @@
+---
+# Minimal PatchMon dynamic inventory (backward compatible).
+# Credentials may come from env: PATCHMON_API_KEY / PATCHMON_API_SECRET
+plugin: patchmon.dynamic_inventory
+api_url: https://patchmon.example.com/api/v1/api/hosts
+verify_ssl: true
+# api_key / api_secret omitted — set via env or ansible.cfg [patchmon]

@@ -1,299 +1,206 @@
 # Ansible Collection - patchmon.dynamic_inventory
 
-A dynamic inventory plugin for Ansible that queries the PatchMon HTTP JSON API and exposes hosts as an Ansible inventory.
+Dynamic inventory, modules, and lookups for the [PatchMon](https://patchmon.net) Integration API.
 
 ## Description
 
-The `dynamic_inventory` plugin allows you to use PatchMon as a dynamic inventory source for Ansible. It queries the PatchMon API to retrieve host information including hostnames, IP addresses, and group assignments, and automatically generates an Ansible inventory.
+The `dynamic_inventory` plugin turns PatchMon hosts and host groups into a live Ansible inventory. With `include_stats: true` it also exposes reboot, update, security, OS, and reporting metadata as host variables and optional auto groups — so you can target fleets with `--limit patchmon_security_required` or Constructable expressions.
+
+Companion content:
+
+| Type | Name | Purpose |
+|------|------|---------|
+| Inventory | `patchmon.dynamic_inventory` | List hosts / groups / stats hostvars |
+| Module | `patchmon_host_info` | Aggregate `/info`, `/stats`, `/system`, … |
+| Module | `patchmon_host_packages` | List packages (optionally updates only) |
+| Lookup | `patchmon_host` | Ad-hoc per-host API lookups |
 
 ## Requirements
 
-- **Ansible**: >= 2.19.0
-- **Python**: 3.6+
+- **Ansible**: >= 2.15.0
+- **Python**: 3.9+
 - **Dependencies**: `requests >= 2.25.1`
 
 ## Installation
 
-### Install from Ansible Galaxy
+### Ansible Galaxy
 
 ```bash
 ansible-galaxy collection install patchmon.dynamic_inventory
 ```
 
-### Install from Source
+### From source
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/PatchMon/PatchMon-ansible.git
-   cd PatchMon-ansible/patchmon/dynamic_inventory
-   ```
+```bash
+git clone https://github.com/PatchMon/PatchMon-ansible.git
+cd PatchMon-ansible
+ansible-galaxy collection build
+ansible-galaxy collection install patchmon-dynamic_inventory-*.tar.gz
+pip install -r requirements.txt
+```
 
-2. Build the collection:
-   ```bash
-   ansible-galaxy collection build
-   ```
+## Inventory configuration
 
-3. Install the collection:
-   ```bash
-   ansible-galaxy collection install patchmon-dynamic_inventory-*.tar.gz
-   ```
-
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Configuration
-
-Create an inventory configuration file (e.g., `patchmon_inventory.yml`):
+Create an inventory file (for example `patchmon_inventory.yml`):
 
 ```yaml
 ---
 plugin: patchmon.dynamic_inventory
-api_url: http://localhost:3000/api/v1/api/hosts
-api_key: your_api_key
-api_secret: your_api_secret
-verify_ssl: false
+api_url: https://patchmon.example.com/api/v1/api/hosts
+api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+verify_ssl: true
 ```
 
-### Configuration Options
+Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`  
+(`api_url` may also be the instance root; the plugin appends `/api/v1/api/hosts`.)
 
-| Option | Description | Required | Default |
-|--------|-------------|----------|---------|
-| `plugin` | Name of the plugin | ✅ | `patchmon.dynamic_inventory` |
-| `api_url` | URL of the PatchMon API endpoint that returns JSON host data | ✅ | — |
-| `api_key` | API key for authentication | ✅ | — |
-| `api_secret` | API secret for authentication | ✅ | — |
-| `verify_ssl` | Whether to verify SSL certificates when contacting the API | ❌ | `true` |
+### Configuration options
+
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `plugin` | yes | — | Must be `patchmon.dynamic_inventory` |
+| `api_url` | yes | — | Hosts endpoint or instance root (`PATCHMON_API_URL`) |
+| `api_key` | yes | — | Token Key (`PATCHMON_API_KEY`) |
+| `api_secret` | yes | — | Token Secret (`PATCHMON_API_SECRET`) |
+| `verify_ssl` | no | `true` | TLS verify (`PATCHMON_VERIFY_SSL`) |
+| `timeout` | no | `30` | HTTP timeout (seconds) |
+| `include_stats` | no | `false` | Request `?include=stats` and set `patchmon_*` hostvars |
+| `hostgroup` | no | — | Filter by PatchMon group name(s) or UUID(s) |
+| `auto_groups` | no | `true` | Derived groups when `include_stats` is true |
+| `inventory_hostname_prefer` | no | `hostname` | `hostname` or `friendly_name` |
+| `compose` / `groups` / `keyed_groups` | no | — | Ansible constructed inventory features |
+| `cache` | no | `false` | Enable inventory caching |
+
+See also [`examples/patchmon_inventory.yml`](examples/patchmon_inventory.yml) and [`examples/patchmon_inventory_stats.yml`](examples/patchmon_inventory_stats.yml).
+
+### Data-rich inventory (`include_stats`)
+
+```yaml
+---
+plugin: patchmon.dynamic_inventory
+api_url: https://patchmon.example.com/api/v1/api/hosts
+include_stats: true
+compose:
+  patchmon_has_security_updates: patchmon_security_updates_count | int > 0
+keyed_groups:
+  - key: patchmon_update_state
+    prefix: update_state
+groups:
+  reboot_and_security: patchmon_needs_reboot and patchmon_security_updates_count | int > 0
+```
+
+#### Host variables (with `include_stats`)
+
+| Hostvar | Source |
+|---------|--------|
+| `ansible_host` / `patchmon_ip` | `ip` |
+| `patchmon_id` | `id` |
+| `patchmon_hostname` / `patchmon_friendly_name` | identity fields |
+| `patchmon_os_type` / `patchmon_os_version` | OS |
+| `patchmon_status` / `patchmon_effective_status` / `patchmon_reporting_state` | lifecycle / freshness |
+| `patchmon_update_state` | `up_to_date`, `updates_pending`, `security_required` |
+| `patchmon_needs_reboot` | boolean |
+| `patchmon_updates_count` / `patchmon_security_updates_count` / `patchmon_total_packages` | package counts |
+| `patchmon_last_update` | last agent report |
+
+#### Auto groups (when `include_stats` and `auto_groups`)
+
+| Group | Condition |
+|-------|-----------|
+| `patchmon_needs_reboot` | `needs_reboot` |
+| `patchmon_security_required` | `update_state == security_required` |
+| `patchmon_updates_pending` | `update_state == updates_pending` |
+| `patchmon_up_to_date` | `update_state == up_to_date` |
+| `patchmon_stale` / `patchmon_overdue` | `reporting_state` |
+| `patchmon_inactive` | `effective_status == inactive` |
+| `patchmon_os_<os>` | sanitized `os_type` |
+
+Plus every PatchMon `host_groups[].name` as an Ansible group.
+
+```bash
+ansible-playbook site.yml -i patchmon_inventory.yml --limit patchmon_security_required
+ansible-playbook reboot.yml -i patchmon_inventory.yml --limit patchmon_needs_reboot
+```
 
 ## Usage
 
-### Basic Usage
-
-Run Ansible commands with the inventory file:
-
 ```bash
-# List all hosts
+# List inventory
 ansible-inventory -i patchmon_inventory.yml --list
 
-# Ping all hosts
-ansible all -i patchmon_inventory.yml -m ping
-
-# Run a playbook
-ansible-playbook -i patchmon_inventory.yml playbook.yml
+# Enable the plugin globally
+# ansible.cfg:
+# [inventory]
+# enable_plugins = patchmon.dynamic_inventory.dynamic_inventory
 ```
 
-### Configure as Default Inventory
-
-Add to your `ansible.cfg`:
-
-```ini
-[defaults]
-inventory = patchmon_inventory.yml
-[inventory]
-enable_plugins = patchmon.dynamic_inventory.dynamic_inventory
-```
-
-### Using in Playbooks
-
-Create a playbook (e.g., `ping.yml`):
+### Modules
 
 ```yaml
----
-- name: Test connectivity to all hosts
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Ping hosts
-      ansible.builtin.ping:
+- name: Gather PatchMon host details
+  patchmon.dynamic_inventory.patchmon_host_info:
+    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+    api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+    host_id: "{{ patchmon_id }}"
+    gather_subset: [info, stats, system]
+  delegate_to: localhost
+  register: pm_info
+
+- name: List packages with updates
+  patchmon.dynamic_inventory.patchmon_host_packages:
+    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+    api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+    host_id: "{{ patchmon_id }}"
+    updates_only: true
+  delegate_to: localhost
+  register: pm_pkgs
 ```
 
-Run the playbook:
-
-```bash
-ansible-playbook ping.yml
-```
-
-## API Response Format
-
-The plugin expects the PatchMon API to return JSON in the following format:
-
-```json
-{
-  "hosts": [
-    {
-      "hostname": "server1.example.com",
-      "ip": "192.168.1.10",
-      "host_groups": [
-        {
-          "name": "web_servers"
-        },
-        {
-          "name": "production"
-        }
-      ]
-    },
-    {
-      "hostname": "server2.example.com",
-      "ip": "192.168.1.11",
-      "host_groups": [
-        {
-          "name": "db_servers"
-        },
-        {
-          "name": "production"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Inventory Mapping
-
-- **Hostname**: The `hostname` field is used as the Ansible host name
-- **IP Address**: The `ip` field is mapped to the `ansible_host` variable
-- **Groups**: Each entry in `host_groups` creates an Ansible group, and hosts are assigned to these groups
-
-## Examples
-
-### Example 1: List Inventory
-
-```bash
-ansible-inventory -i patchmon_inventory.yml --list
-```
-
-Output:
-```json
-{
-    "_meta": {
-        "hostvars": {
-            "server1.example.com": {
-                "ansible_host": "192.168.1.10"
-            },
-            "server2.example.com": {
-                "ansible_host": "192.168.1.11"
-            }
-        }
-    },
-    "all": {
-        "children": [
-            "ungrouped",
-            "web_servers",
-            "db_servers",
-            "production"
-        ]
-    },
-    "db_servers": {
-        "hosts": [
-            "server2.example.com"
-        ]
-    },
-    "production": {
-        "hosts": [
-            "server1.example.com",
-            "server2.example.com"
-        ]
-    },
-    "web_servers": {
-        "hosts": [
-            "server1.example.com"
-        ]
-    }
-}
-```
-
-### Example 2: Target Specific Groups
-
-```bash
-# Run on web servers only
-ansible-playbook -i patchmon_inventory.yml playbook.yml --limit web_servers
-
-# Run on production hosts only
-ansible-playbook -i patchmon_inventory.yml playbook.yml --limit production
-```
-
-### Example 3: Using Environment Variables
-
-For security, you can use Ansible vault or environment variables:
+### Lookup
 
 ```yaml
----
-plugin: patchmon.dynamic_inventory
-api_url: http://localhost:3000/api/v1/api/hosts/
-api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
-verify_ssl: false
+- name: Fetch system details
+  ansible.builtin.debug:
+    var: lookup('patchmon.dynamic_inventory.patchmon_host', patchmon_id, resource='system')
 ```
 
 ## Authentication
 
-The plugin uses HTTP Basic Authentication with the provided `api_key` and `api_secret`. Make sure these credentials have the necessary permissions to query the PatchMon API.
+HTTP Basic Auth with a PatchMon Integration API credential (`host:get` scope minimum). Create credentials under **Settings → Integrations → API** in PatchMon.
 
-## SSL Verification
-
-By default, SSL certificate verification is enabled (`verify_ssl: true`). For development or self-signed certificates, you can disable it by setting `verify_ssl: false`. **Note:** Disabling SSL verification is not recommended for production environments.
-
-## Troubleshooting
-
-### Test API Connectivity
+Prefer environment variables or Ansible Vault over plaintext secrets in inventory files:
 
 ```bash
-# Test the API endpoint directly
-curl -u "api_key:api_secret" http://localhost:3000/api/v1/api/hosts/
+export PATCHMON_API_URL=https://patchmon.example.com/api/v1/api/hosts
+export PATCHMON_API_KEY=...
+export PATCHMON_API_SECRET=...
 ```
 
-### Debug Inventory
+## Compliance note
 
-```bash
-# Show detailed inventory information
-ansible-inventory -i patchmon_inventory.yml --list --debug
-
-# Test with verbose output
-ansible-inventory -i patchmon_inventory.yml --list -v
-```
-
-### Common Issues
-
-1. **Authentication Errors**: Verify that your `api_key` and `api_secret` are correct
-2. **Connection Errors**: Check that the `api_url` is accessible and the API is running
-3. **JSON Parsing Errors**: Ensure the API returns valid JSON in the expected format
-4. **Missing Hosts**: Verify that the API response contains a `hosts` array
+Host compliance status is **not** currently exposed on the scoped Integration API (`/api/v1/api/...`). Compliance routes live under `/api/v1/compliance/*` with session RBAC. This collection does not scrape session cookies. Tracking request: [PatchMon/PatchMon#1189](https://github.com/PatchMon/PatchMon/issues/1189). Once those fields land, a follow-up release will map `patchmon_compliance_*` hostvars and groups.
 
 ## Development
 
-### Testing
-
-Test the plugin locally:
-
 ```bash
-# Test inventory parsing
-ansible-inventory -i patchmon_inventory.yml --list
-
-# Test with a playbook
-ansible-playbook -i patchmon_inventory.yml ping.yml
+pip install -r requirements.txt pytest
+pytest
 ```
-
-### Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
 
 ## License
 
-AGPL-3.0-or-later
-
-See the [LICENSE](LICENSE) file for details.
+AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ## Authors
 
 - Steve Libonati <stevelibonati@yahoo.com>
+- Contributors welcome via [GitHub Issues](https://github.com/PatchMon/PatchMon-ansible/issues)
 
 ## Links
 
-- **Repository**: https://github.com/PatchMon/PatchMon-ansible
-- **Issues**: https://github.com/PatchMon/PatchMon-ansible/issues
+- Repository: https://github.com/PatchMon/PatchMon-ansible
+- PatchMon Integration API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
