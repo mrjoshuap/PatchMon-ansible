@@ -22,6 +22,13 @@ agent_timeout: 30
 # Where to stage the enrollment script on the managed host
 agent_script_path: /tmp/patchmon-enroll.sh
 
+# Controller-side path for host_token dest= (avoids no_log script-body censoring)
+agent_script_controller_path: /tmp/patchmon-enroll-{{ inventory_hostname }}.sh
+
+# On install failure, keep a copy for debugging (contains enrollment secrets)
+agent_keep_failed_script: false
+agent_failed_script_path: /var/tmp/patchmon-enroll-failed-{{ inventory_hostname }}.sh
+
 # Service / binary names (override per platform in vars/ if needed)
 agent_service_name: patchmon-agent
 agent_binary_path: /usr/local/bin/patchmon-agent

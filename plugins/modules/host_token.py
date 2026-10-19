@@ -48,6 +48,14 @@ options:
     description: Pass C(force=true) to the script endpoint.
     type: bool
     default: false
+  dest:
+    description:
+      - Absolute path on the module host to write the enrollment script.
+      - Required for O(state=script). Writing to a file avoids Ansible
+        C(no_log) censoring the key/secret substrings inside a returned
+        C(script) string (which becomes literal C(********)).
+    type: path
+    version_added: "2.0.1"
   admin_token:
     description: Bearer JWT for admin token CRUD (Manage Settings).
     type: str
@@ -90,13 +98,14 @@ requirements:
 """
 
 EXAMPLES = r"""
-- name: Fetch direct-host enrollment script
+- name: Fetch direct-host enrollment script to a local file
   patchmon.core.host_token:
     state: script
     server_url: https://patchmon.example.com
     enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') }}"
     enrollment_secret: "{{ lookup('env', 'PATCHMON_ENROLLMENT_SECRET') }}"
     script_type: direct-host
+    dest: /tmp/patchmon-enroll.sh
   delegate_to: localhost
   register: pm_script
   no_log: true
@@ -114,8 +123,8 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-script:
-  description: Enrollment bash script body (O(state=script)).
+dest:
+  description: Path where the enrollment script was written (O(state=script)).
   returned: when state=script
   type: str
 token:
@@ -126,6 +135,8 @@ message:
   description: API message.
   type: str
 """
+
+import os
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -146,8 +157,22 @@ def _fetch_script(module):
             msg="enrollment_key and enrollment_secret are required when state=script"
         )
 
+    dest = module.params.get("dest")
+    if not dest:
+        module.fail_json(
+            msg=(
+                "dest is required when state=script. Write the script to a file so "
+                "Ansible no_log does not censor key/secret substrings in a returned "
+                "script string (see agent role install.yml)."
+            )
+        )
+
     if module.check_mode:
-        module.exit_json(changed=False, script="", msg="Would fetch enrollment script")
+        module.exit_json(
+            changed=False,
+            dest=dest,
+            msg="Would fetch enrollment script to {0}".format(dest),
+        )
 
     client = PatchMonEnrollmentClient(
         server_url=module.params["server_url"],
@@ -164,7 +189,22 @@ def _fetch_script(module):
     except PatchMonAPIError as exc:
         module.fail_json(msg=str(exc), status_code=exc.status_code)
 
-    module.exit_json(changed=False, script=script)
+    dest_dir = os.path.dirname(dest)
+    if dest_dir and not os.path.isdir(dest_dir):
+        try:
+            os.makedirs(dest_dir, mode=0o700)
+        except OSError as exc:
+            module.fail_json(msg="Unable to create directory for dest: {0}".format(exc))
+
+    try:
+        with open(dest, "w", encoding="utf-8") as handle:
+            handle.write(script)
+        os.chmod(dest, 0o700)
+    except OSError as exc:
+        module.fail_json(msg="Unable to write enrollment script to dest: {0}".format(exc))
+
+    # Do not return script body — no_log would replace key/secret with ********.
+    module.exit_json(changed=False, dest=dest)
 
 
 def _create_token(module):
@@ -260,6 +300,7 @@ def run_module():
                 choices=["direct-host", "proxmox-lxc"],
             ),
             force=dict(type="bool", default=False),
+            dest=dict(type="path"),
             admin_token=dict(type="str", no_log=True),
             token_name=dict(type="str"),
             token_id=dict(type="str"),

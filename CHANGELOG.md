@@ -2,6 +2,22 @@
 
 All notable changes to this collection are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- `agent` role: `agent_keep_failed_script` / `agent_failed_script_path` to retain
+  the enrollment script on install failure for debugging; remove staged script
+  after a successful install.
+- `host_token` `dest` option (required for `state=script`) writes the installer
+  to a file instead of returning the script body.
+
+### Fixed
+
+- Agent install 401 `Invalid or inactive token` caused by Ansible `no_log`
+  replacing enrollment key/secret substrings inside registered `script` with
+  literal `********`. Role now copies from `dest` on the controller.
+
 ## [2.0.0] - 2026-10-19
 
 Collection renamed from `patchmon.dynamic_inventory` to `patchmon.core`.

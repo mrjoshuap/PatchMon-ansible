@@ -20,6 +20,10 @@ See [docs/permissions.md](../../docs/permissions.md).
 | `agent_enrollment_key` / `agent_enrollment_secret` | env | Auto-enrollment credentials |
 | `agent_script_type` | `direct-host` | Or `proxmox-lxc` |
 | `agent_force_new_host` | `false` | Sets `FORCE_NEW_HOST` for the installer |
+| `agent_script_path` | `/tmp/patchmon-enroll.sh` | Staging path for the enrollment script on the target |
+| `agent_script_controller_path` | `/tmp/patchmon-enroll-<host>.sh` | Controller path written by `host_token` (`dest`) |
+| `agent_keep_failed_script` | `false` | On failure, copy script to `agent_failed_script_path` (contains secrets) |
+| `agent_failed_script_path` | `/var/tmp/patchmon-enroll-failed-<host>.sh` | Durable path when `agent_keep_failed_script` is true |
 | `agent_report` | `false` | Run `patchmon-agent report` after present |
 
 ## Example

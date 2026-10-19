@@ -1,6 +1,10 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Download and run the PatchMon auto-enrollment script (enrolls + installs agent).
+#
+# host_token writes the script to dest on the controller. Returning the script
+# body is unsafe: Ansible no_log censors enrollment_key/secret substrings to
+# literal ******** inside registered results.
 
 - name: Fetch enrollment script from PatchMon
   patchmon.core.host_token:
@@ -12,6 +16,7 @@
     force: "{{ agent_force_install }}"
     verify_ssl: "{{ agent_verify_ssl | bool }}"
     timeout: "{{ agent_timeout | int }}"
+    dest: "{{ agent_script_controller_path }}"
   delegate_to: localhost
   become: false
   register: __agent_script
@@ -19,7 +24,7 @@
 
 - name: Stage enrollment script on the managed host
   ansible.builtin.copy:
-    content: "{{ __agent_script.script }}"
+    src: "{{ agent_script_controller_path }}"
     dest: "{{ agent_script_path }}"
     mode: "0700"
     owner: root
@@ -37,4 +42,46 @@
   changed_when: >-
     'already' not in (__agent_install.stdout | default('') | lower)
     and 'skip' not in (__agent_install.stdout | default('') | lower)
+  ignore_errors: true
   # Official script is the supported installer; no dedicated package module yet.
+
+- name: Keep failed enrollment script for debugging
+  ansible.builtin.copy:
+    src: "{{ agent_script_path }}"
+    dest: "{{ agent_failed_script_path }}"
+    remote_src: true
+    mode: "0700"
+    owner: root
+    group: root
+  become: true
+  no_log: true
+  when:
+    - __agent_install is failed
+    - agent_keep_failed_script | bool
+
+- name: Remove enrollment script from managed host after successful install
+  ansible.builtin.file:
+    path: "{{ agent_script_path }}"
+    state: absent
+  become: true
+  when: __agent_install is succeeded
+
+- name: Remove enrollment script from controller after install attempt
+  ansible.builtin.file:
+    path: "{{ agent_script_controller_path }}"
+    state: absent
+  delegate_to: localhost
+  become: false
+
+- name: Fail when enrollment / agent install script failed
+  ansible.builtin.fail:
+    msg: >-
+      PatchMon enrollment failed (rc={{ __agent_install.rc | default('unknown') }}).
+      {% if agent_keep_failed_script | bool -%}
+      Failed script kept at {{ agent_failed_script_path }} (contains secrets; delete after debugging).
+      {% else -%}
+      Staged script left at {{ agent_script_path }}.
+      Set agent_keep_failed_script=true to copy it to {{ agent_failed_script_path }}.
+      {% endif -%}
+      stderr: {{ __agent_install.stderr | default('') }}
+  when: __agent_install is failed

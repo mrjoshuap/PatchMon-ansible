@@ -6,13 +6,16 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+import os
+
 import pytest
 
 from ansible_collections.patchmon.core.plugins.modules import host_token as mod
 
 
-def test_script_fetch(monkeypatch):
+def test_script_fetch_writes_dest(monkeypatch, tmp_path):
     exits = {}
+    dest = str(tmp_path / "enroll.sh")
 
     class FakeModule(object):
         def __init__(self, *args, **kwargs):
@@ -24,6 +27,7 @@ def test_script_fetch(monkeypatch):
                 "enrollment_secret": "es",
                 "script_type": "direct-host",
                 "force": False,
+                "dest": dest,
                 "admin_token": None,
                 "token_name": None,
                 "token_id": None,
@@ -48,7 +52,7 @@ def test_script_fetch(monkeypatch):
             pass
 
         def get_script(self, script_type="direct-host", force=False):
-            return "#!/bin/bash\necho ok\n"
+            return "#!/bin/bash\nexport AUTO_ENROLLMENT_KEY=\"ek\"\necho ok\n"
 
     monkeypatch.setattr(mod, "AnsibleModule", FakeModule)
     monkeypatch.setattr(mod, "PatchMonEnrollmentClient", FakeEnrollment)
@@ -58,7 +62,54 @@ def test_script_fetch(monkeypatch):
         mod.run_module()
 
     assert exits["changed"] is False
-    assert "bash" in exits["script"]
+    assert exits["dest"] == dest
+    assert "script" not in exits
+    assert os.path.isfile(dest)
+    body = open(dest, encoding="utf-8").read()
+    assert "AUTO_ENROLLMENT_KEY=\"ek\"" in body
+    assert oct(os.stat(dest).st_mode & 0o777) == "0o700"
+
+
+def test_script_fetch_requires_dest(monkeypatch):
+    exits = {}
+
+    class FakeModule(object):
+        def __init__(self, *args, **kwargs):
+            self.check_mode = False
+            self.params = {
+                "state": "script",
+                "server_url": "https://patchmon.example.com",
+                "enrollment_key": "ek",
+                "enrollment_secret": "es",
+                "script_type": "direct-host",
+                "force": False,
+                "dest": None,
+                "admin_token": None,
+                "token_name": None,
+                "token_id": None,
+                "max_hosts_per_day": 100,
+                "default_host_group_id": None,
+                "allowed_ip_ranges": None,
+                "expires_at": None,
+                "metadata": None,
+                "verify_ssl": True,
+                "timeout": 30,
+            }
+
+        def fail_json(self, **kwargs):
+            exits.update(kwargs)
+            raise SystemExit(1)
+
+        def exit_json(self, **kwargs):
+            raise SystemExit(0)
+
+    monkeypatch.setattr(mod, "AnsibleModule", FakeModule)
+    monkeypatch.setattr(mod, "HAS_REQUESTS", True)
+
+    with pytest.raises(SystemExit):
+        mod.run_module()
+
+    assert "dest is required" in exits["msg"]
 
 
 def test_create_token(monkeypatch):
@@ -74,6 +125,7 @@ def test_create_token(monkeypatch):
                 "enrollment_secret": None,
                 "script_type": "direct-host",
                 "force": False,
+                "dest": None,
                 "admin_token": "jwt",
                 "token_name": "ansible",
                 "token_id": None,
