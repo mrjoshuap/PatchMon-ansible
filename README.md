@@ -29,6 +29,26 @@ Companion content:
 ansible-galaxy collection install patchmon.dynamic_inventory
 ```
 
+### Offline / air-gapped (GitHub Release tarball)
+
+Tagged releases publish `patchmon-dynamic_inventory-<version>.tar.gz` as a release asset:
+
+1. Download the tarball from the [Releases](https://github.com/PatchMon/PatchMon-ansible/releases) page (or your fork’s Releases).
+2. Copy it to the target system.
+3. Install:
+
+```bash
+ansible-galaxy collection install ./patchmon-dynamic_inventory-1.1.0.tar.gz
+pip install 'requests>=2.25.1'
+```
+
+Or install directly from a release URL when the controller can reach GitHub:
+
+```bash
+ansible-galaxy collection install \
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v1.1.0/patchmon-dynamic_inventory-1.1.0.tar.gz
+```
+
 ### From source
 
 ```bash
@@ -189,6 +209,20 @@ Host compliance status is **not** currently exposed on the scoped Integration AP
 pip install -r requirements.txt pytest
 pytest
 ```
+
+### Cutting a release
+
+1. Bump `galaxy.yml` `version`, update `CHANGELOG.md`, and merge to `main`.
+2. Tag the release commit (tag must match `galaxy.yml`, with a `v` prefix):
+
+```bash
+git tag -a v1.1.0 -m "patchmon.dynamic_inventory 1.1.0"
+git push origin v1.1.0
+```
+
+3. The [Release collection](.github/workflows/release.yml) workflow runs tests, builds the collection tarball, and creates a GitHub Release with the `.tar.gz` attached for offline installs.
+
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v1.1.0`.
 
 ## License
 
