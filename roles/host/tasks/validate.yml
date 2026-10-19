@@ -1,0 +1,49 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate host_state
+  ansible.builtin.assert:
+    that:
+      - host_state is defined
+      - host_state in __host_valid_states
+    fail_msg: >-
+      host_state must be one of {{ __host_valid_states | join(', ') }}.
+
+- name: Validate present-state enrollment credentials
+  ansible.builtin.assert:
+    that:
+      - host_server_url is defined
+      - host_server_url | length > 0
+      - host_enrollment_key is defined
+      - host_enrollment_key | length > 0
+      - host_enrollment_secret is defined
+      - host_enrollment_secret | length > 0
+      - host_friendly_name is defined
+      - host_friendly_name | length > 0
+    fail_msg: >-
+      host_server_url, host_enrollment_key, host_enrollment_secret, and
+      host_friendly_name are required when host_state=present.
+      Auto-Enrollment tokens create host entries; Integration API credentials
+      with only host:get cannot create hosts. See docs/permissions.md.
+  when: host_state == 'present'
+
+- name: Validate absent-state Integration credentials
+  ansible.builtin.assert:
+    that:
+      - host_api_url is defined
+      - host_api_url | length > 0
+      - host_api_key is defined
+      - host_api_key | length > 0
+      - host_api_secret is defined
+      - host_api_secret | length > 0
+      - host_id is defined
+      - host_id | length > 0
+    fail_msg: >-
+      host_api_url, host_api_key, host_api_secret, and host_id are required
+      when host_state=absent. Integration scope host:delete is required.
+      WARNING: This permanently deletes the host and related data in PatchMon.
+  when: host_state == 'absent'
+
+- name: Warn when TLS verification is disabled
+  ansible.builtin.debug:
+    msg: WARNING - host_verify_ssl is false. Use only in lab environments.
+  when: not (host_verify_ssl | bool)

@@ -7,12 +7,13 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: patchmon_host_info
+module: host_info
 short_description: Gather PatchMon host information
-version_added: "1.1.0"
+version_added: "2.0.0"
 description:
   - Retrieves detailed information for a PatchMon host via the Integration API.
   - Optionally aggregates info, stats, system, network, and integrations endpoints.
+  - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
   - patchmon.ansible.auth
 options:
@@ -36,7 +37,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: Gather PatchMon host info and system details
-  patchmon.ansible.patchmon_host_info:
+  patchmon.ansible.host_info:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"

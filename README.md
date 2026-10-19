@@ -1,19 +1,27 @@
 # Ansible Collection - patchmon.ansible
 
-Dynamic inventory, modules, and lookups for the [PatchMon](https://patchmon.net) Integration API.
+Dynamic inventory, modules, lookups, and roles for the [PatchMon](https://patchmon.net) Integration and Auto-Enrollment APIs.
 
 ## Description
 
-The `dynamic_inventory` plugin turns PatchMon hosts and host groups into a live Ansible inventory. With `include_stats: true` it also exposes reboot, update, security, OS, and reporting metadata as host variables and optional auto groups — so you can target fleets with `--limit patchmon_security_required` or Constructable expressions.
+The `inventory` plugin turns PatchMon hosts and host groups into a live Ansible inventory. With `include_stats: true` it also exposes reboot, update, security, OS, and reporting metadata as host variables and optional auto groups — so you can target fleets with `--limit patchmon_security_required` or Constructable expressions.
 
 Companion content:
 
 | Type | FQCN | Purpose |
 |------|------|---------|
-| Inventory | `patchmon.ansible.dynamic_inventory` | List hosts / groups / stats hostvars |
-| Module | `patchmon.ansible.patchmon_host_info` | Aggregate `/info`, `/stats`, `/system`, … |
-| Module | `patchmon.ansible.patchmon_host_packages` | List packages (optionally updates only) |
-| Lookup | `patchmon.ansible.patchmon_host` | Ad-hoc per-host API lookups |
+| Inventory | `patchmon.ansible.inventory` | List hosts / groups / stats hostvars |
+| Module | `patchmon.ansible.host_info` | Aggregate `/info`, `/stats`, `/system`, … |
+| Module | `patchmon.ansible.host_packages` | List packages (optionally updates only) |
+| Module | `patchmon.ansible.host` | Enroll (Auto-Enrollment) or delete (`host:delete`) |
+| Module | `patchmon.ansible.host_token` | Enrollment script / admin token CRUD |
+| Lookup | `patchmon.ansible.host` | Ad-hoc per-host API lookups |
+| Role | `patchmon.ansible.agent` | Install / start / stop / report / remove agent |
+| Role | `patchmon.ansible.host` | Create or delete host entries |
+
+**Permissions matter.** Read plugins need Integration `host:get`. Creating hosts and installing agents need **Auto-Enrollment** credentials — not Integration Basic Auth. See **[docs/permissions.md](docs/permissions.md)**.
+
+**Upgrading from 1.0.0** (`patchmon.dynamic_inventory`): this is a breaking change — install `patchmon.ansible` and update `plugin:` to `patchmon.ansible.inventory`. Step-by-step: **[docs/migrating_to_2.0.md](docs/migrating_to_2.0.md)**.
 
 ## Requirements
 
@@ -38,7 +46,7 @@ Tagged releases publish `patchmon-ansible-<version>.tar.gz` as a release asset:
 3. Install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-ansible-1.1.0.tar.gz
+ansible-galaxy collection install ./patchmon-ansible-2.0.0.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -46,7 +54,7 @@ Or install directly from a release URL when the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v1.1.0/patchmon-ansible-1.1.0.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.0/patchmon-ansible-2.0.0.tar.gz
 ```
 
 ### From source
@@ -67,10 +75,10 @@ Full walkthrough (inventory + playbooks, troubleshooting): **[examples/README.md
 |---------|---------|
 | [`examples/patchmon_inventory.yml`](examples/patchmon_inventory.yml) | Minimal / backward-compatible inventory |
 | [`examples/patchmon_inventory_stats.yml`](examples/patchmon_inventory_stats.yml) | Stats inventory + optional Constructable |
-| [`examples/playbooks/host_info.yml`](examples/playbooks/host_info.yml) | `patchmon_host_info` over inventory hosts |
-| [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `patchmon_host_packages` (pending / security) |
+| [`examples/playbooks/host_info.yml`](examples/playbooks/host_info.yml) | `host_info` over inventory hosts |
+| [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `host_packages` (pending / security) |
 | [`examples/playbooks/host_info_by_id.yml`](examples/playbooks/host_info_by_id.yml) | Modules by UUID (no dynamic inventory) |
-| [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `patchmon_host` lookup |
+| [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `host` lookup |
 
 Quick path:
 
@@ -92,7 +100,7 @@ Create an inventory file, or copy an example from [`examples/`](examples/) and e
 
 ```yaml
 ---
-plugin: patchmon.ansible.dynamic_inventory
+plugin: patchmon.ansible.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -106,7 +114,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
-| `plugin` | yes | — | Must be `patchmon.ansible.dynamic_inventory` |
+| `plugin` | yes | — | Must be `patchmon.ansible.inventory` |
 | `api_url` | yes | — | Hosts endpoint or instance root (`PATCHMON_API_URL`) |
 | `api_key` | yes | — | Token Key (`PATCHMON_API_KEY`) |
 | `api_secret` | yes | — | Token Secret (`PATCHMON_API_SECRET`) |
@@ -123,7 +131,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 
 ```yaml
 ---
-plugin: patchmon.ansible.dynamic_inventory
+plugin: patchmon.ansible.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 include_stats: true
 compose:
@@ -180,21 +188,23 @@ ansible-inventory -i patchmon_inventory.yml --list
 # Enable the plugin globally
 # ansible.cfg:
 # [inventory]
-# enable_plugins = patchmon.ansible.dynamic_inventory
+# enable_plugins = patchmon.ansible.inventory
 ```
 
 ### Modules
 
 Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats inventory so `patchmon_id` is set, or pass the UUID with `-e patchmon_id=...`.
 
-| Module | Purpose |
-|--------|---------|
-| `patchmon.ansible.patchmon_host_info` | Aggregate host detail endpoints via `gather_subset` (`info`, `stats`, `system`, `network`, `integrations`, or `all`) |
-| `patchmon.ansible.patchmon_host_packages` | List packages; set `updates_only: true` for pending updates only |
+| Module | Purpose | Access |
+|--------|---------|--------|
+| `patchmon.ansible.host_info` | Aggregate host detail endpoints via `gather_subset` | Integration `host:get` |
+| `patchmon.ansible.host_packages` | List packages; `updates_only: true` for pending updates | Integration `host:get` |
+| `patchmon.ansible.host` | Enroll host (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
+| `patchmon.ansible.host_token` | Fetch install script or manage enrollment tokens | Auto-Enrollment / admin JWT |
 
 ```yaml
 - name: Gather PatchMon host details
-  patchmon.ansible.patchmon_host_info:
+  patchmon.ansible.host_info:
     api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -204,7 +214,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
   register: pm_info
 
 - name: List packages with updates
-  patchmon.ansible.patchmon_host_packages:
+  patchmon.ansible.host_packages:
     api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
@@ -223,26 +233,45 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 
 Runnable copies: [`examples/playbooks/`](examples/playbooks/).
 
+### Roles and playbooks
+
+| Role | Thin playbook | Purpose |
+|------|---------------|---------|
+| `patchmon.ansible.agent` | [`playbooks/agent.yml`](playbooks/agent.yml) | Install/start/stop/report/remove agent |
+| `patchmon.ansible.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll or delete host entries |
+
+See each role’s README for variables and required credentials.
+
 ### Lookup
 
 ```yaml
 - name: Fetch system details
   ansible.builtin.set_fact:
-    patchmon_system: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='system') }}"
+    patchmon_system: "{{ lookup('patchmon.ansible.host', patchmon_id, resource='system') }}"
 ```
 
 `resource` may be `info`, `stats`, `system`, `network`, `integrations`, `packages`, or `notes`. For packages with updates only, pass `updates_only=true`. See [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml).
 
-## Authentication
+## Authentication and permissions
 
-HTTP Basic Auth with a PatchMon Integration API credential (`host:get` scope minimum). Create credentials under **Settings → Integrations → API** in PatchMon.
+**Read-only** (inventory, info, packages, lookup): Integration API HTTP Basic Auth with at least `host:get`. Create under **Settings → Integrations → API**.
 
-Prefer environment variables or Ansible Vault over plaintext secrets in inventory files:
+**Provisioning** (create hosts, install agent): Auto-Enrollment key/secret under **Settings → Integrations → Auto-Enrollment**. There is no Integration `host:create` scope.
+
+**Delete hosts**: Integration scope `host:delete`.
+
+Full matrix and least-privilege guidance: **[docs/permissions.md](docs/permissions.md)**.
+
+Prefer environment variables, Ansible Vault, or AAP credentials over plaintext secrets:
 
 ```bash
 export PATCHMON_API_URL=https://patchmon.example.com/api/v1/api/hosts
 export PATCHMON_API_KEY=...
 export PATCHMON_API_SECRET=...
+# Provisioning (separate from read-only tokens when possible):
+export PATCHMON_SERVER_URL=https://patchmon.example.com
+export PATCHMON_ENROLLMENT_KEY=...
+export PATCHMON_ENROLLMENT_SECRET=...
 ```
 
 ## Compliance note
@@ -254,7 +283,7 @@ Host compliance status is **not** currently exposed on the scoped Integration AP
 ```bash
 pip install -r requirements.txt pytest ansible-lint
 pytest
-ansible-lint examples/playbooks
+ansible-lint examples/playbooks playbooks
 ```
 
 Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-lint).
@@ -265,13 +294,13 @@ Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-
 2. Tag the release commit (tag must match `galaxy.yml`, with a `v` prefix):
 
 ```bash
-git tag -a v1.1.0 -m "patchmon.ansible 1.1.0"
-git push origin v1.1.0
+git tag -a v2.0.0 -m "patchmon.ansible 2.0.0"
+git push origin v2.0.0
 ```
 
 3. The [Release collection](.github/workflows/release.yml) workflow runs tests, builds the collection tarball, and creates a GitHub Release with the `.tar.gz` attached for offline installs.
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v1.1.0`.
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.0`.
 
 ## License
 
@@ -284,7 +313,10 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ## Links
 
+- Permissions: [docs/permissions.md](docs/permissions.md)
+- Migrate from 1.x: [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md)
 - Examples guide: [examples/README.md](examples/README.md)
 - Repository: https://github.com/PatchMon/PatchMon-ansible
 - PatchMon Integration API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation
+- Auto-Enrollment API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/auto-enrolment-api-docs
 - Changelog: [CHANGELOG.md](CHANGELOG.md)

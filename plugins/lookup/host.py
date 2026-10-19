@@ -7,11 +7,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-name: patchmon_host
+name: host
 short_description: Look up PatchMon host details via the Integration API
-version_added: "1.1.0"
+version_added: "2.0.0"
 description:
   - Queries a PatchMon per-host Integration API endpoint and returns the JSON payload.
+  - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
   - patchmon.ansible.auth
 options:
@@ -37,11 +38,11 @@ requirements:
 EXAMPLES = r"""
 - name: Get PatchMon system details for a host
   ansible.builtin.debug:
-    msg: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='system') }}"
+    msg: "{{ lookup('patchmon.ansible.host', patchmon_id, resource='system') }}"
 
 - name: List packages needing updates
   ansible.builtin.set_fact:
-    pm_packages: "{{ lookup('patchmon.ansible.patchmon_host', patchmon_id, resource='packages', updates_only=true) }}"
+    pm_packages: "{{ lookup('patchmon.ansible.host', patchmon_id, resource='packages', updates_only=true) }}"
 """
 
 RETURN = r"""
@@ -68,7 +69,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if not HAS_REQUESTS:
             raise AnsibleError(
-                "patchmon.ansible.patchmon_host requires the Python 'requests' library"
+                "patchmon.ansible.host requires the Python 'requests' library"
             )
 
         self.set_options(var_options=variables, direct=kwargs)
@@ -102,7 +103,7 @@ class LookupModule(LookupBase):
         results = []
         for host_id in terms:
             display.vvvv(
-                "patchmon_host lookup: host_id={0} resource={1}".format(
+                "patchmon.ansible.host lookup: host_id={0} resource={1}".format(
                     host_id, resource
                 )
             )

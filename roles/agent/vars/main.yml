@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Internal static values for patchmon.ansible.agent
+__agent_valid_states:
+  - present
+  - started
+  - stopped
+  - absent
+  - report

@@ -17,6 +17,9 @@ options:
       - PatchMon hosts endpoint or instance root.
       - Canonical form is C(https://patchmon.example.com/api/v1/api/hosts).
       - Instance root is accepted; the collection appends C(/api/v1/api/hosts) when needed.
+      - These options authenticate to the Integration API (HTTP Basic), not Auto-Enrollment.
+      - Typical minimum scope is C(host:get). Destructive modules require C(host:delete).
+      - See the collection C(docs/permissions.md) for the full scope matrix.
     required: true
     type: str
     env:
@@ -25,7 +28,9 @@ options:
       - section: patchmon
         key: api_url
   api_key:
-    description: PatchMon API Token Key (Basic Auth username).
+    description:
+      - PatchMon Integration API Token Key (Basic Auth username).
+      - Prefer environment variables, Vault, or Controller credentials over plaintext YAML.
     required: true
     type: str
     no_log: true
@@ -35,7 +40,9 @@ options:
       - section: patchmon
         key: api_key
   api_secret:
-    description: PatchMon API Token Secret (Basic Auth password).
+    description:
+      - PatchMon Integration API Token Secret (Basic Auth password).
+      - Prefer environment variables, Vault, or Controller credentials over plaintext YAML.
     required: true
     type: str
     no_log: true
@@ -45,7 +52,9 @@ options:
       - section: patchmon
         key: api_secret
   verify_ssl:
-    description: Verify the PatchMon TLS certificate.
+    description:
+      - Verify the PatchMon TLS certificate.
+      - Set to false only in lab environments.
     type: bool
     default: true
     env:

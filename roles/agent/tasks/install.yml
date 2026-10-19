@@ -1,0 +1,40 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Download and run the PatchMon auto-enrollment script (enrolls + installs agent).
+
+- name: Fetch enrollment script from PatchMon
+  patchmon.ansible.host_token:
+    state: script
+    server_url: "{{ agent_server_url }}"
+    enrollment_key: "{{ agent_enrollment_key }}"
+    enrollment_secret: "{{ agent_enrollment_secret }}"
+    script_type: "{{ agent_script_type }}"
+    force: "{{ agent_force_install }}"
+    verify_ssl: "{{ agent_verify_ssl | bool }}"
+    timeout: "{{ agent_timeout | int }}"
+  delegate_to: localhost
+  become: false
+  register: __agent_script
+  no_log: true
+
+- name: Stage enrollment script on the managed host
+  ansible.builtin.copy:
+    content: "{{ __agent_script.script }}"
+    dest: "{{ agent_script_path }}"
+    mode: "0700"
+    owner: root
+    group: root
+  become: true
+  no_log: true
+
+- name: Run PatchMon enrollment / agent install script
+  ansible.builtin.command:
+    cmd: "{{ agent_script_path }}"
+  environment:
+    FORCE_NEW_HOST: "{{ 'true' if agent_force_new_host else 'false' }}"
+  become: true
+  register: __agent_install
+  changed_when: >-
+    'already' not in (__agent_install.stdout | default('') | lower)
+    and 'skip' not in (__agent_install.stdout | default('') | lower)
+  # Official script is the supported installer; no dedicated package module yet.

@@ -17,10 +17,10 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
 
 | File | What it demonstrates |
 |------|----------------------|
-| [`playbooks/host_info.yml`](playbooks/host_info.yml) | `patchmon_host_info` against inventory hosts (`patchmon_id`) |
-| [`playbooks/pending_updates.yml`](playbooks/pending_updates.yml) | `patchmon_host_packages` with `updates_only`, security vs other |
+| [`playbooks/host_info.yml`](playbooks/host_info.yml) | `host_info` against inventory hosts (`patchmon_id`) |
+| [`playbooks/pending_updates.yml`](playbooks/pending_updates.yml) | `host_packages` with `updates_only`, security vs other |
 | [`playbooks/host_info_by_id.yml`](playbooks/host_info_by_id.yml) | Both modules on `localhost` with `-e patchmon_id=...` (no dynamic inventory) |
-| [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `patchmon_host` lookup for `/system` |
+| [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `host` lookup for `/system` |
 
 ---
 
@@ -33,14 +33,15 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
    pip install 'requests>=2.25.1'
    ```
 
-3. **PatchMon API credential** with at least `host:get`  
-   Create under **Settings → Integrations → API** in PatchMon. You need the Token Key and Token Secret.
+3. **PatchMon API credential** with at least `host:get` for these read-only examples.  
+   Create under **Settings → Integrations → API** in PatchMon. You need the Token Key and Token Secret.  
+   Provisioning (host create / agent install) needs a separate **Auto-Enrollment** token — see [docs/permissions.md](../docs/permissions.md).
 
 4. **Enable the inventory plugin** (once per Ansible project), for example in `ansible.cfg`:
 
    ```ini
    [inventory]
-   enable_plugins = patchmon.ansible.dynamic_inventory
+   enable_plugins = patchmon.ansible.inventory
    ```
 
 ---
@@ -208,12 +209,12 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 
 | Module / lookup | Role |
 |-----------------|------|
-| `patchmon.ansible.patchmon_host_info` | Aggregate `/info`, `/stats`, `/system`, `/network`, `/integrations` via `gather_subset` |
-| `patchmon.ansible.patchmon_host_packages` | List packages; `updates_only: true` for pending updates |
-| `lookup('patchmon.ansible.patchmon_host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes` |
+| `patchmon.ansible.host_info` | Aggregate `/info`, `/stats`, `/system`, `/network`, `/integrations` via `gather_subset` |
+| `patchmon.ansible.host_packages` | List packages; `updates_only: true` for pending updates |
+| `lookup('patchmon.ansible.host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes` |
 
-`patchmon_host_info` return shape: `host.info`, `host.stats`, `host.system`, …  
-`patchmon_host_packages` return shape: `packages`, `total`, `security_updates_count`, `host`.
+`host_info` return shape: `host.info`, `host.stats`, `host.system`, …  
+`host_packages` return shape: `packages`, `total`, `security_updates_count`, `host`.
 
 ---
 
@@ -221,7 +222,7 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 
 | Symptom | What to check |
 |---------|----------------|
-| Plugin not found / ignored | Collection installed? `enable_plugins` includes `patchmon.ansible.dynamic_inventory`? Filename ends in `.yml` / `.yaml`? |
+| Plugin not found / ignored | Collection installed? `enable_plugins` includes `patchmon.ansible.inventory`? Filename ends in `.yml` / `.yaml`? |
 | Auth / HTTP 401 or 403 | `PATCHMON_API_KEY` / `PATCHMON_API_SECRET`; credential has `host:get` |
 | Empty inventory | Hosts enrolled and active in PatchMon? `hostgroup` filter too narrow? |
 | Redirect / empty body errors | Prefer URL **without** a trailing slash that 302s; use `.../api/v1/api/hosts` |

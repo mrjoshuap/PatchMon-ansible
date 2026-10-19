@@ -1,0 +1,34 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.ansible.host — all user-facing vars use host_ prefix.
+
+# present = enroll host entry; absent = delete via Integration API
+host_state: present
+
+# PatchMon instance / Integration API
+host_server_url: "{{ lookup('env', 'PATCHMON_SERVER_URL') | default(lookup('env', 'PATCHMON_API_URL'), true) }}"
+host_api_url: "{{ lookup('env', 'PATCHMON_API_URL') | default(host_server_url, true) }}"
+
+# Auto-enrollment (state=present)
+host_enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') | default('', true) }}"
+host_enrollment_secret: "{{ lookup('env', 'PATCHMON_ENROLLMENT_SECRET') | default('', true) }}"
+
+# Integration API (existence check + state=absent delete)
+host_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') | default('', true) }}"
+host_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') | default('', true) }}"
+
+host_friendly_name: "{{ inventory_hostname }}"
+host_machine_id: ""
+host_id: ""
+host_metadata: {}
+host_force_enroll: false
+
+host_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+host_timeout: 30
+
+# Optional: fetch enrollment script after create (does not install agent)
+host_fetch_script: false
+host_script_type: direct-host
+
+# Optional: after present, import agent role on the target
+host_enroll_agent: false

@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Thin AAP-ready entry point for patchmon.ansible.host
+# Prefer hosts: localhost when only creating API host entries.
+- name: Manage PatchMon host entry
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Run PatchMon host role
+      ansible.builtin.import_role:
+        name: patchmon.ansible.host

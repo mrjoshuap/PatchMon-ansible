@@ -1,0 +1,20 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate host role inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Create PatchMon host entry
+  ansible.builtin.include_tasks: create.yml
+  when: host_state == 'present'
+
+- name: Fetch enrollment script
+  ansible.builtin.include_tasks: token.yml
+  when: host_state == 'present' and host_fetch_script | bool
+
+- name: Enroll agent on the managed host
+  ansible.builtin.include_tasks: enroll.yml
+  when: host_state == 'present' and host_enroll_agent | bool
+
+- name: Delete PatchMon host entry
+  ansible.builtin.include_tasks: delete.yml
+  when: host_state == 'absent'

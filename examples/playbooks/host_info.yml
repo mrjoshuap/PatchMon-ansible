@@ -35,7 +35,7 @@
           patchmon_id yourself.
 
     - name: Gather PatchMon host info, stats, and system
-      patchmon.ansible.patchmon_host_info:
+      patchmon.ansible.host_info:
         api_url: "{{ patchmon_api_url }}"
         api_key: "{{ patchmon_api_key }}"
         api_secret: "{{ patchmon_api_secret }}"

@@ -1,0 +1,14 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Optional hand-off to the agent role on the managed host.
+- name: Install PatchMon agent after host enrollment
+  ansible.builtin.include_role:
+    name: patchmon.ansible.agent
+  vars:
+    agent_state: present
+    agent_server_url: "{{ host_server_url }}"
+    agent_enrollment_key: "{{ host_enrollment_key }}"
+    agent_enrollment_secret: "{{ host_enrollment_secret }}"
+    agent_script_type: "{{ host_script_type }}"
+    agent_verify_ssl: "{{ host_verify_ssl }}"
+    agent_timeout: "{{ host_timeout }}"

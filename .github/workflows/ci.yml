@@ -37,5 +37,5 @@ jobs:
           ln -sfn "$GITHUB_WORKSPACE" \
             ~/.ansible/collections/ansible_collections/patchmon/ansible
 
-      - name: Lint example playbooks
-        run: ansible-lint examples/playbooks
+      - name: Lint example playbooks and collection playbooks
+        run: ansible-lint examples/playbooks playbooks

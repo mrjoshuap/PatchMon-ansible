@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Unit tests for the patchmon_host lookup plugin."""
+"""Unit tests for the host lookup plugin."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -10,7 +10,7 @@ import pytest
 from ansible.errors import AnsibleOptionsError
 
 from ansible_collections.patchmon.ansible.plugins.lookup import (
-    patchmon_host as lookup_mod,
+    host as lookup_mod,
 )
 
 

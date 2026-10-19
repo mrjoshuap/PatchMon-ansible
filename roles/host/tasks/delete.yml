@@ -1,0 +1,14 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Delete PatchMon host entry
+  patchmon.ansible.host:
+    state: absent
+    api_url: "{{ host_api_url }}"
+    api_key: "{{ host_api_key }}"
+    api_secret: "{{ host_api_secret }}"
+    host_id: "{{ host_id }}"
+    verify_ssl: "{{ host_verify_ssl | bool }}"
+    timeout: "{{ host_timeout | int }}"
+  delegate_to: localhost
+  become: false
+  register: host_delete_result

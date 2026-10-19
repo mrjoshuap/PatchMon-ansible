@@ -7,11 +7,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-module: patchmon_host_packages
+module: host_packages
 short_description: List packages for a PatchMon host
-version_added: "1.1.0"
+version_added: "2.0.0"
 description:
   - Retrieves installed packages (or only packages with available updates) for a PatchMon host.
+  - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
   - patchmon.ansible.auth
 options:
@@ -31,7 +32,7 @@ requirements:
 
 EXAMPLES = r"""
 - name: List packages needing updates
-  patchmon.ansible.patchmon_host_packages:
+  patchmon.ansible.host_packages:
     api_url: "{{ patchmon_api_url }}"
     api_key: "{{ patchmon_api_key }}"
     api_secret: "{{ patchmon_api_secret }}"

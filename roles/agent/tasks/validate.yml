@@ -1,0 +1,33 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate agent_state
+  ansible.builtin.assert:
+    that:
+      - agent_state is defined
+      - agent_state in __agent_valid_states
+    fail_msg: >-
+      agent_state must be one of {{ __agent_valid_states | join(', ') }}.
+      Got '{{ agent_state | default('undefined') }}'.
+
+- name: Validate enrollment credentials for install states
+  ansible.builtin.assert:
+    that:
+      - agent_server_url is defined
+      - agent_server_url | length > 0
+      - agent_enrollment_key is defined
+      - agent_enrollment_key | length > 0
+      - agent_enrollment_secret is defined
+      - agent_enrollment_secret | length > 0
+    fail_msg: >-
+      agent_server_url, agent_enrollment_key, and agent_enrollment_secret are
+      required when agent_state is present (auto-enrollment script install).
+      Create an Auto-Enrollment token under Settings → Integrations in PatchMon.
+      See docs/permissions.md.
+  when: agent_state == 'present'
+
+- name: Warn when TLS verification is disabled
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: agent_verify_ssl is false. Use only in lab environments.
+    verbosity: 0
+  when: not (agent_verify_ssl | bool)

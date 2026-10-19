@@ -1,0 +1,38 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Ensure PatchMon host entry is present
+  patchmon.ansible.host:
+    state: present
+    server_url: "{{ host_server_url }}"
+    enrollment_key: "{{ host_enrollment_key }}"
+    enrollment_secret: "{{ host_enrollment_secret }}"
+    friendly_name: "{{ host_friendly_name }}"
+    machine_id: "{{ host_machine_id if host_machine_id | length > 0 else omit }}"
+    host_id: "{{ host_id if host_id | length > 0 else omit }}"
+    metadata: "{{ host_metadata if host_metadata | length > 0 else omit }}"
+    force_enroll: "{{ host_force_enroll }}"
+    api_url: "{{ host_api_url if host_api_url | length > 0 else omit }}"
+    api_key: "{{ host_api_key if host_api_key | length > 0 else omit }}"
+    api_secret: "{{ host_api_secret if host_api_secret | length > 0 else omit }}"
+    verify_ssl: "{{ host_verify_ssl | bool }}"
+    timeout: "{{ host_timeout | int }}"
+  delegate_to: localhost
+  become: false
+  register: host_result
+  no_log: true
+
+- name: Expose enrolled host id
+  ansible.builtin.set_fact:
+    patchmon_id: "{{ host_result.host.id }}"
+  when:
+    - host_result.host is defined
+    - host_result.host.id is defined
+
+- name: Expose one-time host API credentials
+  ansible.builtin.set_fact:
+    patchmon_host_api_id: "{{ host_result.host.api_id }}"
+    patchmon_host_api_key: "{{ host_result.host.api_key }}"
+  when:
+    - host_result.host is defined
+    - host_result.host.api_id is defined
+  no_log: true

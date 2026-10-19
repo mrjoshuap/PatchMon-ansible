@@ -1,0 +1,31 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.ansible.agent — all user-facing vars use agent_ prefix.
+
+# Desired agent lifecycle: present (install+start), started, stopped, absent, report
+agent_state: present
+
+# PatchMon instance root (https://patchmon.example.com)
+agent_server_url: "{{ lookup('env', 'PATCHMON_SERVER_URL') | default(lookup('env', 'PATCHMON_API_URL'), true) }}"
+
+# Auto-enrollment credentials (for script-based install)
+agent_enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') | default('', true) }}"
+agent_enrollment_secret: "{{ lookup('env', 'PATCHMON_ENROLLMENT_SECRET') | default('', true) }}"
+
+agent_script_type: direct-host
+agent_force_install: false
+agent_force_new_host: false
+
+agent_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+agent_timeout: 30
+
+# Where to stage the enrollment script on the managed host
+agent_script_path: /tmp/patchmon-enroll.sh
+
+# Service / binary names (override per platform in vars/ if needed)
+agent_service_name: patchmon-agent
+agent_binary_path: /usr/local/bin/patchmon-agent
+agent_config_dir: /etc/patchmon
+
+# When true, run agent report after ensure-started
+agent_report: false

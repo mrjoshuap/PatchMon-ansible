@@ -1,0 +1,20 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate agent role inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Install PatchMon agent via enrollment script
+  ansible.builtin.include_tasks: install.yml
+  when: agent_state == 'present'
+
+- name: Manage PatchMon agent service
+  ansible.builtin.include_tasks: service.yml
+  when: agent_state in ['present', 'started', 'stopped']
+
+- name: Report from PatchMon agent
+  ansible.builtin.include_tasks: report.yml
+  when: agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
+
+- name: Remove PatchMon agent
+  ansible.builtin.include_tasks: absent.yml
+  when: agent_state == 'absent'

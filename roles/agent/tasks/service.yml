@@ -1,0 +1,16 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Ensure PatchMon agent service is started and enabled
+  ansible.builtin.service:
+    name: "{{ agent_service_name }}"
+    state: started
+    enabled: true
+  become: true
+  when: agent_state in ['present', 'started']
+
+- name: Ensure PatchMon agent service is stopped
+  ansible.builtin.service:
+    name: "{{ agent_service_name }}"
+    state: stopped
+  become: true
+  when: agent_state == 'stopped'

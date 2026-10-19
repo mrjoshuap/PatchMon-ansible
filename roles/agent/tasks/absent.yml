@@ -1,0 +1,21 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Stop and disable PatchMon agent service
+  ansible.builtin.service:
+    name: "{{ agent_service_name }}"
+    state: stopped
+    enabled: false
+  become: true
+  failed_when: false
+
+- name: Remove PatchMon agent binary
+  ansible.builtin.file:
+    path: "{{ agent_binary_path }}"
+    state: absent
+  become: true
+
+- name: Remove PatchMon agent configuration directory
+  ansible.builtin.file:
+    path: "{{ agent_config_dir }}"
+    state: absent
+  become: true

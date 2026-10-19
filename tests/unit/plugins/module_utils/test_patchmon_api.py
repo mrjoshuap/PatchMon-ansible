@@ -129,3 +129,79 @@ def test_get_hosts_http_error(monkeypatch):
         client.get_hosts()
     assert exc.value.status_code == 403
     assert "Access denied" in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        ("https://patchmon.example.com", "https://patchmon.example.com"),
+        ("https://patchmon.example.com/", "https://patchmon.example.com"),
+        (
+            "https://patchmon.example.com/api/v1/api/hosts",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/api",
+            "https://patchmon.example.com",
+        ),
+    ],
+)
+def test_normalize_instance_url(given, expected):
+    assert api.normalize_instance_url(given) == expected
+
+
+def test_delete_host(monkeypatch):
+    class FakeResponse(object):
+        status_code = 200
+        content = b'{"message":"Host deleted successfully"}'
+        is_redirect = False
+        headers = {"Content-Type": "application/json"}
+        text = content.decode()
+
+        def json(self):
+            return {"message": "Host deleted successfully"}
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            assert method == "DELETE"
+            assert url.endswith("/abc-123")
+            return FakeResponse()
+
+    client = api.PatchMonClient(
+        "https://patchmon.example.com", "key", "secret"
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+    result = client.delete_host("abc-123")
+    assert result["message"] == "Host deleted successfully"
+
+
+def test_enrollment_enroll(monkeypatch):
+    class FakeResponse(object):
+        status_code = 201
+        content = b'{"message":"ok","host":{"id":"1"}}'
+        is_redirect = False
+        headers = {"Content-Type": "application/json"}
+        text = content.decode()
+
+        def json(self):
+            return {"message": "ok", "host": {"id": "1"}}
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            assert method == "POST"
+            assert url.endswith("/api/v1/auto-enrollment/enroll")
+            assert kwargs["headers"]["X-Auto-Enrollment-Key"] == "ek"
+            return FakeResponse()
+
+    client = api.PatchMonEnrollmentClient(
+        "https://patchmon.example.com", "ek", "es"
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+    result = client.enroll(friendly_name="web1")
+    assert result["host"]["id"] == "1"

@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-name: dynamic_inventory
+name: inventory
 short_description: Dynamic inventory from the PatchMon Integration API
 version_added: "1.0.0"
 description:
@@ -24,7 +24,7 @@ options:
   plugin:
     description: FQCN of this inventory plugin.
     required: true
-    choices: ["patchmon.ansible.dynamic_inventory"]
+    choices: ["patchmon.ansible.inventory"]
   include_stats:
     description:
       - When true, call the hosts endpoint with C(?include=stats) and expose PatchMon
@@ -32,20 +32,20 @@ options:
       - Enables built-in auto groups unless O(auto_groups) is false.
     type: bool
     default: false
-    version_added: "1.1.0"
+    version_added: "2.0.0"
   hostgroup:
     description:
       - Optional PatchMon host group filter (name or UUID).
       - Multiple values may be provided as a list (OR logic on the API).
     type: raw
-    version_added: "1.1.0"
+    version_added: "2.0.0"
   auto_groups:
     description:
       - When true and O(include_stats) is enabled, create derived groups such as
         C(patchmon_needs_reboot) and C(patchmon_security_required).
     type: bool
     default: true
-    version_added: "1.1.0"
+    version_added: "2.0.0"
   inventory_hostname_prefer:
     description:
       - Which API field to use as the Ansible inventory hostname.
@@ -53,7 +53,7 @@ options:
     type: str
     default: hostname
     choices: [hostname, friendly_name]
-    version_added: "1.1.0"
+    version_added: "2.0.0"
 requirements:
   - requests >= 2.25.1
 author:
@@ -63,13 +63,13 @@ author:
 
 EXAMPLES = r"""
 # Minimal inventory (backward compatible)
-plugin: patchmon.ansible.dynamic_inventory
+plugin: patchmon.ansible.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
 
 # Rich metadata with auto groups and constructed selection
-plugin: patchmon.ansible.dynamic_inventory
+plugin: patchmon.ansible.inventory
 api_url: https://patchmon.example.com/api/v1/api/hosts
 include_stats: true
 auto_groups: true
@@ -127,7 +127,7 @@ _REPORTING_STATE_GROUPS = {
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     """PatchMon Integration API inventory plugin."""
 
-    NAME = "patchmon.ansible.dynamic_inventory"
+    NAME = "patchmon.ansible.inventory"
 
     def verify_file(self, path):
         valid = False

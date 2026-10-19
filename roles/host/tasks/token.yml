@@ -1,0 +1,15 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Fetch enrollment script for this token
+  patchmon.ansible.host_token:
+    state: script
+    server_url: "{{ host_server_url }}"
+    enrollment_key: "{{ host_enrollment_key }}"
+    enrollment_secret: "{{ host_enrollment_secret }}"
+    script_type: "{{ host_script_type }}"
+    verify_ssl: "{{ host_verify_ssl | bool }}"
+    timeout: "{{ host_timeout | int }}"
+  delegate_to: localhost
+  become: false
+  register: host_token_script
+  no_log: true

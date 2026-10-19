@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 namespace: patchmon
 name: ansible
-version: 1.1.0
+version: 2.0.0
 readme: README.md
 authors:
   - Steve Libonati <stevelibonati@yahoo.com>
   - mrjoshuap
 description: >
-  Dynamic inventory, modules, and lookups for the PatchMon Integration API —
-  including optional stats hostvars, constructed groups, and host detail lookups.
+  Dynamic inventory, modules, lookups, and roles for the PatchMon Integration
+  and Auto-Enrollment APIs — including optional stats hostvars, constructed
+  groups, host enrollment, and agent lifecycle management.
 license:
   - AGPL-3.0-or-later
 tags:
@@ -18,8 +19,17 @@ tags:
   - dynamic
   - patching
   - linux
+  - agent
 repository: https://github.com/PatchMon/PatchMon-ansible
 issues: https://github.com/PatchMon/PatchMon-ansible/issues
 documentation: https://patchmon.net/docs/patchmon-api-integrations-guide
 homepage: https://patchmon.net
 dependencies: {}
+build_ignore:
+  - .git
+  - .github
+  - .ansible
+  - .collections
+  - .pytest_cache
+  - .pytest_collections
+  - "*.tar.gz"

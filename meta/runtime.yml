@@ -1,3 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 ---
 requires_ansible: ">=2.15.0"
+
+action_groups:
+  patchmon:
+    - host
+    - host_info
+    - host_packages
+    - host_token

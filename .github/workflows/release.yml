@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (e.g. v1.1.0). Required for manual runs."
+        description: "Existing tag to release (e.g. v2.0.0). Required for manual runs."
         required: true
         type: string
 
@@ -127,6 +127,12 @@ jobs:
               f"""## patchmon.ansible {version}
 
           {body}
+
+          ### Migration from 1.0.0
+
+          See [docs/migrating_to_2.0.md](https://github.com/{repo}/blob/v{version}/docs/migrating_to_2.0.md).
+          This release does not provide FQCN redirects — update inventories to
+          `plugin: patchmon.ansible.inventory`.
 
           ### Offline install
 

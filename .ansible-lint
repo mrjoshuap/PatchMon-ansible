@@ -1,5 +1,5 @@
 ---
-# ansible-lint for example playbooks (plugin collection; no roles).
+# ansible-lint for example and collection playbooks / roles.
 profile: basic
 exclude_paths:
   - .git/
@@ -8,6 +8,7 @@ exclude_paths:
   - .pytest_cache/
   - .collections/
   - .pytest_collections/
+  - .ansible/
 skip_list:
   # Examples intentionally demonstrate debug output.
   - name[casing]
