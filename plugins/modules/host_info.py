@@ -12,7 +12,8 @@ short_description: Gather PatchMon host information
 version_added: "2.0.0"
 description:
   - Retrieves detailed information for a PatchMon host via the Integration API.
-  - Optionally aggregates info, stats, system, network, and integrations endpoints.
+  - Optionally aggregates info, stats, system, network, integrations, notes,
+    package_reports, and agent_queue endpoints.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
   - patchmon.core.auth
@@ -28,7 +29,23 @@ options:
     type: list
     elements: str
     default: [info, stats, system]
-    choices: [info, stats, system, network, integrations, all]
+    choices:
+      - info
+      - stats
+      - system
+      - network
+      - integrations
+      - notes
+      - package_reports
+      - agent_queue
+      - all
+  limit:
+    description:
+      - Maximum number of package reports or agent-queue jobs to return.
+      - Sent as the C(limit) query parameter for C(package_reports) and
+        C(agent_queue) only. The PatchMon default is 10.
+    type: int
+    default: 10
 author:
   - mrjoshuap
 requirements:
@@ -71,6 +88,15 @@ host:
     integrations:
       description: Response from C(/hosts/:id/integrations).
       type: dict
+    notes:
+      description: Response from C(/hosts/:id/notes).
+      type: dict
+    package_reports:
+      description: Response from C(/hosts/:id/package_reports).
+      type: dict
+    agent_queue:
+      description: Response from C(/hosts/:id/agent_queue).
+      type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -83,11 +109,23 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
 )
 
 
+_DETAIL_SUBSETS = [
+    "info",
+    "stats",
+    "system",
+    "network",
+    "integrations",
+    "notes",
+    "package_reports",
+    "agent_queue",
+]
+
+
 def _normalize_subset(gather_subset):
     if not gather_subset:
         return ["info"]
     if "all" in gather_subset:
-        return ["info", "stats", "system", "network", "integrations"]
+        return list(_DETAIL_SUBSETS)
     subsets = []
     for item in gather_subset:
         if item not in subsets:
@@ -110,8 +148,9 @@ def run_module():
                 type="list",
                 elements="str",
                 default=["info", "stats", "system"],
-                choices=["info", "stats", "system", "network", "integrations", "all"],
+                choices=_DETAIL_SUBSETS + ["all"],
             ),
+            limit=dict(type="int", default=10),
         ),
         supports_check_mode=True,
     )
@@ -135,15 +174,24 @@ def run_module():
         )
 
         result = {}
+        limit = module.params["limit"]
         fetchers = {
             "info": client.get_host_info,
             "stats": client.get_host_stats,
             "system": client.get_host_system,
             "network": client.get_host_network,
             "integrations": client.get_host_integrations,
+            "notes": client.get_host_notes,
         }
         for subset in subsets:
-            result[subset] = fetchers[subset](host_id)
+            if subset == "package_reports":
+                result[subset] = client.get_host_package_reports(
+                    host_id, limit=limit
+                )
+            elif subset == "agent_queue":
+                result[subset] = client.get_host_agent_queue(host_id, limit=limit)
+            else:
+                result[subset] = fetchers[subset](host_id)
     except PatchMonAPIError as exc:
         module.fail_json(msg=str(exc))
 

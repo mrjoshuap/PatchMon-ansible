@@ -1,0 +1,18 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate report health inputs
+  ansible.builtin.assert:
+    that:
+      - report_health_host_id is defined
+      - report_health_host_id | length > 0
+      - report_health_api_url is defined
+      - report_health_api_url | length > 0
+      - report_health_api_key is defined
+      - report_health_api_key | length > 0
+      - report_health_api_secret is defined
+      - report_health_api_secret | length > 0
+      - report_health_limit | int > 0
+    fail_msg: >-
+      report_health_host_id, report_health_api_url, report_health_api_key,
+      and report_health_api_secret are required. Integration scope host:get
+      reads package_reports. See docs/permissions.md.

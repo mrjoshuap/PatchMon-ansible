@@ -19,7 +19,7 @@ Scopes are explicit. `get` does **not** imply `delete`.
 
 | Scope | Capabilities in this collection |
 |-------|----------------------------------|
-| `host:get` | Inventory plugin, `host_info`, `host_packages`, `lookup('patchmon.core.host')`, existence checks before enroll |
+| `host:get` | Inventory plugin, `host_info` (including `notes`, `package_reports`, `agent_queue`), `host_packages`, `lookup('patchmon.core.host')`, `report_health` role, existence checks before enroll |
 | `host:delete` | `patchmon.core.host` with `state=absent`, `roles/host` when `host_state=absent` |
 
 There is **no** Integration `host:create` scope. Host creation uses the **Auto-Enrollment** API.
@@ -58,6 +58,7 @@ Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on 
 |---------------|----------------|
 | `patchmon.core.inventory` | Integration `host:get` |
 | `patchmon.core.host_info` / `host_packages` / lookup `host` | Integration `host:get` |
+| `patchmon.core.report_health` | Integration `host:get` (`package_reports`) |
 | `patchmon.core.host` present | Auto-Enrollment token |
 | `patchmon.core.host` absent | Integration `host:delete` |
 | `patchmon.core.host_token` script | Auto-Enrollment token |

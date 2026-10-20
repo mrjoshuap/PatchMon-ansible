@@ -359,6 +359,24 @@ class PatchMonClient(_BaseClient):
     def get_host_notes(self, host_id):
         return self.request("GET", host_resource_url(self.api_url, host_id, "notes"))
 
+    def get_host_package_reports(self, host_id, limit=None):
+        """GET /hosts/:id/package_reports. Requires Integration scope host:get."""
+        query = {"limit": int(limit)} if limit is not None else None
+        return self.request(
+            "GET",
+            host_resource_url(
+                self.api_url, host_id, "package_reports", query=query
+            ),
+        )
+
+    def get_host_agent_queue(self, host_id, limit=None):
+        """GET /hosts/:id/agent_queue. Requires Integration scope host:get."""
+        query = {"limit": int(limit)} if limit is not None else None
+        return self.request(
+            "GET",
+            host_resource_url(self.api_url, host_id, "agent_queue", query=query),
+        )
+
     def delete_host(self, host_id):
         """Delete a host. Requires Integration scope ``host:delete``."""
         url = host_resource_url(self.api_url, host_id)

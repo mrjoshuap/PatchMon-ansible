@@ -1,0 +1,16 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+galaxy_info:
+  role_name: report_health
+  author: PatchMon contributors
+  description: Fail unless the newest PatchMon package report succeeded
+  license: AGPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: GenericLinux
+      versions:
+        - all
+  galaxy_tags:
+    - patchmon
+    - reporting
+dependencies: []

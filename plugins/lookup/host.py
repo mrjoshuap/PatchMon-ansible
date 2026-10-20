@@ -24,11 +24,26 @@ options:
     description: Per-host API resource to fetch.
     type: str
     default: info
-    choices: [info, stats, system, network, integrations, packages, notes]
+    choices:
+      - info
+      - stats
+      - system
+      - network
+      - integrations
+      - packages
+      - notes
+      - package_reports
+      - agent_queue
   updates_only:
     description: When O(resource=packages), only return packages with updates.
     type: bool
     default: false
+  limit:
+    description:
+      - When O(resource) is C(package_reports) or C(agent_queue), maximum
+        number of records to return. Sent as the C(limit) query parameter.
+    type: int
+    default: 10
 author:
   - mrjoshuap
 requirements:
@@ -79,6 +94,7 @@ class LookupModule(LookupBase):
 
         resource = self.get_option("resource")
         updates_only = self.get_option("updates_only")
+        limit = self.get_option("limit")
 
         try:
             client = PatchMonClient(
@@ -112,6 +128,10 @@ class LookupModule(LookupBase):
                     payload = client.get_host_packages(
                         host_id, updates_only=updates_only
                     )
+                elif resource == "package_reports":
+                    payload = client.get_host_package_reports(host_id, limit=limit)
+                elif resource == "agent_queue":
+                    payload = client.get_host_agent_queue(host_id, limit=limit)
                 else:
                     payload = fetchers[resource](host_id)
             except PatchMonAPIError as exc:

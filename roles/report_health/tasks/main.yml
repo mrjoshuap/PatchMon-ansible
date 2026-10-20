@@ -1,0 +1,46 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate report health inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Gather PatchMon package reports
+  patchmon.core.host_info:
+    api_url: "{{ report_health_api_url }}"
+    api_key: "{{ report_health_api_key }}"
+    api_secret: "{{ report_health_api_secret }}"
+    verify_ssl: "{{ report_health_verify_ssl | bool }}"
+    timeout: "{{ report_health_timeout | int }}"
+    host_id: "{{ report_health_host_id }}"
+    gather_subset:
+      - package_reports
+    limit: "{{ report_health_limit | int }}"
+  delegate_to: localhost
+  become: false
+  register: report_health_result
+
+- name: Record package reports
+  ansible.builtin.set_fact:
+    report_health_reports: "{{ report_health_result.host.package_reports.reports | default([]) }}"
+
+- name: Fail when PatchMon has no package reports
+  ansible.builtin.assert:
+    that:
+      - report_health_reports | length > 0
+    fail_msg: >-
+      PatchMon returned no package reports for {{ inventory_hostname }}
+      ({{ report_health_host_id }}). Run an agent report before patching.
+
+- name: Select the newest package report
+  ansible.builtin.set_fact:
+    report_health_latest: "{{ report_health_reports | sort(attribute='date') | last }}"
+
+- name: Fail when the newest package report did not succeed
+  ansible.builtin.assert:
+    that:
+      - (report_health_latest.status | default('')) == 'success'
+    fail_msg: >-
+      Newest PatchMon package report for {{ inventory_hostname }}
+      ({{ report_health_host_id }}) is not success.
+      status={{ report_health_latest.status | default('missing') }},
+      date={{ report_health_latest.date | default('none') }},
+      error={{ report_health_latest.error_message | default('') }}.

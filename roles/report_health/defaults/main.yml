@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.report_health — user-facing vars use report_health_.
+
+report_health_host_id: "{{ patchmon_id | default('') }}"
+report_health_api_url: "{{ lookup('env', 'PATCHMON_API_URL') | default('', true) }}"
+report_health_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') | default('', true) }}"
+report_health_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') | default('', true) }}"
+report_health_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+report_health_timeout: 30
+# Passed as the package_reports limit query parameter (PatchMon default is 10).
+report_health_limit: 10

@@ -239,3 +239,42 @@ def test_enrollment_get_script_uses_params(monkeypatch):
     monkeypatch.setattr(client, "_session", FakeSession())
     result = client.get_script(script_type="direct-host", force=True)
     assert result.startswith("#!/bin/bash")
+
+
+def test_package_reports_and_agent_queue_limit(monkeypatch):
+    seen = []
+
+    class FakeResponse(object):
+        status_code = 200
+        content = b'{"ok": true}'
+        is_redirect = False
+        headers = {"Content-Type": "application/json"}
+        text = content.decode()
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            seen.append((method, url))
+            return FakeResponse()
+
+    client = api.PatchMonClient(
+        "https://patchmon.example.com/api/v1/api/hosts", "key", "secret"
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+
+    client.get_host_package_reports("abc-123", limit=5)
+    client.get_host_agent_queue("abc-123", limit=5)
+
+    assert seen[0] == (
+        "GET",
+        "https://patchmon.example.com/api/v1/api/hosts/abc-123/package_reports?limit=5",
+    )
+    assert seen[1] == (
+        "GET",
+        "https://patchmon.example.com/api/v1/api/hosts/abc-123/agent_queue?limit=5",
+    )

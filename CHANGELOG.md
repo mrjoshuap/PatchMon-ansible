@@ -4,6 +4,19 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Integration `host:get` reads for `package_reports` and `agent_queue` on the
+  API client, `host_info`, and the `host` lookup. `host_info` also gathers
+  `notes`.
+- `report_health` role fails when the newest package report is missing or not
+  `success`.
+
+### Fixed
+
+- `host` role `host_fetch_script` passes `dest` to `host_token`, which requires
+  it for `state=script`.
+
 ## [2.0.0-charlie] - 2026-10-19
 
 ### Changed

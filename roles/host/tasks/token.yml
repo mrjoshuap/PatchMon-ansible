@@ -7,6 +7,7 @@
     enrollment_key: "{{ host_enrollment_key }}"
     enrollment_secret: "{{ host_enrollment_secret }}"
     script_type: "{{ host_script_type }}"
+    dest: "{{ host_script_controller_path }}"
     verify_ssl: "{{ host_verify_ssl | bool }}"
     timeout: "{{ host_timeout | int }}"
   delegate_to: localhost

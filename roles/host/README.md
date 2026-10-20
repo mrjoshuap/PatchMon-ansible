@@ -22,7 +22,8 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
 | `host_enrollment_key` / `host_enrollment_secret` | env | Auto-enrollment token |
 | `host_api_key` / `host_api_secret` | env | Integration API (list + delete) |
 | `host_enroll_agent` | `false` | After present, run `patchmon.core.agent` |
-| `host_fetch_script` | `false` | Fetch installer script via `host_token` |
+| `host_fetch_script` | `false` | Fetch installer script via `host_token` (`dest` is required) |
+| `host_script_controller_path` | `/tmp/patchmon-enroll-<hostname>.sh` | Controller file for the fetched script (mode `0700`; contains secrets) |
 
 ## Example
 

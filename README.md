@@ -11,13 +11,14 @@ Companion content:
 | Type | FQCN | Purpose |
 |------|------|---------|
 | Inventory | `patchmon.core.inventory` | List hosts / groups / stats hostvars |
-| Module | `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/system`, … |
+| Module | `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/notes`, `/package_reports`, `/agent_queue`, … |
 | Module | `patchmon.core.host_packages` | List packages (optionally updates only) |
 | Module | `patchmon.core.host` | Enroll (Auto-Enrollment) or delete (`host:delete`) |
 | Module | `patchmon.core.host_token` | Enrollment script / admin token CRUD |
 | Lookup | `patchmon.core.host` | Ad-hoc per-host API lookups |
 | Role | `patchmon.core.agent` | Install / start / stop / report / remove agent |
 | Role | `patchmon.core.host` | Create or delete host entries |
+| Role | `patchmon.core.report_health` | Fail unless the newest package report succeeded |
 
 **Permissions matter.** Read plugins need Integration `host:get`. Creating hosts and installing agents need **Auto-Enrollment** credentials — not Integration Basic Auth. See **[docs/permissions.md](docs/permissions.md)**.
 

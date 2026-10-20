@@ -29,6 +29,8 @@ host_timeout: 30
 # Optional: fetch enrollment script after create (does not install agent)
 host_fetch_script: false
 host_script_type: direct-host
+# Controller path for host_token dest= (script mode 0700; contains enrollment secrets)
+host_script_controller_path: /tmp/patchmon-enroll-{{ inventory_hostname }}.sh
 
 # Optional: after present, import agent role on the target
 host_enroll_agent: false

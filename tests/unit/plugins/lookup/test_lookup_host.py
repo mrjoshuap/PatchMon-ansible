@@ -24,6 +24,7 @@ class FakeLookup(lookup_mod.LookupModule):
             "timeout": 30,
             "resource": "system",
             "updates_only": False,
+            "limit": 10,
         }
 
     def set_options(self, var_options=None, direct=None):
@@ -67,6 +68,12 @@ class _StubClient(object):
     def get_host_packages(self, host_id, updates_only=False):
         raise AssertionError("packages should not be called")
 
+    def get_host_package_reports(self, host_id, limit=None):
+        raise AssertionError("package_reports should not be called")
+
+    def get_host_agent_queue(self, host_id, limit=None):
+        raise AssertionError("agent_queue should not be called")
+
 
 def test_lookup_fetches_system(monkeypatch):
     calls = []
@@ -104,7 +111,34 @@ def test_lookup_packages_updates_only(monkeypatch):
             "timeout": 30,
             "resource": "packages",
             "updates_only": True,
+            "limit": 10,
         }
     )
     results = plugin.run(["host-2"], variables={})
     assert results[0]["packages"][0]["name"] == "openssl"
+
+
+def test_lookup_package_reports_limit(monkeypatch):
+    class FakeClient(_StubClient):
+        def get_host_package_reports(self, host_id, limit=None):
+            assert host_id == "host-3"
+            assert limit == 5
+            return {"reports": [{"status": "success"}], "total": 1}
+
+    monkeypatch.setattr(lookup_mod, "PatchMonClient", FakeClient)
+    monkeypatch.setattr(lookup_mod, "HAS_REQUESTS", True)
+
+    plugin = FakeLookup(
+        options={
+            "api_url": "https://patchmon.example.com",
+            "api_key": "key",
+            "api_secret": "secret",
+            "verify_ssl": True,
+            "timeout": 30,
+            "resource": "package_reports",
+            "updates_only": False,
+            "limit": 5,
+        }
+    )
+    results = plugin.run(["host-3"], variables={})
+    assert results[0]["reports"][0]["status"] == "success"
