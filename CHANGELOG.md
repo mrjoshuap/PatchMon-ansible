@@ -2,7 +2,7 @@
 
 All notable changes to this collection are documented in this file.
 
-## [Unreleased]
+## [2.0.0-rc1] - 2026-10-20
 
 ### Added
 
