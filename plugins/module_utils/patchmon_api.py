@@ -423,16 +423,17 @@ class PatchMonEnrollmentClient(_BaseClient):
 
     def get_script(self, script_type="direct-host", force=False):
         """GET /api/v1/auto-enrollment/script — bash installer with injected creds."""
-        query = {
+        # Pass credentials via requests params (not the URL string) so error
+        # messages and logs never embed token_key / token_secret.
+        params = {
             "type": script_type,
             "token_key": self._headers["X-Auto-Enrollment-Key"],
             "token_secret": self._headers["X-Auto-Enrollment-Secret"],
         }
         if force:
-            query["force"] = "true"
-        url = self._url(AUTO_ENROLLMENT_PATH + "/script", query=query)
-        # Script endpoint uses query auth; omit secret headers from GET when possible.
-        return self._request("GET", url, expect_json=False)
+            params["force"] = "true"
+        url = self._url(AUTO_ENROLLMENT_PATH + "/script")
+        return self._request("GET", url, params=params, expect_json=False)
 
 
 class PatchMonAdminClient(_BaseClient):

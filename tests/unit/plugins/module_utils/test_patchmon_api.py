@@ -205,3 +205,37 @@ def test_enrollment_enroll(monkeypatch):
     monkeypatch.setattr(client, "_session", FakeSession())
     result = client.enroll(friendly_name="web1")
     assert result["host"]["id"] == "1"
+
+
+def test_enrollment_get_script_uses_params(monkeypatch):
+    class FakeResponse(object):
+        status_code = 200
+        content = b"#!/bin/bash\necho ok\n"
+        is_redirect = False
+        headers = {"Content-Type": "text/plain"}
+        text = content.decode()
+
+        def json(self):
+            raise ValueError("not json")
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            assert method == "GET"
+            assert url.endswith("/api/v1/auto-enrollment/script")
+            assert "token_key" not in url
+            assert "token_secret" not in url
+            assert kwargs["params"]["type"] == "direct-host"
+            assert kwargs["params"]["token_key"] == "ek"
+            assert kwargs["params"]["token_secret"] == "es"
+            assert kwargs["params"]["force"] == "true"
+            return FakeResponse()
+
+    client = api.PatchMonEnrollmentClient(
+        "https://patchmon.example.com", "ek", "es"
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+    result = client.get_script(script_type="direct-host", force=True)
+    assert result.startswith("#!/bin/bash")
