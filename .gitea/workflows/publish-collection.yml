@@ -1,0 +1,144 @@
+# Build patchmon.core and publish to private Automation Hub.
+#
+# Runs on the Gitea mirror (home-mrjoshuap/PatchMon-ansible). GitHub-hosted
+# runners cannot reach aap.home.mrjoshuap.com.
+# A galaxy.yml version change uploads that version to staging (approve into
+# published). Any other main push uploads {version}-dev.{run_id} to the
+# development repository, which has no approval pipeline.
+name: publish-collection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "galaxy.yml"
+      - "plugins/**"
+      - "roles/**"
+      - "playbooks/**"
+      - "meta/**"
+      - ".gitea/workflows/publish-collection.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "galaxy.yml"
+      - "plugins/**"
+      - "roles/**"
+      - "playbooks/**"
+      - "meta/**"
+      - ".gitea/workflows/publish-collection.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: amd64
+    name: Validate collection build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ansible-core and pytest
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-venv python3-pip
+
+          VENV="${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv"
+          python3 -m venv "${VENV}"
+          "${VENV}/bin/pip" install --upgrade pip
+          "${VENV}/bin/pip" install "ansible-core>=2.15" "requests>=2.25.1" pytest
+          echo "${VENV}/bin" >> "${GITHUB_PATH}"
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Build collection tarball
+        run: |
+          ansible-galaxy collection build
+          ls -la patchmon-core-*.tar.gz
+
+  publish:
+    runs-on: amd64
+    name: Publish to Automation Hub
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for galaxy.yml version bump
+        id: version_bump
+        run: |
+          if git diff HEAD~1 HEAD -- galaxy.yml | grep -qE '^[+-]version:'; then
+            echo "bumped=true" >> "${GITHUB_OUTPUT}"
+            echo "galaxy.yml version changed — staging publish"
+          else
+            echo "bumped=false" >> "${GITHUB_OUTPUT}"
+            echo "No galaxy.yml version change — development publish"
+          fi
+
+      - name: Install ansible-core
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-venv python3-pip
+
+          VENV="${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv"
+          python3 -m venv "${VENV}"
+          "${VENV}/bin/pip" install --upgrade pip
+          "${VENV}/bin/pip" install "ansible-core>=2.15"
+          echo "${VENV}/bin" >> "${GITHUB_PATH}"
+
+      - name: Set development prerelease version
+        if: steps.version_bump.outputs.bumped != 'true'
+        run: |
+          set -euo pipefail
+          BASE="$(awk '/^version:/{gsub(/["'\'']/, "", $2); print $2; exit}' galaxy.yml)"
+          case "${BASE}" in
+            *-*) BASE="${BASE%%-*}" ;;
+          esac
+          DEV_VERSION="${BASE}-dev.${GITHUB_RUN_ID}"
+          sed -i "s/^version:.*/version: ${DEV_VERSION}/" galaxy.yml
+          echo "Development version ${DEV_VERSION} (workspace only)"
+
+      - name: Build collection tarball
+        run: |
+          set -euo pipefail
+          ansible-galaxy collection build
+          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
+          if tar -tzf "${ARTIFACT}" | grep -q '^\.ansible/'; then
+            echo "ERROR: ${ARTIFACT} contains .ansible/"
+            exit 1
+          fi
+
+      - name: Publish release to staging
+        if: steps.version_bump.outputs.bumped == 'true'
+        run: |
+          set -euo pipefail
+          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
+          UPLOAD_URL="${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_UPLOAD_URL }}"
+          if [[ -z "${UPLOAD_URL}" ]]; then
+            echo "ERROR: Set secret ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_UPLOAD_URL to the patchmon namespace staging URL"
+            exit 1
+          fi
+          ansible-galaxy collection publish "${ARTIFACT}" \
+            --server "${UPLOAD_URL}" \
+            --token "${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}" \
+            --ignore-certs
+          echo "After import completes, approve patchmon.core in Automation Content → Approval"
+
+      - name: Publish development prerelease
+        if: steps.version_bump.outputs.bumped != 'true'
+        run: |
+          set -euo pipefail
+          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
+          DEV_URL="${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL }}"
+          if [[ -z "${DEV_URL}" ]]; then
+            DEV_URL="https://aap.home.mrjoshuap.com/api/galaxy/content/development/"
+          fi
+          ansible-galaxy collection publish "${ARTIFACT}" \
+            --server "${DEV_URL}" \
+            --token "${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}" \
+            --ignore-certs
+          echo "Published ${ARTIFACT} to the development repository (no approval)"
