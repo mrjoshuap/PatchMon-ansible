@@ -4,6 +4,14 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.0-charlie] - 2026-10-19
+
+### Changed
+
+- `get_script`: pass enrollment `token_key` / `token_secret` via requests
+  `params` instead of embedding them in the URL string, so API error messages
+  and client logs do not capture credentials.
+
 ## [2.0.0-beta] - 2026-10-19
 
 ### Added

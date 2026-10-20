@@ -51,9 +51,11 @@ jobs:
           esac
           VERSION="${TAG#v}"
           TARBALL="patchmon-core-${VERSION}.tar.gz"
+          # SemVer: any version with a hyphen suffix is a pre-release
+          # (alpha, beta, charlie, rc, …).
           PRERELEASE=false
           case "${VERSION}" in
-            *-alpha*|*-beta*|*-rc*|*-a*|*-b*)
+            *-*)
               PRERELEASE=true
               ;;
           esac
