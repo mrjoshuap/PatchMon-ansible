@@ -41,12 +41,15 @@
 #   patchmon_os_<os_type>
 #   Plus each PatchMon host group as patchmon_<slug> (No Reboot → patchmon_no_reboot).
 #
-# HOSTVARS (with include_stats)
-#   patchmon_id, patchmon_hostname, patchmon_friendly_name, patchmon_ip,
-#   patchmon_os_type, patchmon_os_version, patchmon_status,
-#   patchmon_effective_status, patchmon_reporting_state, patchmon_update_state,
-#   patchmon_needs_reboot, patchmon_updates_count, patchmon_security_updates_count,
-#   patchmon_total_packages, patchmon_last_update, ansible_host
+# HOSTVARS (with include_stats, stats_var_scope: all — the default)
+#   Identity: patchmon_id, patchmon_hostname, patchmon_friendly_name,
+#   patchmon_ip, patchmon_groups, ansible_host
+#   Targeting (also set when stats_var_scope: targeting):
+#   patchmon_os_type, patchmon_effective_status, patchmon_reporting_state,
+#   patchmon_update_state, patchmon_needs_reboot, patchmon_security_updates_count
+#   Telemetry (all only — use host_info inject_facts for ansible_facts.patchmon):
+#   patchmon_os_version, patchmon_status, patchmon_updates_count,
+#   patchmon_total_packages, patchmon_last_update
 #
 # =============================================================================
 
@@ -82,7 +85,14 @@ verify_ssl: true
 # Request ?include=stats and populate patchmon_* hostvars (default: false)
 include_stats: true
 
-# Create derived patchmon_* groups from stats (default: true when stats on)
+# all (default): every stats hostvar, including telemetry.
+# targeting: group/play-gate hostvars only. Telemetry stays off the host.
+# Compose that reads patchmon_updates_count or patchmon_os_version needs all.
+# stats_var_scope: all
+# stats_var_scope: targeting
+
+# Create derived patchmon_* groups from stats (default: true when stats on).
+# Groups use the API payload, so they still appear when scope is targeting.
 auto_groups: true
 # auto_groups: false
 

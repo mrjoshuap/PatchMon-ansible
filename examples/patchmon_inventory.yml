@@ -94,6 +94,8 @@ verify_ssl: true
 
 # include_stats: false
 # include_stats: true
+# stats_var_scope: all
+# stats_var_scope: targeting
 # auto_groups: true
 
 # ---------------------------------------------------------------------------

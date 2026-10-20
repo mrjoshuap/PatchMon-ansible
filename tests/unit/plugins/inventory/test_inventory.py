@@ -94,6 +94,12 @@ def test_populate_sets_stats_hostvars_and_auto_groups():
     assert hostvars["patchmon_needs_reboot"] is True
     assert hostvars["patchmon_update_state"] == "security_required"
     assert hostvars["patchmon_security_updates_count"] == 3
+    assert hostvars["patchmon_os_type"] == "Ubuntu"
+    assert hostvars["patchmon_os_version"] == "24.04 LTS"
+    assert hostvars["patchmon_status"] == "active"
+    assert hostvars["patchmon_updates_count"] == 15
+    assert hostvars["patchmon_total_packages"] == 342
+    assert hostvars["patchmon_last_update"] == "2026-02-12T10:30:00.000Z"
 
     assert "patchmon_production" in plugin.inventory.groups
     assert hostvars["patchmon_groups"] == [
@@ -111,6 +117,32 @@ def test_populate_sets_stats_hostvars_and_auto_groups():
     assert "patchmon_security_required" in plugin.inventory.groups
     assert "patchmon_os_ubuntu" in plugin.inventory.groups
     assert "web01.example.com" in plugin.inventory.membership["patchmon_needs_reboot"]
+
+
+def test_targeting_scope_omits_telemetry_and_keeps_groups():
+    plugin = FakePlugin()
+    plugin._options["stats_var_scope"] = "targeting"
+    plugin._populate([SAMPLE_HOST])
+
+    hostvars = plugin.inventory.hosts["web01.example.com"]
+    assert hostvars["patchmon_needs_reboot"] is True
+    assert hostvars["patchmon_update_state"] == "security_required"
+    assert hostvars["patchmon_security_updates_count"] == 3
+    assert hostvars["patchmon_os_type"] == "Ubuntu"
+    assert hostvars["patchmon_effective_status"] == "active"
+    assert hostvars["patchmon_reporting_state"] == "reporting"
+    assert hostvars["patchmon_id"] == "550e8400-e29b-41d4-a716-446655440000"
+    for key in (
+        "patchmon_os_version",
+        "patchmon_last_update",
+        "patchmon_status",
+        "patchmon_updates_count",
+        "patchmon_total_packages",
+    ):
+        assert key not in hostvars
+    assert "patchmon_needs_reboot" in plugin.inventory.groups
+    assert "patchmon_security_required" in plugin.inventory.groups
+    assert "patchmon_os_ubuntu" in plugin.inventory.groups
 
 
 def test_inventory_hostname_prefer_friendly_name():

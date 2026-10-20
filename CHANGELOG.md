@@ -2,6 +2,19 @@
 
 All notable changes to this collection are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Inventory `stats_var_scope` (`all` or `targeting`). `targeting` keeps group
+  and play-gate stats hostvars and omits telemetry (`patchmon_updates_count`,
+  `patchmon_total_packages`, `patchmon_last_update`, `patchmon_os_version`,
+  `patchmon_status`). Auto groups still come from the API payload. Default
+  remains `all`.
+- `patchmon.core.host_info` `inject_facts` (default `false`) returns
+  `ansible_facts.patchmon` with unprefixed identity and stats keys. Flat
+  `patchmon_*` facts are not set.
+
 ## [2.0.0-rc1] - 2026-10-20
 
 ### Added

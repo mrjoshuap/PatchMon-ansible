@@ -141,7 +141,7 @@ Need reboot / updates / security / OS metadata or --limit on those?
 |------------|-----------------|---------------|
 | Hosts + `ansible_host` | yes | yes |
 | PatchMon `host_groups` → `patchmon_<slug>` groups | yes | yes |
-| `patchmon_*` stats hostvars | no (default) | yes (`include_stats: true`) |
+| `patchmon_*` stats hostvars | no (default) | yes (`include_stats: true`; `stats_var_scope: targeting` drops telemetry) |
 | Auto groups (`patchmon_needs_reboot`, …) | no | yes (unless you set `auto_groups: false`) |
 | Commented Constructable samples | brief | full sections |
 

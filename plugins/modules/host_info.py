@@ -14,6 +14,8 @@ description:
   - Retrieves detailed information for a PatchMon host via the Integration API.
   - Optionally aggregates info, stats, system, network, integrations, notes,
     package_reports, and agent_queue endpoints.
+  - O(inject_facts) adds C(ansible_facts.patchmon) (identity plus stats, no
+    C(patchmon_) prefix). It does not set flat C(patchmon_*) facts.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
   - patchmon.core.auth
@@ -46,6 +48,18 @@ options:
         C(agent_queue) only. The PatchMon default is 10.
     type: int
     default: 10
+  inject_facts:
+    description:
+      - When true, also return C(ansible_facts.patchmon).
+      - Keys are unprefixed. Identity comes from the C(info) subset
+        (C(id), C(hostname), C(friendly_name), C(ip)).
+      - Stats fields are taken from the gathered C(info), C(stats), and
+        C(system) subsets. Every other key on the stats payload is included.
+      - Flat C(patchmon_*) facts are not set, so inventory hostvars of those
+        names are left alone.
+    type: bool
+    default: false
+    version_added: "2.0.0"
 author:
   - mrjoshuap
 requirements:
@@ -65,6 +79,19 @@ EXAMPLES = r"""
       - system
   delegate_to: localhost
   register: patchmon_info
+
+- name: Publish identity and stats as nested facts
+  patchmon.core.host_info:
+    api_url: "{{ patchmon_api_url }}"
+    api_key: "{{ patchmon_api_key }}"
+    api_secret: "{{ patchmon_api_secret }}"
+    host_id: "{{ patchmon_id }}"
+    gather_subset:
+      - info
+      - stats
+      - system
+    inject_facts: true
+  delegate_to: localhost
 """
 
 RETURN = r"""
@@ -97,6 +124,19 @@ host:
     agent_queue:
       description: Response from C(/hosts/:id/agent_queue).
       type: dict
+ansible_facts:
+  description:
+    - Present when O(inject_facts) is true.
+    - C(patchmon) holds identity and stats without a C(patchmon_) prefix.
+  returned: when O(inject_facts) is true
+  type: dict
+  contains:
+    patchmon:
+      description:
+        - Identity (C(id), and C(hostname) / C(friendly_name) / C(ip) when the
+          info subset includes them) plus stats fields such as C(needs_reboot),
+          C(update_state), C(updates_count), C(os_version), and C(status).
+      type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -119,6 +159,62 @@ _DETAIL_SUBSETS = [
     "package_reports",
     "agent_queue",
 ]
+
+_FACT_IDENTITY_KEYS = ("hostname", "friendly_name", "ip")
+
+# Same stats names the inventory plugin maps to patchmon_* hostvars.
+_FACT_STATS_KEYS = (
+    "os_type",
+    "os_version",
+    "last_update",
+    "status",
+    "effective_status",
+    "reporting_state",
+    "update_state",
+    "needs_reboot",
+    "updates_count",
+    "security_updates_count",
+    "total_packages",
+)
+
+
+def _as_dict(value):
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
+def _build_patchmon_facts(host_id, gathered):
+    """Identity plus stats for ansible_facts['patchmon'].
+
+    Keys stay unprefixed so they do not override inventory hostvars such as
+    patchmon_needs_reboot. Canonical stats are read from info, then stats,
+    then system. Remaining stats payload keys are included as well.
+    """
+    gathered = _as_dict(gathered)
+    info = _as_dict(gathered.get("info"))
+    stats = _as_dict(gathered.get("stats"))
+    system = _as_dict(gathered.get("system"))
+
+    facts = {}
+    for key in _FACT_IDENTITY_KEYS:
+        if info.get(key) is not None:
+            facts[key] = info[key]
+
+    for source in (info, stats, system):
+        for key in _FACT_STATS_KEYS:
+            if source.get(key) is not None:
+                facts[key] = source[key]
+
+    for key, value in stats.items():
+        if key in ("id",) or key in _FACT_IDENTITY_KEYS:
+            continue
+        if value is None or key in facts:
+            continue
+        facts[key] = value
+
+    facts["id"] = host_id
+    return facts
 
 
 def _normalize_subset(gather_subset):
@@ -151,6 +247,7 @@ def run_module():
                 choices=_DETAIL_SUBSETS + ["all"],
             ),
             limit=dict(type="int", default=10),
+            inject_facts=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
@@ -195,7 +292,12 @@ def run_module():
     except PatchMonAPIError as exc:
         module.fail_json(msg=str(exc))
 
-    module.exit_json(changed=False, host=result)
+    payload = {"changed": False, "host": result}
+    if module.params.get("inject_facts"):
+        payload["ansible_facts"] = {
+            "patchmon": _build_patchmon_facts(host_id, result)
+        }
+    module.exit_json(**payload)
 
 
 def main():

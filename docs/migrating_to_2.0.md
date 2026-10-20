@@ -68,7 +68,18 @@ should use the 2.0.0 FQCNs:
 
 See [permissions.md](permissions.md).
 
-## 5. Smoke-test after migration
+## 5. Stats hostvars and facts
+
+`include_stats: true` still sets `patchmon_*` host variables. `stats_var_scope` defaults to `all` (every stats hostvar). Set `targeting` to keep only the fields that build groups or gate plays:
+
+- kept: `patchmon_needs_reboot`, `patchmon_update_state`, `patchmon_security_updates_count`, `patchmon_os_type`, `patchmon_effective_status`, `patchmon_reporting_state`
+- omitted: `patchmon_updates_count`, `patchmon_total_packages`, `patchmon_last_update`, `patchmon_os_version`, `patchmon_status`
+
+Auto groups are unchanged. `compose` / `keyed_groups` / `groups` that read an omitted name need `stats_var_scope: all`.
+
+Telemetry belongs in `ansible_facts.patchmon` from `patchmon.core.host_info` (`inject_facts: true`, default `false`). Those keys have no `patchmon_` prefix, so they do not override inventory hostvars. The inventory plugin does not write facts.
+
+## 6. Smoke-test after migration
 
 ```bash
 export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'

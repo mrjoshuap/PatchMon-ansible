@@ -16,6 +16,9 @@ description:
   - Supports constructed inventory features (compose, groups, keyed_groups).
   - Prefer namespaced C(patchmon_*) hostvars. Unprefixed C(ip), C(hostname), and C(friendly_name)
     are also set as compose aliases and may collide with user variables.
+  - O(stats_var_scope=targeting) omits telemetry hostvars. Those fields belong in
+    C(ansible_facts.patchmon) from C(patchmon.core.host_info) with O(inject_facts=true),
+    not as a second copy of the same C(patchmon_*) names.
   - PatchMon host groups become Ansible groups named C(patchmon_<slug>). Spaces and
     other characters Ansible rejects are replaced with C(_), then lowercased, so
     C(No Reboot) becomes C(patchmon_no_reboot). When two groups share that slug,
@@ -36,8 +39,28 @@ options:
       - When true, call the hosts endpoint with C(?include=stats) and expose PatchMon
         metadata as C(patchmon_*) host variables.
       - Enables built-in auto groups unless O(auto_groups) is false.
+      - O(stats_var_scope) selects which of those host variables are set.
+        Auto groups still use the API payload.
     type: bool
     default: false
+    version_added: "2.0.0"
+  stats_var_scope:
+    description:
+      - Which stats fields to copy onto the host when O(include_stats) is true.
+      - C(all) sets every C(patchmon_*) stats hostvar.
+      - C(targeting) sets only fields used to build groups or to gate plays
+        (C(patchmon_needs_reboot), C(patchmon_update_state),
+        C(patchmon_security_updates_count), C(patchmon_os_type),
+        C(patchmon_effective_status), C(patchmon_reporting_state)).
+      - Telemetry (C(patchmon_updates_count), C(patchmon_total_packages),
+        C(patchmon_last_update), C(patchmon_os_version), C(patchmon_status))
+        is omitted. Read it from C(patchmon.core.host_info) with
+        O(inject_facts=true) as C(ansible_facts.patchmon).
+      - C(compose), C(groups), and C(keyed_groups) expressions that reference
+        an omitted hostvar require C(all).
+    type: str
+    default: all
+    choices: [all, targeting]
     version_added: "2.0.0"
   hostgroup:
     description:
@@ -114,6 +137,8 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
 
 
 # Stats fields copied onto hosts when include_stats is true.
+# Telemetry keys are omitted when stats_var_scope is targeting. Groups are
+# still built from the API payload, not from the exported hostvars.
 _STATS_HOSTVARS = (
     ("os_type", "patchmon_os_type"),
     ("os_version", "patchmon_os_version"),
@@ -126,6 +151,10 @@ _STATS_HOSTVARS = (
     ("updates_count", "patchmon_updates_count"),
     ("security_updates_count", "patchmon_security_updates_count"),
     ("total_packages", "patchmon_total_packages"),
+)
+
+_TELEMETRY_STATS_KEYS = frozenset(
+    ("os_version", "last_update", "status", "updates_count", "total_packages")
 )
 
 _UPDATE_STATE_GROUPS = {
@@ -306,7 +335,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             hostvars["patchmon_friendly_name"] = to_text(friendly)
 
         if self.get_option("include_stats"):
-            for api_key, var_name in _STATS_HOSTVARS:
+            for api_key, var_name in _stats_fields(self.get_option("stats_var_scope")):
                 if api_key in entry and entry[api_key] is not None:
                     value = entry[api_key]
                     if isinstance(value, bool) or isinstance(value, (int, float)):
@@ -348,6 +377,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         group_name = self._sanitize_group_name(group_name)
         self.inventory.add_group(group_name)
         self.inventory.add_host(host, group=group_name)
+
+
+def _stats_fields(scope):
+    if scope == "targeting":
+        return tuple(
+            item for item in _STATS_HOSTVARS if item[0] not in _TELEMETRY_STATS_KEYS
+        )
+    return _STATS_HOSTVARS
 
 
 def _host_group_rows(entry):

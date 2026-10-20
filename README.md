@@ -124,6 +124,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 | `verify_ssl` | no | `true` | TLS verify (`PATCHMON_VERIFY_SSL`) |
 | `timeout` | no | `30` | HTTP timeout (seconds) |
 | `include_stats` | no | `false` | Request `?include=stats` and set `patchmon_*` hostvars |
+| `stats_var_scope` | no | `all` | `all` exports every stats hostvar. `targeting` keeps group and play-gate fields and omits telemetry |
 | `hostgroup` | no | — | Filter by exact PatchMon group name, group id, or `patchmon_<slug>` |
 | `auto_groups` | no | `true` | Derived groups when `include_stats` is true |
 | `inventory_hostname_prefer` | no | `hostname` | `hostname` or `friendly_name` |
@@ -148,20 +149,33 @@ groups:
 
 #### Host variables (with `include_stats`)
 
-| Hostvar | Source |
-|---------|--------|
-| `ansible_host` / `patchmon_ip` | `ip` |
-| `patchmon_id` | `id` |
-| `patchmon_hostname` / `patchmon_friendly_name` | identity fields |
-| `patchmon_os_type` / `patchmon_os_version` | OS |
-| `patchmon_status` / `patchmon_effective_status` / `patchmon_reporting_state` | lifecycle / freshness |
-| `patchmon_update_state` | `up_to_date`, `updates_pending`, `security_required` |
-| `patchmon_needs_reboot` | boolean |
-| `patchmon_updates_count` / `patchmon_security_updates_count` / `patchmon_total_packages` | package counts |
-| `patchmon_last_update` | last agent report |
-| `patchmon_groups` | list of `{id, name, ansible_group}` for each PatchMon host group. `name` is the PatchMon value and may contain spaces |
+Identity and group membership are always inventory variables. Stats fields used to build groups or to gate a play before fact gathering stay inventory variables too. Telemetry that does not select hosts is omitted when `stats_var_scope: targeting`.
 
-Unprefixed compose aliases `ip`, `hostname`, and `friendly_name` are also set for Constructable expressions. Prefer `patchmon_*` names in playbooks to avoid collisions with user variables.
+| Hostvar | Scope | Source |
+|---------|-------|--------|
+| `ansible_host` / `patchmon_ip` | always | `ip` |
+| `patchmon_id` | always | `id` |
+| `patchmon_hostname` / `patchmon_friendly_name` | always | identity fields |
+| `patchmon_groups` | always | list of `{id, name, ansible_group}` for each PatchMon host group. `name` is the PatchMon value and may contain spaces |
+| `patchmon_os_type` | `all` and `targeting` | OS family; also builds `patchmon_os_<os>` |
+| `patchmon_effective_status` / `patchmon_reporting_state` | `all` and `targeting` | `patchmon_inactive`, `patchmon_stale`, `patchmon_overdue` |
+| `patchmon_update_state` | `all` and `targeting` | `up_to_date`, `updates_pending`, `security_required` |
+| `patchmon_needs_reboot` | `all` and `targeting` | boolean; also builds `patchmon_needs_reboot` |
+| `patchmon_security_updates_count` | `all` and `targeting` | play conditions |
+| `patchmon_os_version` | `all` only | OS version |
+| `patchmon_status` | `all` only | raw status |
+| `patchmon_updates_count` / `patchmon_total_packages` | `all` only | package counts |
+| `patchmon_last_update` | `all` only | last agent report |
+
+`stats_var_scope` defaults to `all`, which matches earlier 2.0 inventories. `targeting` still creates auto groups from the API payload. `compose`, `groups`, and `keyed_groups` expressions that read an omitted hostvar need `all`.
+
+Do not copy the same names into facts. A flat fact named `patchmon_needs_reboot` would override the inventory variable after fact gathering, and the two caches would drift. The inventory plugin does not set `ansible_facts`.
+
+Unprefixed compose aliases `ip`, `hostname`, and `friendly_name` are also set for Constructable expressions. Prefer `patchmon_*` names in playbooks to avoid collisions with user variables. They are not copied into facts.
+
+#### Host facts (`host_info` `inject_facts`)
+
+`patchmon.core.host_info` with `inject_facts: true` returns `ansible_facts.patchmon`. Keys are unprefixed (`needs_reboot`, `updates_count`, `os_version`, `status`, plus `id`, `hostname`, `friendly_name`, and `ip`). That dict is the place for telemetry, including the fields `targeting` leaves off the inventory host. `delegate_to: localhost`. Default `inject_facts` is `false`, so a `register:` of `host` is unchanged.
 
 
 #### Auto groups (when `include_stats` and `auto_groups`)
@@ -213,7 +227,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 
 | Module | Purpose | Access |
 |--------|---------|--------|
-| `patchmon.core.host_info` | Aggregate host detail endpoints via `gather_subset` | Integration `host:get` |
+| `patchmon.core.host_info` | Aggregate host detail endpoints via `gather_subset`. `inject_facts: true` sets `ansible_facts.patchmon` | Integration `host:get` |
 | `patchmon.core.host_packages` | List packages; `updates_only: true` for pending updates | Integration `host:get` |
 | `patchmon.core.host` | Enroll (`state=present`), update omitted-by-default fields, or delete (`state=absent`) | Auto-Enrollment / `host:patch` / `host:put` / `host:delete` |
 | `patchmon.core.host_action` | `fetch_report`, `force_agent_update`, or `regenerate_credentials` | Integration `host:update` |
@@ -229,6 +243,16 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
     gather_subset: [info, stats, system]
   delegate_to: localhost
   register: pm_info
+
+- name: Read telemetry as nested facts (does not override patchmon_* hostvars)
+  patchmon.core.host_info:
+    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
+    api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+    host_id: "{{ patchmon_id }}"
+    gather_subset: [info, stats, system]
+    inject_facts: true
+  delegate_to: localhost
 
 - name: List packages with updates
   patchmon.core.host_packages:

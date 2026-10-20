@@ -1,5 +1,7 @@
 ---
 # Gather PatchMon info / stats / system detail for inventory hosts.
+# inject_facts publishes ansible_facts.patchmon (unprefixed). It does not
+# replace inventory hostvars such as patchmon_needs_reboot.
 #
 # Requires:
 #   - Collection installed; inventory that sets patchmon_id (use include_stats
@@ -45,6 +47,7 @@
           - info
           - stats
           - system
+        inject_facts: true
       delegate_to: localhost
       register: patchmon_info
 
@@ -61,3 +64,5 @@
           needs_reboot: "{{ patchmon_info['host']['system']['needs_reboot'] | default('n/a') }}"
           reboot_reason: "{{ patchmon_info['host']['system']['reboot_reason'] | default('') }}"
           kernel: "{{ patchmon_info['host']['system']['kernel_version'] | default('n/a') }}"
+          fact_updates_count: "{{ ansible_facts['patchmon']['updates_count'] | default('n/a') }}"
+          fact_needs_reboot: "{{ ansible_facts['patchmon']['needs_reboot'] | default('n/a') }}"
