@@ -97,7 +97,7 @@ ansible-inventory -i inventories/patchmon.yml --list
 ansible-inventory -i inventories/patchmon.yml --graph
 ```
 
-Expect hosts under PatchMon group names (for example `Production`). With the **stats** example and `auto_groups: true`, also expect groups such as `patchmon_security_required` and `patchmon_needs_reboot`.
+Expect hosts under `patchmon_<slug>` groups (for example `patchmon_production`). A PatchMon name with a space, such as `No Reboot`, becomes `patchmon_no_reboot` when that slug is unique. With the **stats** example and `auto_groups: true`, also expect groups such as `patchmon_security_required` and `patchmon_needs_reboot`.
 
 ### 5. Run a simple check
 
@@ -105,8 +105,8 @@ Expect hosts under PatchMon group names (for example `Production`). With the **s
 # All hosts from PatchMon
 ansible all -i inventories/patchmon.yml -m ping
 
-# One PatchMon host group (name must match PatchMon)
-ansible all -i inventories/patchmon.yml -m ping --limit Production
+# One PatchMon host group (Ansible name, not the raw PatchMon label)
+ansible all -i inventories/patchmon.yml -m ping --limit patchmon_production
 ```
 
 ### 6. (Stats example) target derived groups
@@ -140,7 +140,7 @@ Need reboot / updates / security / OS metadata or --limit on those?
 | Capability | Minimal example | Stats example |
 |------------|-----------------|---------------|
 | Hosts + `ansible_host` | yes | yes |
-| PatchMon `host_groups` → Ansible groups | yes | yes |
+| PatchMon `host_groups` → `patchmon_<slug>` groups | yes | yes |
 | `patchmon_*` stats hostvars | no (default) | yes (`include_stats: true`) |
 | Auto groups (`patchmon_needs_reboot`, …) | no | yes (unless you set `auto_groups: false`) |
 | Commented Constructable samples | brief | full sections |
@@ -154,12 +154,16 @@ You can turn the minimal file into a stats inventory by setting `include_stats: 
 Both examples document `hostgroup`. Uncomment to ask the API for a subset (OR logic for lists):
 
 ```yaml
-hostgroup: Production
+hostgroup: Production          # exact PatchMon name
+hostgroup: "No Reboot"         # spaces must match the PatchMon name
+hostgroup: patchmon_production # Ansible group, when that slug is unique
 # or:
 hostgroup:
   - Production
   - Development
 ```
+
+`No Reboot` and `No_Reboot` are different groups. A token with spaces already turned into `_` matches only when one PatchMon group sanitizes to it. If both exist, pass the group id or the exact name.
 
 ---
 

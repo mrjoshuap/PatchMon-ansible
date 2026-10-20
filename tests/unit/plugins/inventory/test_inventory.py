@@ -16,6 +16,7 @@ class FakeInventory(object):
         self.hosts = {}
         self.groups = set()
         self.membership = {}
+        self.group_vars = {}
 
     def add_host(self, name, group=None):
         self.hosts.setdefault(name, {})
@@ -26,8 +27,11 @@ class FakeInventory(object):
         self.groups.add(name)
         return name
 
-    def set_variable(self, host, key, value):
-        self.hosts.setdefault(host, {})[key] = value
+    def set_variable(self, entity, key, value):
+        if entity in self.groups and entity not in self.hosts:
+            self.group_vars.setdefault(entity, {})[key] = value
+            return
+        self.hosts.setdefault(entity, {})[key] = value
 
 
 class FakePlugin(inv.InventoryModule):
@@ -91,7 +95,18 @@ def test_populate_sets_stats_hostvars_and_auto_groups():
     assert hostvars["patchmon_update_state"] == "security_required"
     assert hostvars["patchmon_security_updates_count"] == 3
 
-    assert "Production" in plugin.inventory.groups
+    assert "patchmon_production" in plugin.inventory.groups
+    assert hostvars["patchmon_groups"] == [
+        {
+            "id": "g1",
+            "name": "Production",
+            "ansible_group": "patchmon_production",
+        }
+    ]
+    assert plugin.inventory.group_vars["patchmon_production"]["patchmon_group_name"] == (
+        "Production"
+    )
+    assert plugin.inventory.group_vars["patchmon_production"]["patchmon_group_id"] == "g1"
     assert "patchmon_needs_reboot" in plugin.inventory.groups
     assert "patchmon_security_required" in plugin.inventory.groups
     assert "patchmon_os_ubuntu" in plugin.inventory.groups
@@ -114,7 +129,7 @@ def test_auto_groups_disabled():
     plugin._options["auto_groups"] = False
     plugin._populate([SAMPLE_HOST])
 
-    assert "Production" in plugin.inventory.groups
+    assert "patchmon_production" in plugin.inventory.groups
     assert "patchmon_needs_reboot" not in plugin.inventory.groups
 
 
@@ -128,3 +143,34 @@ def test_unprefixed_compose_aliases():
     assert hostvars["hostname"] == "web01.example.com"
     assert hostvars["friendly_name"] == "web-server-01"
     assert hostvars["patchmon_ip"] == "192.168.1.100"
+
+
+def test_host_group_space_becomes_patchmon_slug():
+    plugin = FakePlugin()
+    host = dict(SAMPLE_HOST)
+    host["host_groups"] = [{"id": "g-space", "name": "No Reboot"}]
+    plugin._populate([host])
+
+    assert "patchmon_no_reboot" in plugin.inventory.groups
+    assert plugin.inventory.group_vars["patchmon_no_reboot"]["patchmon_group_name"] == (
+        "No Reboot"
+    )
+
+
+def test_space_and_underscore_groups_are_disambiguated_by_id():
+    plugin = FakePlugin()
+    host = dict(SAMPLE_HOST)
+    host["host_groups"] = [
+        {"id": "aaa-111", "name": "No Reboot"},
+        {"id": "bbb-222", "name": "No_Reboot"},
+    ]
+    plugin._populate([host])
+
+    assert "patchmon_no_reboot_aaa_111" in plugin.inventory.groups
+    assert "patchmon_no_reboot_bbb_222" in plugin.inventory.groups
+    names = {
+        item["name"]: item["ansible_group"]
+        for item in plugin.inventory.hosts["web01.example.com"]["patchmon_groups"]
+    }
+    assert names["No Reboot"] == "patchmon_no_reboot_aaa_111"
+    assert names["No_Reboot"] == "patchmon_no_reboot_bbb_222"

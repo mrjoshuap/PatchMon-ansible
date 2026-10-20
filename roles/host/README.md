@@ -29,7 +29,7 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
 | `host_notes` | unset | Desired notes. `""` clears notes. Unset leaves notes unchanged |
 | `host_auto_update` | unset | `true` or `false`. Unset leaves the flag unchanged |
 | `host_host_down_alerts` | unset | `true` or `false` override. Unset leaves the current setting unchanged |
-| `host_groups` | unset | List of group names or UUIDs. Replaces membership. `[]` clears it. Unset leaves groups unchanged |
+| `host_groups` | unset | List of exact PatchMon group names, group ids, or Ansible groups (`patchmon_<slug>`). A sanitized name matches only when one group collapses to that slug (`No Reboot` vs `No_Reboot`). Replaces membership. `[]` clears it. Unset leaves groups unchanged |
 
 Do not default `host_groups` to `[]` or `host_notes` to `""` in inventory. Those values are applied. Commands such as regenerate-credentials stay on `patchmon.core.host_action` and are not part of this role.
 

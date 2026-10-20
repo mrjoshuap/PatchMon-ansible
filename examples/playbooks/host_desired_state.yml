@@ -41,6 +41,7 @@
         verify_ssl: "{{ patchmon_verify_ssl | bool }}"
         host_id: "{{ patchmon_id }}"
         notes: "Managed by Ansible"
+        # Exact PatchMon names. "No Reboot" is not the same group as No_Reboot.
         groups:
           - Automated
       register: patchmon_host

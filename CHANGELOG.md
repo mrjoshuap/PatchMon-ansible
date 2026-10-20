@@ -21,6 +21,18 @@ All notable changes to this collection are documented in this file.
 - `report_health` role fails when the newest package report is missing or not
   `success`.
 
+### Changed
+
+- Inventory host groups are named `patchmon_<slug>` so they sort with the
+  stats groups. Spaces and other characters Ansible rejects become `_`, then
+  the name is lowercased (`No Reboot` → `patchmon_no_reboot`). The original
+  name and id are hostvar `patchmon_groups` and group vars
+  `patchmon_group_name` / `patchmon_group_id`. A slug shared by two groups,
+  or one that matches a stats auto-group, appends the group id. `host`
+  membership and the inventory `hostgroup` filter accept an exact name
+  (spaces kept), a group id, or that Ansible group. A sanitized token that
+  matches both a space and an underscore must be the id or the exact name.
+
 ### Fixed
 
 - `host` role `host_fetch_script` passes `dest` to `host_token`, which requires

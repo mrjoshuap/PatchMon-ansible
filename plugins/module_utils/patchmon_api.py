@@ -8,6 +8,11 @@ __metaclass__ = type
 
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
+from ansible_collections.patchmon.core.plugins.module_utils.group_names import (
+    GroupNameError,
+    resolve_group_ids,
+)
+
 try:
     import requests
     from requests.auth import HTTPBasicAuth
@@ -394,6 +399,28 @@ class PatchMonClient(_BaseClient):
             "GET", integration_resource_url(self.api_url, "host-groups")
         )
 
+    def resolve_hostgroup_filter(self, hostgroup):
+        """Resolve inventory ``hostgroup`` tokens to PatchMon group ids.
+
+        Accepts a name, UUID, or Ansible group (``patchmon_<slug>``). A name
+        whose spaces were normalized to ``_`` matches only when one group
+        sanitizes to that token. The hosts API then receives ids, so a space
+        and an underscore are not confused in the query string.
+        """
+        if hostgroup is None or hostgroup == "" or hostgroup == []:
+            return None
+        if isinstance(hostgroup, (list, tuple)):
+            tokens = [item for item in hostgroup if item not in (None, "")]
+        else:
+            tokens = [hostgroup]
+        if not tokens:
+            return None
+        catalog = _group_catalog(_host_group_rows(self.list_host_groups()))
+        try:
+            return resolve_group_ids(list(tokens), catalog)
+        except GroupNameError as exc:
+            raise PatchMonAPIError(str(exc)) from exc
+
     def reconcile_host(
         self,
         host_id,
@@ -519,7 +546,14 @@ class PatchMonClient(_BaseClient):
         }
 
     def _resolve_group_ids(self, groups):
-        """Map group names or UUIDs to ids. An empty list clears membership."""
+        """Map group names or UUIDs to ids. An empty list clears membership.
+
+        Exact PatchMon names are distinct, so ``No Reboot`` and ``No_Reboot``
+        stay different groups. A sanitized token (spaces already replaced
+        with ``_``, or the ``patchmon_`` inventory group) matches only when
+        one catalog group produces it. Ambiguous tokens must be a group id
+        or the exact name.
+        """
         if groups is None:
             return []
         if not isinstance(groups, list):
@@ -527,41 +561,11 @@ class PatchMonClient(_BaseClient):
         if not groups:
             return []
 
-        rows = _host_group_rows(self.list_host_groups())
-        by_id = {}
-        by_name = {}
-        for row in rows:
-            if not isinstance(row, dict) or not row.get("id"):
-                continue
-            group_id = str(row["id"])
-            by_id[group_id] = group_id
-            name = row.get("name")
-            if name is not None:
-                by_name.setdefault(str(name), []).append(group_id)
-
-        resolved = []
-        seen = set()
-        for raw in groups:
-            token = str(raw).strip() if raw is not None else ""
-            if not token:
-                raise PatchMonAPIError(
-                    "groups entries must be non-empty names or UUIDs"
-                )
-            if token in by_id:
-                group_id = by_id[token]
-            else:
-                matches = by_name.get(token) or []
-                if len(matches) != 1:
-                    raise PatchMonAPIError(
-                        "host group {0!r} did not match exactly one group".format(
-                            token
-                        )
-                    )
-                group_id = matches[0]
-            if group_id not in seen:
-                seen.add(group_id)
-                resolved.append(group_id)
-        return resolved
+        catalog = _group_catalog(_host_group_rows(self.list_host_groups()))
+        try:
+            return resolve_group_ids(groups, catalog)
+        except GroupNameError as exc:
+            raise PatchMonAPIError(str(exc)) from exc
 
     def fetch_report(self, host_id):
         """POST /hosts/:id/fetch-report. Requires Integration scope ``host:update``."""
@@ -585,6 +589,21 @@ class PatchMonClient(_BaseClient):
             "POST",
             host_resource_url(self.api_url, host_id, "regenerate-credentials"),
         )
+
+
+def _group_catalog(rows):
+    catalog = []
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("id"):
+            continue
+        name = row.get("name")
+        catalog.append(
+            {
+                "id": str(row["id"]),
+                "name": "" if name is None else str(name),
+            }
+        )
+    return catalog
 
 
 def _host_group_rows(payload):

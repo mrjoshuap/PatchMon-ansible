@@ -90,7 +90,11 @@ options:
     type: raw
   groups:
     description:
-      - Desired host group membership, as group names or UUIDs.
+      - Desired host group membership. Each entry is a group id, the exact
+        PatchMon name, or the Ansible inventory group C(patchmon_<slug>).
+      - Exact names keep spaces. C(No Reboot) and C(No_Reboot) are different
+        groups. A sanitized token matches only when one group collapses to
+        that slug; otherwise pass the group id or the exact name.
       - Replaces the full membership set. An empty list removes every group.
       - Omitted means membership is left unchanged.
       - Names are resolved with C(GET /api/v1/api/host-groups).
@@ -155,7 +159,7 @@ EXAMPLES = r"""
     notes: "Owned by the platform team"
     groups:
       - Automated
-      - No_Reboot
+      - "No Reboot"
   delegate_to: localhost
 """
 

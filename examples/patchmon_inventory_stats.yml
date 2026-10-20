@@ -39,7 +39,7 @@
 #   patchmon_needs_reboot, patchmon_security_required, patchmon_updates_pending,
 #   patchmon_up_to_date, patchmon_stale, patchmon_overdue, patchmon_inactive,
 #   patchmon_os_<os_type>
-#   Plus every PatchMon host_groups[].name as an Ansible group.
+#   Plus each PatchMon host group as patchmon_<slug> (No Reboot → patchmon_no_reboot).
 #
 # HOSTVARS (with include_stats)
 #   patchmon_id, patchmon_hostname, patchmon_friendly_name, patchmon_ip,
@@ -93,10 +93,13 @@ inventory_hostname_prefer: hostname
 # inventory_hostname_prefer: friendly_name
 
 # Limit the API query to one or more PatchMon host groups (OR logic).
-# Accepts names and/or UUIDs. Omit to return all hosts.
+# Exact name (spaces allowed), group id, or Ansible group patchmon_<slug>.
+# No Reboot and No_Reboot are different. A sanitized token matches only when
+# one group collapses to that slug. Omit to return all hosts.
 # hostgroup: Production
+# hostgroup: "No Reboot"
 # hostgroup:
-#   - Production
+#   - patchmon_production
 #   - Development
 #   - 550e8400-e29b-41d4-a716-446655440000
 
@@ -117,25 +120,25 @@ inventory_hostname_prefer: hostname
 # ---------------------------------------------------------------------------
 
 # keyed_groups:
-#   # e.g. update_state_security_required, update_state_up_to_date
+#   # e.g. patchmon_update_state_security_required
 #   - key: patchmon_update_state
-#     prefix: update_state
-#   # e.g. os_Ubuntu, os_Debian
+#     prefix: patchmon_update_state
+#   # e.g. patchmon_os_type_Ubuntu (distinct from auto group patchmon_os_ubuntu)
 #   - key: patchmon_os_type
-#     prefix: os
-#   # e.g. reporting_state_stale
+#     prefix: patchmon_os_type
+#   # e.g. patchmon_reporting_state_stale
 #   - key: patchmon_reporting_state
-#     prefix: reporting_state
+#     prefix: patchmon_reporting_state
 
 # ---------------------------------------------------------------------------
 # Constructable — groups (Jinja conditionals → custom group names)
 # ---------------------------------------------------------------------------
 
 # groups:
-#   reboot_and_security: >
+#   patchmon_reboot_and_security: >
 #     patchmon_needs_reboot and (patchmon_security_updates_count | int > 0)
-#   needs_any_updates: patchmon_updates_count | int > 0
-#   ubuntu_security: >
+#   patchmon_needs_any_updates: patchmon_updates_count | int > 0
+#   patchmon_ubuntu_security: >
 #     patchmon_os_type == 'Ubuntu' and patchmon_update_state == 'security_required'
 
 # Fail on compose/group expression errors (default: false)

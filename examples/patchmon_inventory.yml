@@ -27,8 +27,8 @@
 #        enable_plugins = patchmon.core.inventory
 #   5. List inventory:
 #        ansible-inventory -i patchmon_inventory.yml --list
-#   6. Target a PatchMon host group by name:
-#        ansible all -i patchmon_inventory.yml -m ping --limit Production
+#   6. Target a PatchMon host group (patchmon_<slug>):
+#        ansible all -i patchmon_inventory.yml -m ping --limit patchmon_production
 #
 # CREDENTIALS (pick one)
 #   - Environment: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
@@ -39,7 +39,7 @@
 # INVENTORY SHAPE (default / no stats)
 #   Hostvars: ansible_host (from ip); patchmon_id / patchmon_friendly_name when
 #             present in the API response
-#   Groups:   each PatchMon host_groups[].name
+#   Groups:   patchmon_<slug> for each host group (No Reboot → patchmon_no_reboot)
 #
 # =============================================================================
 
@@ -73,10 +73,13 @@ verify_ssl: true
 # ---------------------------------------------------------------------------
 
 # Limit the API query to one or more PatchMon host groups (OR logic).
-# Accepts names and/or UUIDs. Omit to return all hosts.
+# Exact name (spaces allowed), group id, or Ansible group patchmon_<slug>.
+# No Reboot and No_Reboot are different. A sanitized token matches only when
+# one group collapses to that slug. Omit to return all hosts.
 # hostgroup: Production
+# hostgroup: "No Reboot"
 # hostgroup:
-#   - Production
+#   - patchmon_production
 #   - Development
 
 # Inventory hostname source (default: hostname)

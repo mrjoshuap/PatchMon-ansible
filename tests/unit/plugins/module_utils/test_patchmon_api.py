@@ -244,6 +244,27 @@ def test_reconcile_patches_only_drift_and_skips_in_check_mode(monkeypatch):
     assert calls[1][2] == {"notes": "new"}
 
 
+def test_reconcile_sanitized_group_name_matches_spaced_name(monkeypatch):
+    calls = []
+
+    def router(method, url, body):
+        calls.append((method, url, body))
+        if url.endswith("/info"):
+            return _JsonResponse({"host_groups": []})
+        if url.endswith("/host-groups"):
+            return _JsonResponse(
+                {"host_groups": [{"id": "g-space", "name": "No Reboot"}]}
+            )
+        if method == "PUT" and url.endswith("/groups"):
+            return _JsonResponse({"message": "updated"})
+        raise AssertionError((method, url))
+
+    client = _client_with_router(monkeypatch, router)
+    result = client.reconcile_host("h1", groups=["No_Reboot"])
+    assert result["changed"] is True
+    assert calls[-1][2] == {"groupIds": ["g-space"]}
+
+
 def test_reconcile_empty_groups_replaces_without_catalog_lookup(monkeypatch):
     calls = []
 

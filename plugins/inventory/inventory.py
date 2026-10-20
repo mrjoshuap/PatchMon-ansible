@@ -16,6 +16,12 @@ description:
   - Supports constructed inventory features (compose, groups, keyed_groups).
   - Prefer namespaced C(patchmon_*) hostvars. Unprefixed C(ip), C(hostname), and C(friendly_name)
     are also set as compose aliases and may collide with user variables.
+  - PatchMon host groups become Ansible groups named C(patchmon_<slug>). Spaces and
+    other characters Ansible rejects are replaced with C(_), then lowercased, so
+    C(No Reboot) becomes C(patchmon_no_reboot). When two groups share that slug,
+    or the slug is a stats auto-group, the group id is appended. The original
+    name and id are on each host as C(patchmon_groups) and as group vars
+    C(patchmon_group_name) / C(patchmon_group_id).
 extends_documentation_fragment:
   - constructed
   - inventory_cache
@@ -35,8 +41,13 @@ options:
     version_added: "2.0.0"
   hostgroup:
     description:
-      - Optional PatchMon host group filter (name or UUID).
+      - Optional PatchMon host group filter.
+      - Accepts a group id, the exact PatchMon name (spaces allowed), or the
+        Ansible group C(patchmon_<slug>).
+      - A sanitized name matches only when one group collapses to that slug.
+        C(No Reboot) and C(No_Reboot) both existing requires the id or the exact name.
       - Multiple values may be provided as a list (OR logic on the API).
+      - Resolved to group ids before the hosts query.
     type: raw
     version_added: "2.0.0"
   auto_groups:
@@ -77,11 +88,11 @@ compose:
   patchmon_has_security_updates: patchmon_security_updates_count | int > 0
 keyed_groups:
   - key: patchmon_update_state
-    prefix: update_state
+    prefix: patchmon_update_state
   - key: patchmon_os_type
-    prefix: os
+    prefix: patchmon_os_type
 groups:
-  reboot_and_security: patchmon_needs_reboot and patchmon_security_updates_count | int > 0
+  patchmon_reboot_and_security: patchmon_needs_reboot and patchmon_security_updates_count | int > 0
 """
 
 import re
@@ -90,6 +101,11 @@ from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
+from ansible_collections.patchmon.core.plugins.module_utils.group_names import (
+    GroupNameError,
+    assign_ansible_group_names,
+    group_key,
+)
 from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import (
     HAS_REQUESTS,
     PatchMonAPIError,
@@ -174,9 +190,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 verify_ssl=self.get_option("verify_ssl"),
                 timeout=self.get_option("timeout"),
             )
+            hostgroup = self.get_option("hostgroup")
+            if hostgroup:
+                hostgroup = client.resolve_hostgroup_filter(hostgroup)
             payload = client.get_hosts(
                 include_stats=self.get_option("include_stats"),
-                hostgroup=self.get_option("hostgroup"),
+                hostgroup=hostgroup,
             )
         except PatchMonAPIError as exc:
             raise AnsibleParserError(
@@ -190,6 +209,29 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         include_stats = self.get_option("include_stats")
         auto_groups = self.get_option("auto_groups") and include_stats
         prefer = self.get_option("inventory_hostname_prefer")
+
+        catalog = {}
+        for entry in hosts:
+            if not isinstance(entry, dict):
+                continue
+            for row in _host_group_rows(entry):
+                catalog[group_key(row)] = row
+        try:
+            assigned = assign_ansible_group_names(catalog.values())
+        except GroupNameError as exc:
+            raise AnsibleParserError(
+                "patchmon.core: {0}".format(to_native(exc))
+            ) from exc
+        for key, row in catalog.items():
+            ansible_name = self._sanitize_group_name(assigned[key])
+            self.inventory.add_group(ansible_name)
+            if row.get("id"):
+                self.inventory.set_variable(
+                    ansible_name, "patchmon_group_id", row["id"]
+                )
+            self.inventory.set_variable(
+                ansible_name, "patchmon_group_name", row["name"]
+            )
 
         for entry in hosts:
             if not isinstance(entry, dict):
@@ -210,18 +252,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.add_host(name)
 
             hostvars = self._build_hostvars(entry)
+            membership = []
+            for row in _host_group_rows(entry):
+                ansible_name = self._sanitize_group_name(
+                    assigned[group_key(row)]
+                )
+                membership.append(
+                    {
+                        "id": row.get("id"),
+                        "name": row["name"],
+                        "ansible_group": ansible_name,
+                    }
+                )
+                self._add_to_group(name, ansible_name)
+            membership.sort(
+                key=lambda item: (item["name"], item.get("id") or "")
+            )
+            hostvars["patchmon_groups"] = membership
             for key, value in hostvars.items():
                 self.inventory.set_variable(name, key, value)
-
-            for group_entry in entry.get("host_groups") or []:
-                if not isinstance(group_entry, dict):
-                    continue
-                group_name = group_entry.get("name")
-                if not group_name:
-                    continue
-                group_name = self._sanitize_group_name(to_text(group_name))
-                self.inventory.add_group(group_name)
-                self.inventory.add_host(name, group=group_name)
 
             if auto_groups:
                 self._add_auto_groups(name, entry)
@@ -299,3 +348,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         group_name = self._sanitize_group_name(group_name)
         self.inventory.add_group(group_name)
         self.inventory.add_host(host, group=group_name)
+
+
+def _host_group_rows(entry):
+    rows = []
+    for group_entry in entry.get("host_groups") or []:
+        if not isinstance(group_entry, dict):
+            continue
+        name = group_entry.get("name")
+        if name is None or to_text(name).strip() == "":
+            continue
+        row = {"name": to_text(name)}
+        if group_entry.get("id"):
+            row["id"] = to_text(group_entry.get("id"))
+        rows.append(row)
+    return rows

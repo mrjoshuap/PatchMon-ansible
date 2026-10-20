@@ -124,7 +124,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 | `verify_ssl` | no | `true` | TLS verify (`PATCHMON_VERIFY_SSL`) |
 | `timeout` | no | `30` | HTTP timeout (seconds) |
 | `include_stats` | no | `false` | Request `?include=stats` and set `patchmon_*` hostvars |
-| `hostgroup` | no | — | Filter by PatchMon group name(s) or UUID(s) |
+| `hostgroup` | no | — | Filter by exact PatchMon group name, group id, or `patchmon_<slug>` |
 | `auto_groups` | no | `true` | Derived groups when `include_stats` is true |
 | `inventory_hostname_prefer` | no | `hostname` | `hostname` or `friendly_name` |
 | `compose` / `groups` / `keyed_groups` | no | — | Ansible constructed inventory features |
@@ -141,9 +141,9 @@ compose:
   patchmon_has_security_updates: patchmon_security_updates_count | int > 0
 keyed_groups:
   - key: patchmon_update_state
-    prefix: update_state
+    prefix: patchmon_update_state
 groups:
-  reboot_and_security: patchmon_needs_reboot and patchmon_security_updates_count | int > 0
+  patchmon_reboot_and_security: patchmon_needs_reboot and patchmon_security_updates_count | int > 0
 ```
 
 #### Host variables (with `include_stats`)
@@ -159,6 +159,7 @@ groups:
 | `patchmon_needs_reboot` | boolean |
 | `patchmon_updates_count` / `patchmon_security_updates_count` / `patchmon_total_packages` | package counts |
 | `patchmon_last_update` | last agent report |
+| `patchmon_groups` | list of `{id, name, ansible_group}` for each PatchMon host group. `name` is the PatchMon value and may contain spaces |
 
 Unprefixed compose aliases `ip`, `hostname`, and `friendly_name` are also set for Constructable expressions. Prefer `patchmon_*` names in playbooks to avoid collisions with user variables.
 
@@ -175,7 +176,19 @@ Unprefixed compose aliases `ip`, `hostname`, and `friendly_name` are also set fo
 | `patchmon_inactive` | `effective_status == inactive` |
 | `patchmon_os_<os>` | sanitized `os_type` |
 
-Plus every PatchMon `host_groups[].name` as an Ansible group.
+#### Host groups
+
+Every PatchMon `host_groups[]` entry becomes an Ansible group under the same `patchmon_` prefix:
+
+| PatchMon name | Ansible group |
+|---------------|---------------|
+| `Automated` | `patchmon_automated` |
+| `No Reboot` | `patchmon_no_reboot` |
+| `No_Reboot` (and `No Reboot` also exists) | `patchmon_no_reboot_<group_id>` |
+
+Spaces, hyphens, and other characters Ansible rejects are replaced with `_`, then lowercased. The original name is group var `patchmon_group_name` and the UUID is `patchmon_group_id`. When two groups share a slug, both names append the sanitized group id so a space is not silently treated as an underscore. A slug that matches a stats auto-group (`patchmon_needs_reboot`, `patchmon_os_<type>`, and the others above) is suffixed the same way.
+
+`hostgroup` and `patchmon.core.host` `groups` accept the exact PatchMon name, the group id, or the Ansible group. Exact names win: `No Reboot` and `No_Reboot` stay different groups. `No_Reboot` or `patchmon_no_reboot` is accepted only when a single group sanitizes to that slug.
 
 ```bash
 ansible-playbook site.yml -i patchmon_inventory.yml --limit patchmon_security_required
