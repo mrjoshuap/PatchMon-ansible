@@ -13,11 +13,12 @@ Companion content:
 | Inventory | `patchmon.core.inventory` | List hosts / groups / stats hostvars |
 | Module | `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/notes`, `/package_reports`, `/agent_queue`, … |
 | Module | `patchmon.core.host_packages` | List packages (optionally updates only) |
-| Module | `patchmon.core.host` | Enroll (Auto-Enrollment) or delete (`host:delete`) |
+| Module | `patchmon.core.host` | Enroll, update desired state, or delete |
+| Module | `patchmon.core.host_action` | Queue a report, force an agent update, or regenerate agent credentials |
 | Module | `patchmon.core.host_token` | Enrollment script / admin token CRUD |
 | Lookup | `patchmon.core.host` | Ad-hoc per-host API lookups |
 | Role | `patchmon.core.agent` | Install / start / stop / report / remove agent |
-| Role | `patchmon.core.host` | Create or delete host entries |
+| Role | `patchmon.core.host` | Create, update desired state, or delete host entries |
 | Role | `patchmon.core.report_health` | Fail unless the newest package report succeeded |
 
 **Permissions matter.** Read plugins need Integration `host:get`. Creating hosts and installing agents need **Auto-Enrollment** credentials — not Integration Basic Auth. See **[docs/permissions.md](docs/permissions.md)**.
@@ -80,6 +81,7 @@ Full walkthrough (inventory + playbooks, troubleshooting): **[examples/README.md
 | [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `host_packages` (pending / security) |
 | [`examples/playbooks/host_info_by_id.yml`](examples/playbooks/host_info_by_id.yml) | Modules by UUID (no dynamic inventory) |
 | [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `host` lookup |
+| [`examples/playbooks/host_desired_state.yml`](examples/playbooks/host_desired_state.yml) | Notes, groups, and `host_action` |
 
 Quick path:
 
@@ -200,7 +202,8 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 |--------|---------|--------|
 | `patchmon.core.host_info` | Aggregate host detail endpoints via `gather_subset` | Integration `host:get` |
 | `patchmon.core.host_packages` | List packages; `updates_only: true` for pending updates | Integration `host:get` |
-| `patchmon.core.host` | Enroll host (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
+| `patchmon.core.host` | Enroll (`state=present`), update omitted-by-default fields, or delete (`state=absent`) | Auto-Enrollment / `host:patch` / `host:put` / `host:delete` |
+| `patchmon.core.host_action` | `fetch_report`, `force_agent_update`, or `regenerate_credentials` | Integration `host:update` |
 | `patchmon.core.host_token` | Fetch install script or manage enrollment tokens | Auto-Enrollment / admin JWT |
 
 ```yaml
@@ -239,7 +242,7 @@ Runnable copies: [`examples/playbooks/`](examples/playbooks/).
 | Role | Thin playbook | Purpose |
 |------|---------------|---------|
 | `patchmon.core.agent` | [`playbooks/agent.yml`](playbooks/agent.yml) | Install/start/stop/report/remove agent |
-| `patchmon.core.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll or delete host entries |
+| `patchmon.core.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll, update desired state, or delete host entries |
 
 See each role’s README for variables and required credentials.
 
@@ -258,6 +261,10 @@ See each role’s README for variables and required credentials.
 **Read-only** (inventory, info, packages, lookup): Integration API HTTP Basic Auth with at least `host:get`. Create under **Settings → Integrations → API**.
 
 **Provisioning** (create hosts, install agent): Auto-Enrollment key/secret under **Settings → Integrations → Auto-Enrollment**. There is no Integration `host:create` scope.
+
+**Desired state** (friendly name, notes, auto-update, host-down alerts, groups): Integration `host:get` plus `host:patch` and/or `host:put`. Omitted fields are left unchanged. `groups: []` clears membership.
+
+**Commands** (`host_action`): Integration `host:update`. A successful command is always changed. `regenerate_credentials` returns a one-time agent key and invalidates the previous one; set `no_log: true` on that task.
 
 **Delete hosts**: Integration scope `host:delete`.
 

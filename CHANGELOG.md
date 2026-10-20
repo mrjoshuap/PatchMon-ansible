@@ -6,6 +6,15 @@ All notable changes to this collection are documented in this file.
 
 ### Added
 
+- `patchmon.core.host` desired-state fields (`friendly_name_update`, `notes`,
+  `auto_update`, `host_down_alerts`, `groups`). Omitted fields are not sent.
+  Compares use `host:get`; scalar writes use `host:patch`; group replacement
+  uses `host:put`.
+- `patchmon.core.host_action` for `fetch_report`, `force_agent_update`, and
+  `regenerate_credentials` (`host:update`).
+- `host` role variables for the same desired-state fields. They stay unmanaged
+  until set.
+
 - Integration `host:get` reads for `package_reports` and `agent_queue` on the
   API client, `host_info`, and the `host` lookup. `host_info` also gathers
   `notes`.

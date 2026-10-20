@@ -150,6 +150,136 @@ def test_normalize_instance_url(given, expected):
     assert api.normalize_instance_url(given) == expected
 
 
+class _JsonResponse(object):
+    def __init__(self, payload, status_code=200):
+        self.status_code = status_code
+        self._payload = payload
+        self.is_redirect = False
+        self.headers = {"Content-Type": "application/json"}
+        self.content = b"{}"
+        self.text = "{}"
+
+    def json(self):
+        return self._payload
+
+
+def _client_with_router(monkeypatch, router):
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            return router(method, url, kwargs.get("json"))
+
+    client = api.PatchMonClient(
+        "https://patchmon.example.com/api/v1/api/hosts", "key", "secret"
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+    return client
+
+
+def test_reconcile_skips_writes_when_values_match(monkeypatch):
+    calls = []
+
+    def router(method, url, body):
+        calls.append((method, url, body))
+        if url.endswith("/notes"):
+            return _JsonResponse({"host_id": "h1", "notes": "same"})
+        if url.endswith("/info"):
+            return _JsonResponse(
+                {
+                    "friendly_name": "web1",
+                    "auto_update": False,
+                    "host_down_alerts_enabled": False,
+                    "host_groups": [{"id": "g1", "name": "Automated"}],
+                }
+            )
+        if url.endswith("/host-groups"):
+            return _JsonResponse(
+                {"host_groups": [{"id": "g1", "name": "Automated"}]}
+            )
+        raise AssertionError(url)
+
+    client = _client_with_router(monkeypatch, router)
+    result = client.reconcile_host(
+        "h1",
+        friendly_name="web1",
+        notes="same",
+        auto_update=False,
+        host_down_alerts=False,
+        groups=["Automated"],
+    )
+    assert result["changed"] is False
+    assert result["updates"] == []
+    assert all(call[0] == "GET" for call in calls)
+
+
+def test_reconcile_patches_only_drift_and_skips_in_check_mode(monkeypatch):
+    calls = []
+
+    def router(method, url, body):
+        calls.append((method, url, body))
+        if url.endswith("/notes"):
+            return _JsonResponse({"notes": "old"})
+        raise AssertionError(url)
+
+    client = _client_with_router(monkeypatch, router)
+    result = client.reconcile_host("h1", notes="new", check_mode=True)
+    assert result["changed"] is True
+    assert result["updates"] == ["notes"]
+    assert result["diff"]["before"]["notes"] == "old"
+    assert result["diff"]["after"]["notes"] == "new"
+    assert calls == [
+        (
+            "GET",
+            "https://patchmon.example.com/api/v1/api/hosts/h1/notes",
+            None,
+        )
+    ]
+
+    calls[:] = []
+    written = client.reconcile_host("h1", notes="new", check_mode=False)
+    assert written["changed"] is True
+    assert calls[1][0] == "PATCH"
+    assert calls[1][2] == {"notes": "new"}
+
+
+def test_reconcile_empty_groups_replaces_without_catalog_lookup(monkeypatch):
+    calls = []
+
+    def router(method, url, body):
+        calls.append((method, url, body))
+        if url.endswith("/info"):
+            return _JsonResponse(
+                {"host_groups": [{"id": "g1", "name": "Automated"}]}
+            )
+        if method == "PUT" and url.endswith("/groups"):
+            return _JsonResponse({"message": "updated"})
+        raise AssertionError((method, url))
+
+    client = _client_with_router(monkeypatch, router)
+    result = client.reconcile_host("h1", groups=[])
+    assert result["changed"] is True
+    assert result["updates"] == ["groups"]
+    assert calls[0][0] == "GET"
+    assert calls[1] == (
+        "PUT",
+        "https://patchmon.example.com/api/v1/api/hosts/h1/groups",
+        {"groupIds": []},
+    )
+    assert not any("/host-groups" in call[1] for call in calls)
+
+
+def test_reconcile_omitted_fields_do_not_call_the_api(monkeypatch):
+    def router(method, url, body):
+        raise AssertionError((method, url, body))
+
+    client = _client_with_router(monkeypatch, router)
+    result = client.reconcile_host("h1")
+    assert result["changed"] is False
+    assert result["updates"] == []
+
+
 def test_delete_host(monkeypatch):
     class FakeResponse(object):
         status_code = 200

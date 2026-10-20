@@ -5,6 +5,7 @@ requires_ansible: ">=2.15.0"
 action_groups:
   patchmon:
     - host
+    - host_action
     - host_info
     - host_packages
     - host_token

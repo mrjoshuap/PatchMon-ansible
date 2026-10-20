@@ -21,6 +21,7 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
 | [`playbooks/pending_updates.yml`](playbooks/pending_updates.yml) | `host_packages` with `updates_only`, security vs other |
 | [`playbooks/host_info_by_id.yml`](playbooks/host_info_by_id.yml) | Both modules on `localhost` with `-e patchmon_id=...` (no dynamic inventory) |
 | [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `host` lookup for `/system` |
+| [`playbooks/host_desired_state.yml`](playbooks/host_desired_state.yml) | `host` notes and groups, then `host_action` `fetch_report` |
 
 ---
 

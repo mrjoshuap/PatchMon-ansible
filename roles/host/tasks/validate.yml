@@ -8,6 +8,78 @@
     fail_msg: >-
       host_state must be one of {{ __host_valid_states | join(', ') }}.
 
+- name: Record whether managed host fields are set
+  ansible.builtin.set_fact:
+    __host_managed_fields: >-
+      {{
+        host_friendly_name_update is defined
+        or host_notes is defined
+        or host_auto_update is defined
+        or host_host_down_alerts is defined
+        or host_groups is defined
+      }}
+
+- name: Validate managed field types
+  when: __host_managed_fields | bool
+  block:
+    - name: Require Integration credentials for managed host fields
+      ansible.builtin.assert:
+        that:
+          - host_api_url is defined
+          - host_api_url | length > 0
+          - host_api_key is defined
+          - host_api_key | length > 0
+          - host_api_secret is defined
+          - host_api_secret | length > 0
+        fail_msg: >-
+          host_api_url, host_api_key, and host_api_secret are required when
+          host_friendly_name_update, host_notes, host_auto_update,
+          host_host_down_alerts, or host_groups is set. Needs host:get plus
+          host:patch and/or host:put. See docs/permissions.md.
+
+    - name: Validate host_friendly_name_update
+      when: host_friendly_name_update is defined
+      ansible.builtin.assert:
+        that:
+          - host_friendly_name_update is string
+          - host_friendly_name_update | length > 0
+          - host_friendly_name_update | length <= 100
+        fail_msg: host_friendly_name_update must be 1-100 characters when set.
+
+    - name: Validate host_notes
+      when: host_notes is defined
+      ansible.builtin.assert:
+        that:
+          - host_notes is string
+        fail_msg: host_notes must be a string. Use an empty string to clear notes.
+
+    - name: Validate host_auto_update
+      when: host_auto_update is defined
+      ansible.builtin.assert:
+        that:
+          - host_auto_update | type_debug == 'bool'
+        fail_msg: host_auto_update must be true or false when set. Omit it to leave the flag unchanged.
+
+    - name: Validate host_host_down_alerts
+      when: host_host_down_alerts is defined
+      ansible.builtin.assert:
+        that:
+          - host_host_down_alerts | type_debug == 'bool'
+        fail_msg: >-
+          host_host_down_alerts must be true or false when set.
+          Omit it to leave the current override unchanged.
+
+    - name: Validate host_groups
+      when: host_groups is defined
+      ansible.builtin.assert:
+        that:
+          - host_groups is sequence
+          - host_groups is not string
+          - host_groups is not mapping
+        fail_msg: >-
+          host_groups must be a list of group names or UUIDs.
+          An empty list clears membership. Omit the variable to leave groups unchanged.
+
 - name: Validate present-state enrollment credentials
   ansible.builtin.assert:
     that:
@@ -21,10 +93,13 @@
       - host_friendly_name | length > 0
     fail_msg: >-
       host_server_url, host_enrollment_key, host_enrollment_secret, and
-      host_friendly_name are required when host_state=present.
+      host_friendly_name are required when host_state=present unless this run
+      only updates an existing host (set host_id plus a managed field).
       Auto-Enrollment tokens create host entries; Integration API credentials
       with only host:get cannot create hosts. See docs/permissions.md.
-  when: host_state == 'present'
+  when: >-
+    host_state == 'present'
+    and not ((__host_managed_fields | bool) and (host_id | default('') | length > 0))
 
 - name: Validate absent-state Integration credentials
   ansible.builtin.assert:
