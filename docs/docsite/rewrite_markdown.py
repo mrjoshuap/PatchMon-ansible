@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Rewrite README and CHANGELOG links for the Sphinx docsite."""
+"""Rewrite README, CHANGELOG, and PROPOSAL links for the Sphinx docsite."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ DOC_LINKS = {
     "docs/permissions.md": "permissions.html",
     "docs/migrating_to_2.0.md": "migrating_to_2.0.html",
     "CHANGELOG.md": "changelog.html",
+    "PROPOSAL.md": "proposal.html",
     "examples/README.md": "quick_start.html",
 }
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
@@ -54,7 +55,7 @@ def main() -> int:
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     dest = os.path.join(root, "built-docs", "included")
     os.makedirs(dest, exist_ok=True)
-    for name in ("README.md", "CHANGELOG.md"):
+    for name in ("README.md", "CHANGELOG.md", "PROPOSAL.md"):
         with open(os.path.join(root, name), encoding="utf-8") as handle:
             rewritten = rewrite(handle.read())
         with open(os.path.join(dest, name), "w", encoding="utf-8") as handle:

@@ -40,6 +40,11 @@ _static = os.path.abspath(
 html_static_path = [_static]
 html_css_files = ["patchmon.css"]
 html_favicon = os.path.join(_static, "favicon.svg")
+# The Ansible theme includes banner.html at the top of every page.
+_templates = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "docs", "docsite", "_templates")
+)
+templates_path = [_templates]
 
 
 def _insert_markdown(app, docname, source):
@@ -50,22 +55,22 @@ def _insert_markdown(app, docname, source):
             "Ansible Collection - patchmon.core",
         ),
         "docsite/changelog": ("CHANGELOG.md", "Changelog"),
+        "docsite/proposal": ("PROPOSAL.md", "Proposal"),
     }
     page = pages.get(docname)
-    if page is None:
-        return
-    filename, title = page
-    # Relative to built-docs/rst/docsite/. A leading slash is the Sphinx source
-    # root, so this cannot be an absolute filesystem path.
-    included = os.path.join("..", "..", "..", "built-docs", "included", filename)
-    label = next(
-        (line for line in source[0].splitlines() if line.startswith(".. _")),
-        "",
-    )
-    source[0] = (
-        f"{label}\n\n{title}\n{'=' * len(title)}\n\n"
-        f".. include:: {included}\n   :parser: myst_parser.sphinx_\n"
-    )
+    if page is not None:
+        filename, title = page
+        # Relative to built-docs/rst/docsite/. A leading slash is the Sphinx source
+        # root, so this cannot be an absolute filesystem path.
+        included = os.path.join("..", "..", "..", "built-docs", "included", filename)
+        label = next(
+            (line for line in source[0].splitlines() if line.startswith(".. _")),
+            "",
+        )
+        source[0] = (
+            f"{label}\n\n{title}\n{'=' * len(title)}\n\n"
+            f".. include:: {included}\n   :parser: myst_parser.sphinx_\n"
+        )
 
 
 def setup(app):

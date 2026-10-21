@@ -435,3 +435,35 @@ html.writer-html4 .rst-content dl:not(.docutils) dl > dt {
   background: #450a0a !important;
   border-color: #f87171 !important;
 }
+
+.patchmon-proposal-banner,
+.patchmon-proposal-bar {
+  background: #14532d !important;
+  border: 1px solid var(--patchmon-green);
+  border-radius: 8px;
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.patchmon-proposal-banner {
+  border-width: 2px;
+  padding: 1.15rem 1.35rem;
+}
+
+.patchmon-proposal-banner p,
+.patchmon-proposal-bar p {
+  color: var(--patchmon-text) !important;
+  margin-bottom: 0.65rem;
+}
+
+.patchmon-proposal-banner p:last-child,
+.patchmon-proposal-bar p:last-child {
+  margin-bottom: 0;
+}
+
+.patchmon-proposal-banner a,
+.patchmon-proposal-bar a {
+  color: #ecfdf5 !important;
+  font-weight: 700;
+  text-decoration: underline;
+}

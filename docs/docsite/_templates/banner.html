@@ -1,0 +1,12 @@
+{# Included by sphinx_ansible_theme at the top of each page. #}
+{% if pagename == "index" %}
+<div class="patchmon-proposal-banner" role="note">
+  <p><strong>Proposal: adopt patchmon.core 2.0 as the official Ansible collection</strong></p>
+  <p>This fork replaces <code>patchmon.dynamic_inventory</code> 1.0.0. The breaking change is the dynamic inventory: install <code>patchmon.core</code> and set <code>plugin: patchmon.core.inventory</code>. The modules, roles, lookup, and inventory filters are documented for advanced Ansible users.</p>
+  <p><a href="{{ pathto('docsite/proposal') }}">Read the full proposal</a></p>
+</div>
+{% elif pagename != "docsite/proposal" %}
+<div class="patchmon-proposal-bar" role="note">
+  <p><a href="{{ pathto('docsite/proposal') }}">Proposal: adopt patchmon.core 2.0 as the official Ansible collection</a></p>
+</div>
+{% endif %}

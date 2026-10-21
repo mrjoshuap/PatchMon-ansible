@@ -2,6 +2,7 @@
 sections:
   - title: Start here
     toctree:
+      - proposal
       - readme
       - quick_start
       - troubleshooting
