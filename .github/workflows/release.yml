@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # For workflow_dispatch against an existing tag, fetch tags
           fetch-depth: 0
@@ -80,7 +80,7 @@ jobs:
           echo "galaxy.yml version ${GALAXY_VERSION} matches tag"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -167,7 +167,7 @@ jobs:
           echo "path=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: patchmon.core ${{ steps.meta.outputs.version }}
