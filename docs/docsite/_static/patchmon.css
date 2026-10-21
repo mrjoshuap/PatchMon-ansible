@@ -1,0 +1,164 @@
+/* Align the Ansible Sphinx theme with PatchMon's dark slate and green. */
+
+:root {
+  --patchmon-bg: #020617;
+  --patchmon-surface: #0f172a;
+  --patchmon-elevated: #1e293b;
+  --patchmon-text: #f1f5f9;
+  --patchmon-muted: #94a3b8;
+  --patchmon-green: #22c55e;
+  --patchmon-green-deep: #16a34a;
+  --patchmon-orange: #f7931e;
+}
+
+.DocSite-globalNav,
+.ansibleNav {
+  background: var(--patchmon-bg) !important;
+  border-bottom: 1px solid var(--patchmon-elevated);
+}
+
+.DocSite-globalNav a,
+.ansibleNav a {
+  color: var(--patchmon-muted) !important;
+}
+
+.DocSite-globalNav a:hover,
+.ansibleNav a:hover {
+  color: var(--patchmon-green) !important;
+}
+
+.DocSite-nav,
+.wy-side-nav-search,
+.wy-nav-top {
+  background: var(--patchmon-surface) !important;
+}
+
+.DocSiteNav-title,
+.wy-side-nav-search a,
+.wy-nav-top a {
+  color: var(--patchmon-text) !important;
+}
+
+.wy-nav-side {
+  background: var(--patchmon-bg) !important;
+}
+
+.wy-menu-vertical a {
+  color: var(--patchmon-muted) !important;
+}
+
+.wy-menu-vertical a:hover {
+  background: var(--patchmon-elevated) !important;
+  color: var(--patchmon-green) !important;
+}
+
+.wy-menu-vertical li.current > a,
+.wy-menu-vertical li.toctree-l1.current > a {
+  background: #14532d !important;
+  border-right: 3px solid var(--patchmon-green);
+  color: var(--patchmon-text) !important;
+}
+
+.wy-nav-content-wrap,
+.wy-nav-content,
+.wy-body-for-nav {
+  background: var(--patchmon-surface) !important;
+  color: var(--patchmon-text);
+}
+
+.rst-content,
+.rst-content .section {
+  color: var(--patchmon-text);
+}
+
+.rst-content h1,
+.rst-content h2,
+.rst-content h3,
+.rst-content h4,
+.rst-content h5,
+.rst-content h6,
+.rst-content .toctree-wrapper p,
+.rst-content p,
+.rst-content li,
+.rst-content dd,
+.rst-content dt {
+  color: var(--patchmon-text);
+}
+
+.rst-content h1,
+.rst-content h2 {
+  border-bottom-color: var(--patchmon-elevated);
+}
+
+.rst-content a,
+.rst-content a:visited {
+  color: var(--patchmon-green);
+}
+
+.rst-content a:hover {
+  color: var(--patchmon-orange);
+}
+
+.rst-content code,
+.rst-content tt {
+  background: var(--patchmon-elevated);
+  border: 1px solid #334155;
+  color: #bbf7d0;
+}
+
+.rst-content pre,
+.rst-content div.highlight,
+.highlight {
+  background: var(--patchmon-bg) !important;
+}
+
+.rst-content table.docutils,
+.rst-content table.docutils td,
+.rst-content table.docutils th {
+  background: var(--patchmon-bg);
+  border-color: var(--patchmon-elevated) !important;
+  color: var(--patchmon-text);
+}
+
+.rst-content table.docutils th {
+  background: var(--patchmon-elevated);
+}
+
+.wy-breadcrumbs,
+.wy-breadcrumbs a,
+.rst-footer-buttons {
+  color: var(--patchmon-muted) !important;
+}
+
+.btn,
+.btn-neutral {
+  background: var(--patchmon-elevated) !important;
+  color: var(--patchmon-text) !important;
+  border-color: #334155 !important;
+}
+
+.btn:hover,
+.btn-neutral:hover {
+  background: #14532d !important;
+  color: var(--patchmon-text) !important;
+}
+
+.wy-side-nav-search input[type="text"] {
+  background: var(--patchmon-bg);
+  border: 1px solid #334155;
+  color: var(--patchmon-text);
+}
+
+.rst-content .admonition,
+.rst-content .note,
+.rst-content .warning {
+  background: var(--patchmon-bg);
+  color: var(--patchmon-text);
+}
+
+.mermaid {
+  background: var(--patchmon-bg);
+  border: 1px solid var(--patchmon-elevated);
+  border-radius: 8px;
+  padding: 12px;
+}

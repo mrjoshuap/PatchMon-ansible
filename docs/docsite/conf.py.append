@@ -1,0 +1,39 @@
+import os
+
+extensions.extend(["myst_parser", "sphinxcontrib.mermaid"])
+
+myst_enable_extensions = ["colon_fence", "deflist", "tasklist"]
+myst_fence_as_directive = ["mermaid"]
+myst_heading_anchors = 3
+suppress_warnings = ["myst.xref_missing"]
+
+mermaid_version = "11.4.1"
+mermaid_init_js = """
+mermaid.initialize({
+  startOnLoad: true,
+  theme: "dark",
+  themeVariables: {
+    primaryColor: "#14532d",
+    primaryTextColor: "#f1f5f9",
+    primaryBorderColor: "#22c55e",
+    lineColor: "#22c55e",
+    secondaryColor: "#1e293b",
+    tertiaryColor: "#0f172a",
+    background: "#020617",
+    mainBkg: "#14532d",
+    nodeBorder: "#22c55e",
+    clusterBkg: "#0f172a",
+    titleColor: "#f1f5f9",
+    edgeLabelBackground: "#1e293b"
+  }
+});
+"""
+
+html_theme_options["style_nav_header_background"] = "#020617"
+
+_static = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "docs", "docsite", "_static")
+)
+html_static_path = [_static]
+html_css_files = ["patchmon.css"]
+html_favicon = os.path.join(_static, "favicon.svg")

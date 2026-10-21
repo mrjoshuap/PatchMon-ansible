@@ -47,18 +47,7 @@ jobs:
           --plugin-docs --skip-rstcheck .
 
       - name: Build docsite
-        run: |
-          rm -rf built-docs
-          mkdir -m 700 built-docs
-          antsibull-docs sphinx-init --use-current --squash-hierarchy --fail-on-error \
-            --project "patchmon.core" \
-            --title "patchmon.core" \
-            --html-short-title "patchmon.core" \
-            --copyright "PatchMon contributors" \
-            --extra-html-theme-options "documentation_home_url=https://mrjoshuap.github.io/PatchMon-ansible/" \
-            patchmon.core --dest-dir built-docs
-          python -m pip install -r built-docs/requirements.txt
-          ./built-docs/build.sh
+        run: bash docs/build-docsite.sh
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'

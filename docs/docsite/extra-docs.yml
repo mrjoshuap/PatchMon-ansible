@@ -1,6 +1,12 @@
 ---
 sections:
+  - title: Start here
+    toctree:
+      - readme
+      - quick_start
+      - troubleshooting
   - title: Guides
     toctree:
       - permissions
       - migrating_to_2.0
+      - changelog
