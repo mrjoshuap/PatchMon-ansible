@@ -9,6 +9,8 @@ All notable changes to this collection are documented in this file.
 - Example playbooks for the enroll, maintain, all-pending, and retire flow
   under `examples/playbooks/`. Policy group membership stays on the
   Auto-Enrollment token. There is no Integration route to set it from a play.
+- `examples/playbooks/lookup_system.yml` also looks up stats, pending
+  packages, the newest package report, and the agent queue.
 
 ## [2.0.1] - 2026-10-21
 

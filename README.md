@@ -79,7 +79,7 @@ Full walkthrough (inventory + playbooks, troubleshooting): **[examples/README.md
 | [`examples/playbooks/host_info.yml`](examples/playbooks/host_info.yml) | `host_info` over inventory hosts |
 | [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `host_packages` (pending / security) |
 | [`examples/playbooks/host_info_by_id.yml`](examples/playbooks/host_info_by_id.yml) | Modules by UUID (no dynamic inventory) |
-| [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `host` lookup |
+| [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `host` lookup (system, stats, packages, reports, queue) |
 
 Quick path:
 
@@ -365,7 +365,7 @@ See each role’s README for variables and required credentials.
     patchmon_system: "{{ lookup('patchmon.core.host', patchmon_id, resource='system') }}"
 ```
 
-`resource` may be `info`, `stats`, `system`, `network`, `integrations`, `packages`, or `notes`. For packages with updates only, pass `updates_only=true`. See [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml).
+`resource` may be `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes`, `package_reports`, or `agent_queue`. For packages with updates only, pass `updates_only=true`. `package_reports` and `agent_queue` take `limit` (default 10). [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) fetches system, stats, pending packages, the newest package report, and the agent queue.
 
 ## Authentication and permissions
 

@@ -58,6 +58,18 @@ EXAMPLES = r"""
 - name: List packages needing updates
   ansible.builtin.set_fact:
     pm_packages: "{{ lookup('patchmon.core.host', patchmon_id, resource='packages', updates_only=true) }}"
+
+- name: Read update counts before a maintenance window
+  ansible.builtin.debug:
+    msg: "{{ lookup('patchmon.core.host', patchmon_id, resource='stats') }}"
+
+- name: Read the newest package reports
+  ansible.builtin.debug:
+    msg: "{{ lookup('patchmon.core.host', patchmon_id, resource='package_reports', limit=10) }}"
+
+- name: Read failed agent jobs
+  ansible.builtin.debug:
+    msg: "{{ lookup('patchmon.core.host', patchmon_id, resource='agent_queue', limit=10) }}"
 """
 
 RETURN = r"""

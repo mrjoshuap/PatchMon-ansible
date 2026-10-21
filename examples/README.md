@@ -20,7 +20,7 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
 | [`playbooks/host_info.yml`](playbooks/host_info.yml) | `host_info` against inventory hosts (`patchmon_id`) |
 | [`playbooks/pending_updates.yml`](playbooks/pending_updates.yml) | `host_packages` with `updates_only`, security vs other |
 | [`playbooks/host_info_by_id.yml`](playbooks/host_info_by_id.yml) | Both modules on `localhost` with `-e patchmon_id=...` (no dynamic inventory) |
-| [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `host` lookup for `/system` |
+| [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `host` lookup for system, stats, pending packages, package reports, and the agent queue |
 
 ### Fleet lifecycle
 
@@ -244,7 +244,7 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 |-----------------|------|
 | `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/system`, `/network`, `/integrations` via `gather_subset` |
 | `patchmon.core.host_packages` | List packages; `updates_only: true` for pending updates |
-| `lookup('patchmon.core.host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes` |
+| `lookup('patchmon.core.host', id, resource='…')` | One-shot JSON for `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes`, `package_reports`, `agent_queue` |
 
 `host_info` return shape: `host.info`, `host.stats`, `host.system`, …  
 `host_packages` return shape: `packages`, `total`, `security_updates_count`, `host`.

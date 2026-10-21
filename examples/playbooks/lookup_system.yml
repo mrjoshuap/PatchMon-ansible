@@ -1,5 +1,8 @@
 ---
-# Demonstrate the patchmon_host lookup plugin (system resource).
+# Operational patchmon.core.host lookups for one host UUID.
+# system: reboot and kernel. stats: whether the host is behind.
+# packages: pending updates, including security names. package_reports:
+# newest agent report. agent_queue: failed agent jobs.
 #
 # Requires:
 #   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
@@ -9,10 +12,11 @@
 #   ansible-playbook examples/playbooks/lookup_system.yml \
 #     -e patchmon_id=550e8400-e29b-41d4-a716-446655440000
 #
-# Other resource= values: info, stats, system, network, integrations, packages, notes
-# For packages with updates only, add updates_only=true to the lookup kwargs.
+# Other resource= values: info, network, integrations, notes.
+# packages accepts updates_only=true. package_reports and agent_queue
+# accept limit (PatchMon default 10).
 
-- name: Lookup PatchMon system details
+- name: Lookup PatchMon host details for operations
   hosts: localhost
   connection: local
   gather_facts: false
@@ -43,3 +47,105 @@
           installed_kernel: "{{ patchmon_system['installed_kernel_version'] | default('n/a') }}"
           architecture: "{{ patchmon_system['architecture'] | default('n/a') }}"
           uptime: "{{ patchmon_system['system_uptime'] | default('n/a') }}"
+
+    - name: Fetch /hosts/:id/stats via lookup
+      ansible.builtin.set_fact:
+        patchmon_stats: >-
+          {{ lookup(
+               'patchmon.core.host',
+               patchmon_id,
+               resource='stats'
+             ) }}
+
+    - name: Show whether the host is behind
+      ansible.builtin.debug:
+        msg:
+          update_state: "{{ patchmon_stats['update_state'] | default('') }}"
+          updates_count: "{{ patchmon_stats['updates_count'] | default(0) }}"
+          security_updates_count: "{{ patchmon_stats['security_updates_count'] | default(0) }}"
+          reporting_state: "{{ patchmon_stats['reporting_state'] | default('') }}"
+          effective_status: "{{ patchmon_stats['effective_status'] | default('') }}"
+          last_update: "{{ patchmon_stats['last_update'] | default('n/a') }}"
+
+    - name: Fetch packages with updates via lookup
+      ansible.builtin.set_fact:
+        patchmon_packages: >-
+          {{ lookup(
+               'patchmon.core.host',
+               patchmon_id,
+               resource='packages',
+               updates_only=true
+             ) }}
+
+    - name: Summarize pending updates
+      ansible.builtin.debug:
+        msg: >-
+          {{ patchmon_packages.total | default(0) }} package(s) with updates.
+
+    - name: List security updates
+      ansible.builtin.debug:
+        msg: >-
+          [SECURITY] {{ item.name }}:
+          {{ item.current_version | default('?') }} -> {{ item.available_version | default('?') }}
+      loop: >-
+        {{
+          patchmon_packages.packages
+          | default([])
+          | selectattr('is_security_update')
+          | list
+        }}
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Fetch recent package reports via lookup
+      ansible.builtin.set_fact:
+        patchmon_package_reports: >-
+          {{ lookup(
+               'patchmon.core.host',
+               patchmon_id,
+               resource='package_reports',
+               limit=10
+             ) }}
+
+    - name: Record package reports
+      ansible.builtin.set_fact:
+        patchmon_reports: "{{ patchmon_package_reports.reports | default([]) }}"
+
+    - name: Select the newest package report
+      ansible.builtin.set_fact:
+        patchmon_latest_report: "{{ patchmon_reports | sort(attribute='date') | last }}"
+      when: patchmon_reports | length > 0
+
+    - name: Show the newest package report
+      ansible.builtin.debug:
+        msg:
+          status: "{{ patchmon_latest_report.status | default('missing') }}"
+          date: "{{ patchmon_latest_report.date | default('none') }}"
+          error: "{{ patchmon_latest_report.error_message | default('') }}"
+      when: patchmon_reports | length > 0
+
+    - name: Note when PatchMon has no package reports
+      ansible.builtin.debug:
+        msg: >-
+          PatchMon returned no package reports. Run an agent report before
+          patching.
+      when: patchmon_reports | length == 0
+
+    - name: Fetch the agent job queue via lookup
+      ansible.builtin.set_fact:
+        patchmon_agent_queue: >-
+          {{ lookup(
+               'patchmon.core.host',
+               patchmon_id,
+               resource='agent_queue',
+               limit=10
+             ) }}
+
+    - name: Show failed agent jobs
+      ansible.builtin.debug:
+        msg:
+          failed: >-
+            {{
+              (patchmon_agent_queue.queue_status | default({})).failed
+              | default(0)
+            }}
