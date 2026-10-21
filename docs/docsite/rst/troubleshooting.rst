@@ -23,9 +23,9 @@ Check the API from the control node before debugging Ansible. Use the same Integ
    * - Plugin not found or ignored
      - The collection is installed, ``enable_plugins`` includes ``patchmon.core.inventory``, and the inventory filename ends in ``.yml`` or ``.yaml``.
    * - HTTP 401 or 403
-     - ``PATCHMON_API_KEY`` and ``PATCHMON_API_SECRET`` are the Integration token, and the token has the scope that call needs. ``host:get`` does not imply ``host:patch``, ``host:put``, ``host:update``, or ``host:delete``. Creating a host or installing the agent needs Auto-Enrollment, not this token. See :ref:`ansible_collections.patchmon.core.docsite.permissions`.
+     - ``PATCHMON_API_KEY`` and ``PATCHMON_API_SECRET`` are the Integration token, and the token has the scope that call needs. ``host:get`` does not imply ``host:delete``. Creating a host or installing the agent needs Auto-Enrollment, not this token. See :ref:`ansible_collections.patchmon.core.docsite.permissions`.
    * - Empty inventory
-     - Hosts are enrolled in PatchMon, and ``hostgroup`` is not filtering them out. An exact name such as ``No Reboot`` is not the same group as ``No_Reboot``.
+     - Hosts are enrolled in PatchMon, and ``hostgroup`` is not filtering them out. Pass a group id or the exact PatchMon name. ``No Reboot`` is not the same group as ``No_Reboot``, and a ``patchmon_<slug>`` token is not translated.
    * - Redirect or empty body
      - Use ``https://<patchmon>/api/v1/api/hosts`` without a trailing slash that returns a redirect.
    * - TLS errors

@@ -13,12 +13,11 @@ Companion content:
 | Inventory | `patchmon.core.inventory` | List hosts / groups / stats hostvars |
 | Module | `patchmon.core.host_info` | Aggregate `/info`, `/stats`, `/notes`, `/package_reports`, `/agent_queue`, … |
 | Module | `patchmon.core.host_packages` | List packages (optionally updates only) |
-| Module | `patchmon.core.host` | Enroll, update desired state, or delete |
-| Module | `patchmon.core.host_action` | Queue a report, force an agent update, or regenerate agent credentials |
+| Module | `patchmon.core.host` | Enroll or delete a host entry |
 | Module | `patchmon.core.host_token` | Enrollment script / admin token CRUD |
 | Lookup | `patchmon.core.host` | Ad-hoc per-host API lookups |
 | Role | `patchmon.core.agent` | Install / start / stop / report / remove agent |
-| Role | `patchmon.core.host` | Create, update desired state, or delete host entries |
+| Role | `patchmon.core.host` | Create or delete host entries |
 | Role | `patchmon.core.report_health` | Fail unless the newest package report succeeded |
 
 **Permissions matter.** Read plugins need Integration `host:get`. Creating hosts and installing agents need **Auto-Enrollment** credentials — not Integration Basic Auth. See **[docs/permissions.md](docs/permissions.md)**.
@@ -81,7 +80,6 @@ Full walkthrough (inventory + playbooks, troubleshooting): **[examples/README.md
 | [`examples/playbooks/pending_updates.yml`](examples/playbooks/pending_updates.yml) | `host_packages` (pending / security) |
 | [`examples/playbooks/host_info_by_id.yml`](examples/playbooks/host_info_by_id.yml) | Modules by UUID (no dynamic inventory) |
 | [`examples/playbooks/lookup_system.yml`](examples/playbooks/lookup_system.yml) | `host` lookup |
-| [`examples/playbooks/host_desired_state.yml`](examples/playbooks/host_desired_state.yml) | Notes, groups, and `host_action` |
 
 Quick path:
 
@@ -195,7 +193,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 | `timeout` | no | `30` | HTTP timeout (seconds) |
 | `include_stats` | no | `false` | Request `?include=stats` and set `patchmon_*` hostvars |
 | `stats_var_scope` | no | `all` | `all` exports every stats hostvar. `targeting` keeps group and play-gate fields and omits telemetry |
-| `hostgroup` | no | — | Filter by exact PatchMon group name, group id, or `patchmon_<slug>` |
+| `hostgroup` | no | — | Filter by group id or the exact PatchMon name. A `patchmon_<slug>` token is not translated |
 | `auto_groups` | no | `true` | Derived groups when `include_stats` is true |
 | `inventory_hostname_prefer` | no | `hostname` | `hostname` or `friendly_name` |
 | `compose` / `groups` / `keyed_groups` | no | — | Ansible constructed inventory features |
@@ -272,7 +270,7 @@ Every PatchMon `host_groups[]` entry becomes an Ansible group under the same `pa
 
 Spaces, hyphens, and other characters Ansible rejects are replaced with `_`, then lowercased. The original name is group var `patchmon_group_name` and the UUID is `patchmon_group_id`. When two groups share a slug, both names append the sanitized group id so a space is not silently treated as an underscore. A slug that matches a stats auto-group (`patchmon_needs_reboot`, `patchmon_os_<type>`, and the others above) is suffixed the same way.
 
-`hostgroup` and `patchmon.core.host` `groups` accept the exact PatchMon name, the group id, or the Ansible group. Exact names win: `No Reboot` and `No_Reboot` stay different groups. `No_Reboot` or `patchmon_no_reboot` is accepted only when a single group sanitizes to that slug.
+`hostgroup` accepts a group id or the exact PatchMon name. `No Reboot` and `No_Reboot` stay different groups. An Ansible `patchmon_<slug>` token is not translated, because the Integration API has no group catalog.
 
 ```bash
 ansible-playbook site.yml -i patchmon_inventory.yml --limit patchmon_security_required
@@ -299,8 +297,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 |--------|---------|--------|
 | `patchmon.core.host_info` | Aggregate host detail endpoints via `gather_subset`. `inject_facts: true` sets `ansible_facts.patchmon` | Integration `host:get` |
 | `patchmon.core.host_packages` | List packages; `updates_only: true` for pending updates | Integration `host:get` |
-| `patchmon.core.host` | Enroll (`state=present`), update omitted-by-default fields, or delete (`state=absent`) | Auto-Enrollment / `host:patch` / `host:put` / `host:delete` |
-| `patchmon.core.host_action` | `fetch_report`, `force_agent_update`, or `regenerate_credentials` | Integration `host:update` |
+| `patchmon.core.host` | Enroll (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
 | `patchmon.core.host_token` | Fetch install script or manage enrollment tokens | Auto-Enrollment / admin JWT |
 
 ```yaml
@@ -349,7 +346,7 @@ Runnable copies: [`examples/playbooks/`](examples/playbooks/).
 | Role | Thin playbook | Purpose |
 |------|---------------|---------|
 | `patchmon.core.agent` | [`playbooks/agent.yml`](playbooks/agent.yml) | Install/start/stop/report/remove agent |
-| `patchmon.core.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll, update desired state, or delete host entries |
+| `patchmon.core.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll or delete host entries |
 
 See each role’s README for variables and required credentials.
 
@@ -368,10 +365,6 @@ See each role’s README for variables and required credentials.
 **Read-only** (inventory, info, packages, lookup): Integration API HTTP Basic Auth with at least `host:get`. Create under **Settings → Integrations → API**.
 
 **Provisioning** (create hosts, install agent): Auto-Enrollment key/secret under **Settings → Integrations → Auto-Enrollment**. There is no Integration `host:create` scope.
-
-**Desired state** (friendly name, notes, auto-update, host-down alerts, groups): Integration `host:get` plus `host:patch` and/or `host:put`. Omitted fields are left unchanged. `groups: []` clears membership.
-
-**Commands** (`host_action`): Integration `host:update`. A successful command is always changed. `regenerate_credentials` returns a one-time agent key and invalidates the previous one; set `no_log: true` on that task.
 
 **Delete hosts**: Integration scope `host:delete`.
 
@@ -393,9 +386,13 @@ export PATCHMON_ENROLLMENT_SECRET=...
 
 Host compliance status is **not** currently exposed on the scoped Integration API (`/api/v1/api/...`). Compliance routes live under `/api/v1/compliance/*` with session RBAC. This collection does not scrape session cookies. Tracking request: [Expose compliance summary on the Integration API](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj). Once those fields land, a follow-up release will map `patchmon_compliance_*` hostvars and groups.
 
+## Host changes the Integration API does not expose
+
+Changing a host's friendly name, notes, auto-update flag, host-down alerts, or group membership requires a signed-in user (`PATCH` and `PUT` under `/api/v1/hosts/...`). The same is true of fetch-report, force-agent-update, and regenerate-credentials. This collection does not call those routes and does not use session cookies. Inventory still maps `host_groups` from `GET /api/v1/api/hosts`. Reading notes stays on `host_info`. Group writes are tracked by [PatchMon issue 595](https://github.com/PatchMon/PatchMon/issues/595). Paste-ready requests: [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md).
+
 ## Feedback this collection addresses
 
-PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go. The request to adopt this collection is [PROPOSAL.md](PROPOSAL.md).
+PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go. The request to adopt this collection is [PROPOSAL.md](PROPOSAL.md). Limits this collection does not paper over are in [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md).
 
 | Request | What this collection provides |
 |---------|-------------------------------|

@@ -73,13 +73,12 @@ verify_ssl: true
 # ---------------------------------------------------------------------------
 
 # Limit the API query to one or more PatchMon host groups (OR logic).
-# Exact name (spaces allowed), group id, or Ansible group patchmon_<slug>.
-# No Reboot and No_Reboot are different. A sanitized token matches only when
-# one group collapses to that slug. Omit to return all hosts.
+# Group id or the exact PatchMon name. No Reboot and No_Reboot are different.
+# A patchmon_<slug> token is not translated. Omit to return all hosts.
 # hostgroup: Production
 # hostgroup: "No Reboot"
 # hostgroup:
-#   - patchmon_production
+#   - Production
 #   - Development
 
 # Inventory hostname source (default: hostname)

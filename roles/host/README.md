@@ -7,7 +7,6 @@ Create (auto-enroll) or delete PatchMon host entries.
 | `host_state` | Credential | Scope / permission | Effect |
 |--------------|------------|--------------------|--------|
 | `present` | Auto-Enrollment key + secret | Enrollment token | Creates a host row and returns one-time `api_id` / `api_key` |
-| `present` with managed fields | Integration API key + secret | `host:get` plus `host:patch` and/or `host:put` | Updates only the fields you set. Enrollment is optional when `host_id` is set |
 | `absent` | Integration API key + secret | `host:delete` | **Permanently deletes** the host and related data |
 
 Integration tokens with only `host:get` **cannot** create hosts. There is no `host:create` Integration scope; use Auto-Enrollment.
@@ -25,13 +24,8 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
 | `host_enroll_agent` | `false` | After present, run `patchmon.core.agent` |
 | `host_fetch_script` | `false` | Fetch installer script via `host_token` (`dest` is required) |
 | `host_script_controller_path` | `/tmp/patchmon-enroll-<hostname>.sh` | Controller file for the fetched script (mode `0700`; contains secrets) |
-| `host_friendly_name_update` | unset | Desired friendly name. Unset leaves the current name unchanged |
-| `host_notes` | unset | Desired notes. `""` clears notes. Unset leaves notes unchanged |
-| `host_auto_update` | unset | `true` or `false`. Unset leaves the flag unchanged |
-| `host_host_down_alerts` | unset | `true` or `false` override. Unset leaves the current setting unchanged |
-| `host_groups` | unset | List of exact PatchMon group names, group ids, or Ansible groups (`patchmon_<slug>`). A sanitized name matches only when one group collapses to that slug (`No Reboot` vs `No_Reboot`). Replaces membership. `[]` clears it. Unset leaves groups unchanged |
 
-Do not default `host_groups` to `[]` or `host_notes` to `""` in inventory. Those values are applied. Commands such as regenerate-credentials stay on `patchmon.core.host_action` and are not part of this role.
+Friendly name, notes, auto-update, host-down alerts, and group membership are session routes. This role does not change them. See [PATCHMON-FEEDBACK.md](../../PATCHMON-FEEDBACK.md).
 
 ## Example
 

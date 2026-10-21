@@ -4,6 +4,18 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Breaking
+
+- `patchmon.core.host` no longer updates friendly name, notes, auto-update,
+  host-down alerts, or group membership. Those writes are session routes, not
+  Integration API routes. The module enrolls (`state=present`) or deletes
+  (`state=absent`).
+- Removed `patchmon.core.host_action` (`fetch_report`, `force_agent_update`,
+  `regenerate_credentials`). Those commands are session routes.
+- Inventory `hostgroup` is passed to the hosts list query as a group id or the
+  exact PatchMon name. Ansible `patchmon_<slug>` tokens are no longer resolved.
+  `GET /api/v1/api/host-groups` is not on the Integration API.
+
 ## [2.0.0] - 2026-10-20
 
 Stable release of `patchmon.core`. This release is not backward compatible with

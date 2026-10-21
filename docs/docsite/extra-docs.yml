@@ -9,5 +9,6 @@ sections:
   - title: Guides
     toctree:
       - permissions
+      - patchmon_feedback
       - migrating_to_2.0
       - changelog

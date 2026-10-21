@@ -64,13 +64,12 @@ options:
     version_added: "2.0.0"
   hostgroup:
     description:
-      - Optional PatchMon host group filter.
-      - Accepts a group id, the exact PatchMon name (spaces allowed), or the
-        Ansible group C(patchmon_<slug>).
-      - A sanitized name matches only when one group collapses to that slug.
-        C(No Reboot) and C(No_Reboot) both existing requires the id or the exact name.
+      - Optional PatchMon host group filter passed to the hosts list query.
+      - Accepts a group id or the exact PatchMon name (spaces allowed).
+      - C(No Reboot) and C(No_Reboot) are different groups. An Ansible
+        C(patchmon_<slug>) token is not translated. There is no Integration
+        group catalog.
       - Multiple values may be provided as a list (OR logic on the API).
-      - Resolved to group ids before the hosts query.
     type: raw
     version_added: "2.0.0"
   auto_groups:

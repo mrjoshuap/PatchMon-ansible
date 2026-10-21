@@ -56,6 +56,7 @@ def _insert_markdown(app, docname, source):
         ),
         "docsite/changelog": ("CHANGELOG.md", "Changelog"),
         "docsite/proposal": ("PROPOSAL.md", "Proposal"),
+        "docsite/patchmon_feedback": ("PATCHMON-FEEDBACK.md", "PatchMon feedback"),
     }
     page = pages.get(docname)
     if page is not None:

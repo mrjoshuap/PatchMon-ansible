@@ -24,10 +24,11 @@ Migration, with the inventory snippet: [Migrating to patchmon.core 2.0.0](https:
 What 2.0.0 adds for advanced Ansible users:
 
 - Inventory with optional stats hostvars (`include_stats`), `patchmon_*` groups for policy and for state (security updates, reboot, reporting), a `hostgroup` filter, and constructed inventory (`compose`, `groups`, `keyed_groups`)
-- Modules: `host`, `host_info`, `host_packages`, `host_action`, `host_token`
+- Modules: `host`, `host_info`, `host_packages`, `host_token`
 - Lookup: `host`
-- Roles: `agent` (install, start, stop, report, remove), `host` (enroll and desired state), `report_health`
-- A documented split between Integration credentials (`host:get` for reads) and Auto-Enrollment (create a host and install the agent)
+- Roles: `agent` (install, start, stop, report, remove), `host` (enroll or delete), `report_health`
+- A documented split between Integration credentials (`host:get` for reads, `host:delete` to remove a host) and Auto-Enrollment (create a host and install the agent)
+- Host field changes, group replacement, and host commands are left out until the Integration API has them. Paste-ready requests: [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md)
 
 The plugin, role, and guide pages are published here: [patchmon.core documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
 

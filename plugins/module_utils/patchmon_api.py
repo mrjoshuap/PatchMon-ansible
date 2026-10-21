@@ -8,11 +8,6 @@ __metaclass__ = type
 
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
-from ansible_collections.patchmon.core.plugins.module_utils.group_names import (
-    GroupNameError,
-    resolve_group_ids,
-)
-
 try:
     import requests
     from requests.auth import HTTPBasicAuth
@@ -105,12 +100,6 @@ def build_hosts_url(api_url, include_stats=False, hostgroup=None):
     if not params:
         return base
     return "{0}?{1}".format(base, urlencode(params))
-
-
-def integration_resource_url(api_url, resource):
-    """Build an Integration API URL that is not under ``/hosts``."""
-    root = normalize_instance_url(api_url).rstrip("/")
-    return "{0}/api/v1/api/{1}".format(root, str(resource).strip("/"))
 
 
 def host_resource_url(api_url, host_id, resource=None, query=None):
@@ -393,231 +382,19 @@ class PatchMonClient(_BaseClient):
         url = host_resource_url(self.api_url, host_id)
         return self.request("DELETE", url)
 
-    def list_host_groups(self):
-        """GET /api/v1/api/host-groups. Requires Integration scope ``host:get``."""
-        return self.request(
-            "GET", integration_resource_url(self.api_url, "host-groups")
-        )
-
     def resolve_hostgroup_filter(self, hostgroup):
-        """Resolve inventory ``hostgroup`` tokens to PatchMon group ids.
+        """Return hostgroup tokens for the hosts list query.
 
-        Accepts a name, UUID, or Ansible group (``patchmon_<slug>``). A name
-        whose spaces were normalized to ``_`` matches only when one group
-        sanitizes to that token. The hosts API then receives ids, so a space
-        and an underscore are not confused in the query string.
+        The Integration list route accepts a group id or the exact PatchMon
+        name and resolves it. There is no Integration group catalog, so an
+        Ansible ``patchmon_<slug>`` token is not translated.
         """
         if hostgroup is None or hostgroup == "" or hostgroup == []:
             return None
         if isinstance(hostgroup, (list, tuple)):
             tokens = [item for item in hostgroup if item not in (None, "")]
-        else:
-            tokens = [hostgroup]
-        if not tokens:
-            return None
-        catalog = _group_catalog(_host_group_rows(self.list_host_groups()))
-        try:
-            return resolve_group_ids(list(tokens), catalog)
-        except GroupNameError as exc:
-            raise PatchMonAPIError(str(exc)) from exc
-
-    def reconcile_host(
-        self,
-        host_id,
-        friendly_name=None,
-        notes=None,
-        auto_update=None,
-        host_down_alerts=None,
-        groups=None,
-        check_mode=False,
-    ):
-        """Apply managed host fields, writing only values that differ.
-
-        ``None`` leaves a field unmanaged. ``groups=[]`` clears membership.
-        ``friendly_name``, ``notes``, ``auto_update``, and ``host_down_alerts``
-        require ``host:patch``. ``groups`` requires ``host:put``. Every compare
-        requires ``host:get``. Check mode performs the GETs and skips writes.
-        """
-        before = {}
-        after = {}
-        updates = []
-        info = None
-        needs_info = any(
-            value is not None
-            for value in (friendly_name, auto_update, host_down_alerts, groups)
-        )
-        if needs_info:
-            info = self.get_host_info(host_id)
-            if not isinstance(info, dict):
-                raise PatchMonAPIError("host info response must be a JSON object")
-
-        if friendly_name is not None:
-            current = info.get("friendly_name") or ""
-            before["friendly_name"] = current
-            after["friendly_name"] = friendly_name
-            if current != friendly_name:
-                updates.append("friendly_name")
-                if not check_mode:
-                    self.request(
-                        "PATCH",
-                        host_resource_url(self.api_url, host_id, "friendly-name"),
-                        json_body={"friendly_name": friendly_name},
-                    )
-
-        if notes is not None:
-            payload = self.get_host_notes(host_id)
-            current = ""
-            if isinstance(payload, dict) and payload.get("notes") is not None:
-                current = payload.get("notes")
-            before["notes"] = current
-            after["notes"] = notes
-            if current != notes:
-                updates.append("notes")
-                if not check_mode:
-                    self.request(
-                        "PATCH",
-                        host_resource_url(self.api_url, host_id, "notes"),
-                        json_body={"notes": notes},
-                    )
-
-        if auto_update is not None:
-            desired = bool(auto_update)
-            if "auto_update" not in info:
-                current = None
-                drift = True
-            else:
-                current = bool(info.get("auto_update"))
-                drift = current != desired
-            before["auto_update"] = current
-            after["auto_update"] = desired
-            if drift:
-                updates.append("auto_update")
-                if not check_mode:
-                    self.request(
-                        "PATCH",
-                        host_resource_url(self.api_url, host_id, "auto-update"),
-                        json_body={"auto_update": desired},
-                    )
-
-        if host_down_alerts is not None:
-            desired = bool(host_down_alerts)
-            if "host_down_alerts_enabled" not in info:
-                current = None
-                drift = True
-            else:
-                current = info.get("host_down_alerts_enabled")
-                if current is None:
-                    drift = True
-                else:
-                    current = bool(current)
-                    drift = current != desired
-            before["host_down_alerts"] = current
-            after["host_down_alerts"] = desired
-            if drift:
-                updates.append("host_down_alerts")
-                if not check_mode:
-                    self.request(
-                        "PATCH",
-                        host_resource_url(self.api_url, host_id, "host-down-alerts"),
-                        json_body={"host_down_alerts_enabled": desired},
-                    )
-
-        if groups is not None:
-            desired_ids = self._resolve_group_ids(groups)
-            current_ids = []
-            for row in info.get("host_groups") or []:
-                if isinstance(row, dict) and row.get("id"):
-                    current_ids.append(str(row["id"]))
-            before["groups"] = sorted(current_ids)
-            after["groups"] = sorted(desired_ids)
-            if set(current_ids) != set(desired_ids):
-                updates.append("groups")
-                if not check_mode:
-                    self.request(
-                        "PUT",
-                        host_resource_url(self.api_url, host_id, "groups"),
-                        json_body={"groupIds": desired_ids},
-                    )
-
-        return {
-            "changed": bool(updates),
-            "diff": {"before": before, "after": after},
-            "updates": updates,
-        }
-
-    def _resolve_group_ids(self, groups):
-        """Map group names or UUIDs to ids. An empty list clears membership.
-
-        Exact PatchMon names are distinct, so ``No Reboot`` and ``No_Reboot``
-        stay different groups. A sanitized token (spaces already replaced
-        with ``_``, or the ``patchmon_`` inventory group) matches only when
-        one catalog group produces it. Ambiguous tokens must be a group id
-        or the exact name.
-        """
-        if groups is None:
-            return []
-        if not isinstance(groups, list):
-            raise PatchMonAPIError("groups must be a list")
-        if not groups:
-            return []
-
-        catalog = _group_catalog(_host_group_rows(self.list_host_groups()))
-        try:
-            return resolve_group_ids(groups, catalog)
-        except GroupNameError as exc:
-            raise PatchMonAPIError(str(exc)) from exc
-
-    def fetch_report(self, host_id):
-        """POST /hosts/:id/fetch-report. Requires Integration scope ``host:update``."""
-        return self.request(
-            "POST", host_resource_url(self.api_url, host_id, "fetch-report")
-        )
-
-    def force_agent_update(self, host_id):
-        """POST /hosts/:id/force-agent-update. Requires ``host:update``."""
-        return self.request(
-            "POST", host_resource_url(self.api_url, host_id, "force-agent-update")
-        )
-
-    def regenerate_credentials(self, host_id):
-        """POST /hosts/:id/regenerate-credentials. Requires ``host:update``.
-
-        The response includes a one-time agent API key. The previous key is
-        invalidated.
-        """
-        return self.request(
-            "POST",
-            host_resource_url(self.api_url, host_id, "regenerate-credentials"),
-        )
-
-
-def _group_catalog(rows):
-    catalog = []
-    for row in rows:
-        if not isinstance(row, dict) or not row.get("id"):
-            continue
-        name = row.get("name")
-        catalog.append(
-            {
-                "id": str(row["id"]),
-                "name": "" if name is None else str(name),
-            }
-        )
-    return catalog
-
-
-def _host_group_rows(payload):
-    if isinstance(payload, dict):
-        rows = payload.get("host_groups")
-        if rows is None:
-            rows = payload.get("groups")
-    elif isinstance(payload, list):
-        rows = payload
-    else:
-        rows = None
-    if not isinstance(rows, list):
-        raise PatchMonAPIError("expected host_groups to be a list")
-    return rows
+            return tokens or None
+        return hostgroup
 
 
 class PatchMonEnrollmentClient(_BaseClient):
