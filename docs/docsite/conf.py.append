@@ -5,7 +5,7 @@ extensions.extend(["myst_parser", "sphinxcontrib.mermaid"])
 myst_enable_extensions = ["colon_fence", "deflist", "tasklist"]
 myst_fence_as_directive = ["mermaid"]
 myst_heading_anchors = 3
-suppress_warnings = ["myst.xref_missing"]
+suppress_warnings = ["myst.xref_missing", "myst.header"]
 
 mermaid_version = "11.4.1"
 mermaid_init_js = """
@@ -37,3 +37,33 @@ _static = os.path.abspath(
 html_static_path = [_static]
 html_css_files = ["patchmon.css"]
 html_favicon = os.path.join(_static, "favicon.svg")
+
+
+def _insert_markdown(app, docname, source):
+    """Insert rewritten Markdown after rstcheck has already linted the stub pages."""
+    pages = {
+        "docsite/readme": (
+            "README.md",
+            "Ansible Collection - patchmon.core",
+        ),
+        "docsite/changelog": ("CHANGELOG.md", "Changelog"),
+    }
+    page = pages.get(docname)
+    if page is None:
+        return
+    filename, title = page
+    # Relative to built-docs/rst/docsite/. A leading slash is the Sphinx source
+    # root, so this cannot be an absolute filesystem path.
+    included = os.path.join("..", "..", "..", "built-docs", "included", filename)
+    label = next(
+        (line for line in source[0].splitlines() if line.startswith(".. _")),
+        "",
+    )
+    source[0] = (
+        f"{label}\n\n{title}\n{'=' * len(title)}\n\n"
+        f".. include:: {included}\n   :parser: myst_parser.sphinx_\n"
+    )
+
+
+def setup(app):
+    app.connect("source-read", _insert_markdown)

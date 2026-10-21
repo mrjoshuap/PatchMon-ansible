@@ -31,9 +31,19 @@ def rewrite_link(match: re.Match[str]) -> str:
     return "](" + GITHUB_BLOB + url + ")"
 
 
+def strip_title(text: str) -> str:
+    """The RST page supplies the title. Drop the Markdown H1 so it is not repeated."""
+    lines = text.splitlines(keepends=True)
+    if lines and lines[0].startswith("# "):
+        lines = lines[1:]
+        if lines and lines[0].strip() == "":
+            lines = lines[1:]
+    return "".join(lines)
+
+
 def rewrite(text: str) -> str:
     text = text.replace("<patchmon-host>", "patchmon.example.com")
-    return LINK_RE.sub(rewrite_link, text)
+    return strip_title(LINK_RE.sub(rewrite_link, text))
 
 
 def main() -> int:
