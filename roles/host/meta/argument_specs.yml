@@ -1,0 +1,155 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Create, update, or delete a PatchMon host entry
+    description:
+      - C(host_state=present) creates a host with an Auto-Enrollment token, or updates an existing host when managed fields are set.
+      - C(host_state=absent) permanently deletes the host through the Integration API and needs scope C(host:delete).
+      - Omitted managed fields are left unchanged. Do not default C(host_notes) to an empty string or C(host_groups) to an empty list in inventory, because those values are applied.
+      - There is no Integration C(host:create) scope. Creating a host needs Auto-Enrollment credentials.
+    author:
+      - PatchMon contributors
+    options:
+      host_state:
+        description:
+          - C(present) enrolls a host or updates managed fields.
+          - C(absent) deletes the host and related PatchMon data.
+        type: str
+        default: present
+        choices: [present, absent]
+      host_server_url:
+        description:
+          - PatchMon instance root used for auto-enrollment.
+          - Required for C(host_state=present) unless this run only updates an existing host (C(host_id) plus a managed field).
+          - When omitted, defaults to C(PATCHMON_SERVER_URL), then C(PATCHMON_API_URL).
+        type: str
+      host_api_url:
+        description:
+          - Integration API URL used for existence checks, desired-state updates, and delete.
+          - Required when a managed field is set, and when C(host_state=absent).
+          - When omitted, defaults to C(PATCHMON_API_URL), then C(host_server_url).
+        type: str
+      host_enrollment_key:
+        description:
+          - Auto-Enrollment token key.
+          - Required for C(host_state=present) unless this run only updates an existing host.
+          - When omitted, defaults to C(PATCHMON_ENROLLMENT_KEY).
+        type: str
+      host_enrollment_secret:
+        description:
+          - Auto-Enrollment token secret.
+          - Required for C(host_state=present) unless this run only updates an existing host.
+          - When omitted, defaults to C(PATCHMON_ENROLLMENT_SECRET).
+        type: str
+      host_api_key:
+        description:
+          - Integration API token key.
+          - Required for managed-field updates and for C(host_state=absent).
+          - When omitted, defaults to C(PATCHMON_API_KEY).
+        type: str
+      host_api_secret:
+        description:
+          - Integration API token secret.
+          - Required for managed-field updates and for C(host_state=absent).
+          - When omitted, defaults to C(PATCHMON_API_SECRET).
+        type: str
+      host_friendly_name:
+        description:
+          - Display name sent at enrollment.
+          - Required for C(host_state=present) unless this run only updates an existing host.
+          - When omitted, defaults to C(inventory_hostname).
+          - This is not the desired-state rename. Use C(host_friendly_name_update) to change an existing name.
+        type: str
+      host_machine_id:
+        description:
+          - Optional machine identifier used to deduplicate enrollment.
+        type: str
+        default: ""
+      host_id:
+        description:
+          - PatchMon host UUID.
+          - Required for C(host_state=absent).
+          - Set this with a managed field to update an existing host without calling enroll.
+        type: str
+        default: ""
+      host_metadata:
+        description:
+          - Optional metadata object passed to enrollment.
+        type: dict
+        default: {}
+      host_force_enroll:
+        description:
+          - Always call enroll, even when a matching host is already listed.
+          - The default skips enrollment when a match is found, which needs Integration scope C(host:get).
+        type: bool
+        default: false
+      host_verify_ssl:
+        description:
+          - Verify the PatchMon TLS certificate.
+          - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
+        type: bool
+      host_timeout:
+        description:
+          - HTTP timeout in seconds.
+        type: int
+        default: 30
+      host_fetch_script:
+        description:
+          - After C(host_state=present), download the enrollment script with C(patchmon.core.host_token).
+          - This does not install the agent. The script contains enrollment secrets.
+        type: bool
+        default: false
+      host_script_type:
+        description:
+          - Enrollment script type used when C(host_fetch_script) is true.
+        type: str
+        default: direct-host
+        choices: [direct-host, proxmox-lxc]
+      host_script_controller_path:
+        description:
+          - Controller path for the fetched enrollment script.
+          - The file mode is C(0700) and the contents include enrollment secrets.
+          - When omitted, defaults to C(/tmp/patchmon-enroll-<inventory_hostname>.sh).
+        type: str
+      host_enroll_agent:
+        description:
+          - After C(host_state=present), run C(patchmon.core.agent) on the target host.
+        type: bool
+        default: false
+      host_friendly_name_update:
+        description:
+          - Desired friendly name for an existing host.
+          - Must be 1 to 100 characters when set.
+          - Omit to leave the current name unchanged.
+          - Needs Integration scopes C(host:get) and C(host:patch).
+        type: str
+      host_notes:
+        description:
+          - Desired host notes.
+          - An empty string clears notes.
+          - Omit to leave notes unchanged.
+          - Needs Integration scopes C(host:get) and C(host:patch).
+        type: str
+      host_auto_update:
+        description:
+          - Desired agent auto-update flag.
+          - Omit to leave the flag unchanged. C(false) disables auto-update.
+          - Needs Integration scopes C(host:get) and C(host:patch).
+        type: bool
+      host_host_down_alerts:
+        description:
+          - Desired host-down alert override.
+          - Omit to leave the current setting unchanged.
+          - Needs Integration scopes C(host:get) and C(host:patch).
+        type: bool
+      host_groups:
+        description:
+          - Desired PatchMon group membership.
+          - Each entry is an exact PatchMon group name, a group id, or an Ansible group C(patchmon_<slug>).
+          - A sanitized name matches only when one group collapses to that slug.
+          - Replaces membership. An empty list clears it.
+          - Omit to leave groups unchanged.
+          - Needs Integration scopes C(host:get) and C(host:put).
+        type: list
+        elements: str

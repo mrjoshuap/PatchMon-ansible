@@ -32,13 +32,13 @@ options:
     type: str
     required: true
   enrollment_key:
-    description: Existing auto-enrollment token key (for O(state=script)).
+    description:
+      - Existing auto-enrollment token key (for O(state=script)). This value is a secret.
     type: str
-    no_log: true
   enrollment_secret:
-    description: Existing auto-enrollment token secret (for O(state=script)).
+    description:
+      - Existing auto-enrollment token secret (for O(state=script)). This value is a secret.
     type: str
-    no_log: true
   script_type:
     description: Enrollment script type query parameter.
     type: str
@@ -57,9 +57,9 @@ options:
     type: path
     version_added: "2.0.1"
   admin_token:
-    description: Bearer JWT for admin token CRUD (Manage Settings).
+    description:
+      - Bearer JWT for admin token CRUD (Manage Settings). This value is a secret.
     type: str
-    no_log: true
   token_name:
     description: Name for a new auto-enrollment token (O(state=present)).
     type: str

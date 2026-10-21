@@ -1,0 +1,82 @@
+---
+# Build the patchmon.core docsite and publish it to GitHub Pages on this fork.
+# Pull requests build and lint only. Push to main and workflow_dispatch deploy.
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible-core>=2.15" "antsibull-docs"
+
+      - name: Install collection into path
+        run: |
+          mkdir -p "$RUNNER_TEMP/collections/ansible_collections/patchmon"
+          ln -sfn "$GITHUB_WORKSPACE" \
+            "$RUNNER_TEMP/collections/ansible_collections/patchmon/core"
+          echo "ANSIBLE_COLLECTIONS_PATHS=$RUNNER_TEMP/collections" >> "$GITHUB_ENV"
+
+      - name: Lint collection docs
+        run: >-
+          antsibull-docs lint-collection-docs
+          --plugin-docs --skip-rstcheck .
+
+      - name: Build docsite
+        run: |
+          rm -rf built-docs
+          mkdir -m 700 built-docs
+          antsibull-docs sphinx-init --use-current --squash-hierarchy --fail-on-error \
+            --project "patchmon.core" \
+            --title "patchmon.core" \
+            --html-short-title "patchmon.core" \
+            --copyright "PatchMon contributors" \
+            --extra-html-theme-options "documentation_home_url=https://mrjoshuap.github.io/PatchMon-ansible/" \
+            patchmon.core --dest-dir built-docs
+          python -m pip install -r built-docs/requirements.txt
+          ./built-docs/build.sh
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: built-docs/build/html
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -33,13 +33,13 @@ options:
       - Falls back to O(api_url) when omitted.
     type: str
   enrollment_key:
-    description: Auto-enrollment token key (required for O(state=present)).
+    description:
+      - Auto-enrollment token key (required for O(state=present)). This value is a secret.
     type: str
-    no_log: true
   enrollment_secret:
-    description: Auto-enrollment token secret (required for O(state=present)).
+    description:
+      - Auto-enrollment token secret (required for O(state=present)). This value is a secret.
     type: str
-    no_log: true
   friendly_name:
     description: Display name for the host (required for O(state=present)).
     type: str
@@ -107,13 +107,13 @@ options:
       - Required for O(state=absent) and for present-state existence checks.
     type: str
   api_key:
-    description: Integration API token key (Basic Auth username).
+    description:
+      - Integration API token key (Basic Auth username). This value is a secret.
     type: str
-    no_log: true
   api_secret:
-    description: Integration API token secret (Basic Auth password).
+    description:
+      - Integration API token secret (Basic Auth password). This value is a secret.
     type: str
-    no_log: true
   verify_ssl:
     description: Verify the PatchMon TLS certificate.
     type: bool

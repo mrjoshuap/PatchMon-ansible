@@ -358,6 +358,7 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ## Links
 
+- Module documentation: https://mrjoshuap.github.io/PatchMon-ansible/
 - Permissions: [docs/permissions.md](docs/permissions.md)
 - Migrate from 1.x: [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md)
 - Examples guide: [examples/README.md](examples/README.md)

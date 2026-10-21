@@ -1,0 +1,53 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Fail unless the newest PatchMon package report succeeded
+    description:
+      - Reads C(GET /hosts/:id/package_reports) with Integration scope C(host:get).
+      - Fails when PatchMon has no reports, or when the newest report status is not C(success).
+      - Does not install packages or talk to the agent.
+      - Run this before a patch job so a host whose last report failed is not upgraded from stale inventory stats.
+    author:
+      - PatchMon contributors
+    options:
+      report_health_host_id:
+        description:
+          - PatchMon host UUID.
+          - Required.
+          - When omitted, defaults to C(patchmon_id) when that inventory variable is set.
+        type: str
+      report_health_api_url:
+        description:
+          - Integration API URL.
+          - Required.
+          - When omitted, defaults to C(PATCHMON_API_URL).
+        type: str
+      report_health_api_key:
+        description:
+          - Integration API token key.
+          - Required. Needs scope C(host:get).
+          - When omitted, defaults to C(PATCHMON_API_KEY).
+        type: str
+      report_health_api_secret:
+        description:
+          - Integration API token secret.
+          - Required.
+          - When omitted, defaults to C(PATCHMON_API_SECRET).
+        type: str
+      report_health_verify_ssl:
+        description:
+          - Verify the PatchMon TLS certificate.
+          - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
+        type: bool
+      report_health_timeout:
+        description:
+          - HTTP timeout in seconds.
+        type: int
+        default: 30
+      report_health_limit:
+        description:
+          - C(limit) query parameter for the package reports request.
+          - PatchMon's own default is 10. Must be greater than zero.
+        type: int
+        default: 10

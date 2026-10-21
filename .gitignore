@@ -10,4 +10,5 @@ htmlcov/
 .tox/
 *.egg-info/
 .venv/
+built-docs/
 

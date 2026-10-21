@@ -1,0 +1,108 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Install, start, stop, report, or remove the PatchMon agent
+    description:
+      - Installs the PatchMon agent with an Auto-Enrollment script, or manages the local agent service.
+      - Install (C(agent_state=present)) needs an Auto-Enrollment key and secret, not an Integration API token.
+      - Start, stop, report, and remove run on the managed host and do not call the PatchMon API.
+    author:
+      - PatchMon contributors
+    options:
+      agent_state:
+        description:
+          - Desired agent lifecycle.
+          - C(present) downloads the enrollment script and installs the agent, then ensures the service is started.
+          - C(started) and C(stopped) only change the local service.
+          - C(report) runs C(patchmon-agent report).
+          - C(absent) removes the agent.
+        type: str
+        default: present
+        choices: [present, started, stopped, absent, report]
+      agent_server_url:
+        description:
+          - PatchMon instance root, for example C(https://patchmon.example.com).
+          - Required when C(agent_state=present).
+          - When omitted, defaults to C(PATCHMON_SERVER_URL), then C(PATCHMON_API_URL).
+        type: str
+      agent_enrollment_key:
+        description:
+          - Auto-Enrollment token key.
+          - Required when C(agent_state=present).
+          - When omitted, defaults to C(PATCHMON_ENROLLMENT_KEY).
+        type: str
+      agent_enrollment_secret:
+        description:
+          - Auto-Enrollment token secret.
+          - Required when C(agent_state=present).
+          - When omitted, defaults to C(PATCHMON_ENROLLMENT_SECRET).
+        type: str
+      agent_script_type:
+        description:
+          - Enrollment script type passed to the script endpoint.
+        type: str
+        default: direct-host
+        choices: [direct-host, proxmox-lxc]
+      agent_force_install:
+        description:
+          - Pass C(force=true) to the enrollment script endpoint.
+        type: bool
+        default: false
+      agent_force_new_host:
+        description:
+          - Set C(FORCE_NEW_HOST) for the installer so it creates a new host entry.
+        type: bool
+        default: false
+      agent_verify_ssl:
+        description:
+          - Verify the PatchMon TLS certificate when downloading the enrollment script.
+          - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
+        type: bool
+      agent_timeout:
+        description:
+          - HTTP timeout in seconds for the enrollment script download.
+        type: int
+        default: 30
+      agent_script_path:
+        description:
+          - Path on the managed host where the enrollment script is staged.
+          - The script contains enrollment secrets and is removed after a successful install.
+        type: str
+        default: /tmp/patchmon-enroll.sh
+      agent_script_controller_path:
+        description:
+          - Controller path written by C(patchmon.core.host_token) before the script is copied to the host.
+          - When omitted, defaults to C(/tmp/patchmon-enroll-<inventory_hostname>.sh).
+        type: str
+      agent_keep_failed_script:
+        description:
+          - On install failure, keep a copy of the script at C(agent_failed_script_path).
+          - The copy contains enrollment secrets.
+        type: bool
+        default: false
+      agent_failed_script_path:
+        description:
+          - Durable path used when C(agent_keep_failed_script) is true.
+          - When omitted, defaults to C(/var/tmp/patchmon-enroll-failed-<inventory_hostname>.sh).
+        type: str
+      agent_service_name:
+        description:
+          - systemd unit name for the agent.
+        type: str
+        default: patchmon-agent
+      agent_binary_path:
+        description:
+          - Path to the agent binary used for report and removal.
+        type: str
+        default: /usr/local/bin/patchmon-agent
+      agent_config_dir:
+        description:
+          - Agent configuration directory removed with C(agent_state=absent).
+        type: str
+        default: /etc/patchmon
+      agent_report:
+        description:
+          - Run C(patchmon-agent report) after C(agent_state=present) has installed and started the agent.
+        type: bool
+        default: false

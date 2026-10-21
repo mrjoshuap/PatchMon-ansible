@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Shared PatchMon Integration API connection options."""
+"""Shared PatchMon Integration API connection options for modules."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -20,48 +20,30 @@ options:
       - These options authenticate to the Integration API (HTTP Basic), not Auto-Enrollment.
       - Typical minimum scope is C(host:get). Destructive modules require C(host:delete).
       - See the collection C(docs/permissions.md) for the full scope matrix.
+      - Environment variable C(PATCHMON_API_URL). Ini section C(patchmon), key C(api_url).
     required: true
     type: str
-    env:
-      - name: PATCHMON_API_URL
-    ini:
-      - section: patchmon
-        key: api_url
   api_key:
     description:
-      - PatchMon Integration API Token Key (Basic Auth username).
+      - PatchMon Integration API Token Key (Basic Auth username). This value is a secret.
       - Prefer environment variables, Vault, or Controller credentials over plaintext YAML.
+      - Environment variable C(PATCHMON_API_KEY). Ini section C(patchmon), key C(api_key).
     required: true
     type: str
-    no_log: true
-    env:
-      - name: PATCHMON_API_KEY
-    ini:
-      - section: patchmon
-        key: api_key
   api_secret:
     description:
-      - PatchMon Integration API Token Secret (Basic Auth password).
+      - PatchMon Integration API Token Secret (Basic Auth password). This value is a secret.
       - Prefer environment variables, Vault, or Controller credentials over plaintext YAML.
+      - Environment variable C(PATCHMON_API_SECRET). Ini section C(patchmon), key C(api_secret).
     required: true
     type: str
-    no_log: true
-    env:
-      - name: PATCHMON_API_SECRET
-    ini:
-      - section: patchmon
-        key: api_secret
   verify_ssl:
     description:
       - Verify the PatchMon TLS certificate.
       - Set to false only in lab environments.
+      - Environment variable C(PATCHMON_VERIFY_SSL). Ini section C(patchmon), key C(verify_ssl).
     type: bool
     default: true
-    env:
-      - name: PATCHMON_VERIFY_SSL
-    ini:
-      - section: patchmon
-        key: verify_ssl
   timeout:
     description: HTTP timeout in seconds for PatchMon API requests.
     type: int

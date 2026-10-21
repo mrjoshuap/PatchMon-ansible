@@ -17,7 +17,7 @@ description:
   - Prefer namespaced C(patchmon_*) hostvars. Unprefixed C(ip), C(hostname), and C(friendly_name)
     are also set as compose aliases and may collide with user variables.
   - O(stats_var_scope=targeting) omits telemetry hostvars. Those fields belong in
-    C(ansible_facts.patchmon) from C(patchmon.core.host_info) with O(inject_facts=true),
+    C(ansible_facts.patchmon) from C(patchmon.core.host_info) with O(patchmon.core.host_info#module:inject_facts=true),
     not as a second copy of the same C(patchmon_*) names.
   - PatchMon host groups become Ansible groups named C(patchmon_<slug>). Spaces and
     other characters Ansible rejects are replaced with C(_), then lowercased, so
@@ -28,7 +28,7 @@ description:
 extends_documentation_fragment:
   - constructed
   - inventory_cache
-  - patchmon.core.auth
+  - patchmon.core.auth_plugin
 options:
   plugin:
     description: FQCN of this inventory plugin.
@@ -55,7 +55,7 @@ options:
       - Telemetry (C(patchmon_updates_count), C(patchmon_total_packages),
         C(patchmon_last_update), C(patchmon_os_version), C(patchmon_status))
         is omitted. Read it from C(patchmon.core.host_info) with
-        O(inject_facts=true) as C(ansible_facts.patchmon).
+        O(patchmon.core.host_info#module:inject_facts=true) as C(ansible_facts.patchmon).
       - C(compose), C(groups), and C(keyed_groups) expressions that reference
         an omitted hostvar require C(all).
     type: str

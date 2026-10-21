@@ -14,7 +14,7 @@ description:
   - Queries a PatchMon per-host Integration API endpoint and returns the JSON payload.
   - Requires Integration API scope C(host:get).
 extends_documentation_fragment:
-  - patchmon.core.auth
+  - patchmon.core.auth_plugin
 options:
   _terms:
     description:

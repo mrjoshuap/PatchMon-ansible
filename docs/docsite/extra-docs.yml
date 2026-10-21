@@ -1,0 +1,6 @@
+---
+sections:
+  - title: Guides
+    toctree:
+      - permissions
+      - migrating_to_2.0
