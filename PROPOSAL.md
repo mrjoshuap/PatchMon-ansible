@@ -19,7 +19,7 @@ Current users change two names:
 - Collection: `patchmon.dynamic_inventory` becomes `patchmon.core`
 - Inventory plugin: `patchmon.dynamic_inventory.dynamic_inventory` becomes `patchmon.core.inventory`
 
-Migration, with the inventory snippet: https://mrjoshuap.github.io/PatchMon-ansible/docsite/migrating_to_2.0.html
+Migration, with the inventory snippet: [Migrating to patchmon.core 2.0.0](https://mrjoshuap.github.io/PatchMon-ansible/docsite/migrating_to_2.0.html)
 
 What 2.0.0 adds for advanced Ansible users:
 
@@ -29,19 +29,19 @@ What 2.0.0 adds for advanced Ansible users:
 - Roles: `agent` (install, start, stop, report, remove), `host` (enroll and desired state), `report_health`
 - A documented split between Integration credentials (`host:get` for reads) and Auto-Enrollment (create a host and install the agent)
 
-The plugin, role, and guide pages are published here: https://mrjoshuap.github.io/PatchMon-ansible/
+The plugin, role, and guide pages are published here: [patchmon.core documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
 
-Permissions: https://mrjoshuap.github.io/PatchMon-ansible/docsite/permissions.html
+Permissions: [PatchMon API permissions](https://mrjoshuap.github.io/PatchMon-ansible/docsite/permissions.html)
 
-Quick start: https://mrjoshuap.github.io/PatchMon-ansible/docsite/quick_start.html
+Quick start: [Quick start](https://mrjoshuap.github.io/PatchMon-ansible/docsite/quick_start.html)
 
-Inventory plugin: https://mrjoshuap.github.io/PatchMon-ansible/inventory_inventory.html
+Inventory plugin: [patchmon.core.inventory](https://mrjoshuap.github.io/PatchMon-ansible/inventory_inventory.html)
 
-Fork: https://github.com/mrjoshuap/PatchMon-ansible
+Fork: [mrjoshuap/PatchMon-ansible](https://github.com/mrjoshuap/PatchMon-ansible)
 
-Release I install, including the offline tarball: https://github.com/mrjoshuap/PatchMon-ansible/releases/tag/v2.0.0
+Release I install, including the offline tarball: [patchmon.core 2.0.0](https://github.com/mrjoshuap/PatchMon-ansible/releases/tag/v2.0.0)
 
-Upstream collection today (`patchmon.dynamic_inventory` 1.0.0): https://github.com/PatchMon/PatchMon-ansible
+Upstream collection today (`patchmon.dynamic_inventory` 1.0.0): [PatchMon/PatchMon-ansible](https://github.com/PatchMon/PatchMon-ansible)
 
 ## Why
 
@@ -53,7 +53,7 @@ I have been running 2.0.0 this way in my homelab, installed from the release tar
 ansible-galaxy collection install ./patchmon-core-2.0.0.tar.gz
 ```
 
-Direct asset: https://github.com/mrjoshuap/PatchMon-ansible/releases/download/v2.0.0/patchmon-core-2.0.0.tar.gz
+Direct asset: [patchmon-core-2.0.0.tar.gz](https://github.com/mrjoshuap/PatchMon-ansible/releases/download/v2.0.0/patchmon-core-2.0.0.tar.gz)
 
 It is in daily use. There may still be a couple of typos.
 
@@ -63,7 +63,7 @@ On the fork itself:
 - ansible-lint on the playbook and role YAML
 - collection documentation lint, published as the docsite
 - role argument specs (`meta/argument_specs.yml`), module argument specs, and `tasks/validate.yml` on each role
-- collection layout following Red Hat Automation Good Practices: defaults, validation, idempotent tasks, and thin playbooks in front of the roles (https://redhat-cop.github.io/automation-good-practices/)
+- collection layout following [Red Hat Automation Good Practices](https://redhat-cop.github.io/automation-good-practices/): defaults, validation, idempotent tasks, and thin playbooks in front of the roles
 
 I developed it in Cursor with Grok, using Ansible best-practice skills for collections, roles, playbooks, and Python plugins. I run what I am asking you to adopt, and I can answer review questions on it.
 
@@ -71,16 +71,13 @@ I developed it in Cursor with Grok, using Ansible best-practice skills for colle
 
 If you accept the collection, these look covered. Merging them into this request would keep the votes in one place:
 
-- Ansible Dynamic Inventory: https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2
-  `patchmon.core.inventory` lists hosts, groups, and optional stats hostvars.
-- Automatic rollout of agents via API with Ansible: https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf
-  `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent.
-- Patch Management using Ansible: https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf
-  Policy groups and hostvars such as `patchmon_update_state` and `patchmon_needs_reboot` let a play patch and reboot selected hosts on a schedule. PatchMon stays the source of group membership.
+- [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2). `patchmon.core.inventory` lists hosts, groups, and optional stats hostvars.
+- [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf). `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent.
+- [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf). Policy groups and hostvars such as `patchmon_update_state` and `patchmon_needs_reboot` let a play patch and reboot selected hosts on a schedule. PatchMon stays the source of group membership.
 
 Compliance is a separate product change, and this collection leaves it out:
 
-- Expose compliance summary on the Integration API: https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj
+- [Expose compliance summary on the Integration API](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj)
 
 Those routes are session RBAC today. Once they exist on the Integration API, a later release can map them.
 
