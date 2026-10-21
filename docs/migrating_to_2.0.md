@@ -8,7 +8,7 @@ There are no compatibility redirects — update installs and inventory YAML as b
 ```bash
 ansible-galaxy collection install patchmon.core
 # or from a release tarball:
-# ansible-galaxy collection install ./patchmon-core-2.0.0.tar.gz
+# ansible-galaxy collection install ./patchmon-core-2.0.1.tar.gz
 ```
 
 You can remove the old collection if it is still installed:

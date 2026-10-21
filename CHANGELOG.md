@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-21
+
 ### Breaking
 
 - `patchmon.core.host` no longer updates friendly name, notes, auto-update,
@@ -15,6 +17,11 @@ All notable changes to this collection are documented in this file.
 - Inventory `hostgroup` is passed to the hosts list query as a group id or the
   exact PatchMon name. Ansible `patchmon_<slug>` tokens are no longer resolved.
   `GET /api/v1/api/host-groups` is not on the Integration API.
+
+### Added
+
+- Collection docsite on GitHub Pages.
+- Argument specs for the `agent`, `host`, and `report_health` roles.
 
 ## [2.0.0] - 2026-10-20
 
