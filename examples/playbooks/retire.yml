@@ -1,0 +1,49 @@
+# Remove the PatchMon agent, then delete the host record when patchmon_id
+# is set. An empty patchmon_id skips the delete, so a host that never
+# enrolled still finishes (the agent tasks are a no-op when nothing is
+# installed). A failed agent removal stops the delete for that host.
+# Requires --limit so this does not run against every inventory host.
+#
+# Delete needs Integration host:delete:
+#   PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/retire.yml --limit web01.example.com
+
+- name: Require an explicit limit before retiring hosts
+  hosts: all
+  gather_facts: false
+  connection: local
+  any_errors_fatal: true
+
+  tasks:
+    - name: Require --limit
+      ansible.builtin.assert:
+        that:
+          - ansible_limit | default('') | length > 0
+        fail_msg: >-
+          Pass --limit. retire.yml removes the PatchMon agent and deletes
+          the host record when patchmon_id is set.
+      delegate_to: localhost
+      run_once: true
+
+- name: Retire PatchMon agent and host record
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Remove PatchMon agent
+      ansible.builtin.import_role:
+        name: patchmon.core.agent
+      vars:
+        agent_state: absent
+
+    - name: Delete PatchMon host record
+      ansible.builtin.include_role:
+        name: patchmon.core.host
+      vars:
+        host_state: absent
+        host_id: "{{ patchmon_id }}"
+      when: patchmon_id | default('') | length > 0

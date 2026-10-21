@@ -1,0 +1,62 @@
+# All pending upgrades for Automated and No Reboot. apt uses safe. dnf and
+# dnf5 use latest. Manual is reporting only, so a host also in
+# patchmon_manual is skipped. Hosts with no policy group are not in hosts:.
+# Not imported by maintain.yml. Does not reboot — reboot_needed.yml does.
+# After the upgrades, run patchmon.core.agent with agent_state report.
+#
+# Requires a stats inventory (examples/patchmon_inventory_stats.yml).
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/apply_all_updates.yml
+
+- name: Apply all pending upgrades on Automated and No Reboot hosts
+  hosts: patchmon_automated:patchmon_no_reboot
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Apply apt upgrades
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: safe
+        force_apt_get: true
+      when:
+        - "'patchmon_manual' not in group_names"
+        - ansible_pkg_mgr == 'apt'
+
+    - name: Apply dnf upgrades  # noqa: package-latest
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      when:
+        - "'patchmon_manual' not in group_names"
+        - ansible_pkg_mgr == 'dnf'
+
+    - name: Apply dnf5 upgrades  # noqa: package-latest
+      ansible.builtin.dnf5:
+        name: "*"
+        state: latest
+        update_cache: true
+      when:
+        - "'patchmon_manual' not in group_names"
+        - ansible_pkg_mgr == 'dnf5'
+
+    - name: Fail on unsupported package manager
+      ansible.builtin.fail:
+        msg: >-
+          Unsupported package manager {{ ansible_pkg_mgr }} on
+          {{ inventory_hostname }}. Expected apt, dnf, or dnf5.
+      when:
+        - "'patchmon_manual' not in group_names"
+        - ansible_pkg_mgr not in ['apt', 'dnf', 'dnf5']
+
+    - name: Report package state to PatchMon after upgrades
+      ansible.builtin.include_role:
+        name: patchmon.core.agent
+      vars:
+        agent_state: report
+      when:
+        - "'patchmon_manual' not in group_names"
+        - ansible_pkg_mgr in ['apt', 'dnf', 'dnf5']

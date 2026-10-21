@@ -1,0 +1,26 @@
+# Install the PatchMon agent on hosts that are joining the fleet.
+# Auto-Enrollment creates the host record. The host stays in that token's
+# default group. There is no Integration route to set a policy group.
+#
+# Requires:
+#   - SSH access and privilege escalation on the targets
+#   - Env: PATCHMON_SERVER_URL (or PATCHMON_API_URL), PATCHMON_ENROLLMENT_KEY,
+#     PATCHMON_ENROLLMENT_SECRET
+#
+# Example:
+#   ansible-playbook -i inventories/linux.yml \
+#     examples/playbooks/enroll.yml --limit web01.example.com
+#
+# After enroll, refresh a stats inventory and run maintain.yml.
+
+- name: Enroll hosts with the PatchMon agent
+  hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Install PatchMon agent
+      ansible.builtin.import_role:
+        name: patchmon.core.agent
+      vars:
+        agent_state: present

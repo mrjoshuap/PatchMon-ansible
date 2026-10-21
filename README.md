@@ -97,7 +97,7 @@ ansible-playbook -i inventories/patchmon.yml examples/playbooks/pending_updates.
 
 ## Example fleet pattern
 
-These diagrams show a fleet built from the inventory plugin and the roles. The plays live in your project. **Automated**, **No Reboot**, and **Manual** are example PatchMon group names. The plugin maps each group to an Ansible group `patchmon_<slug>`.
+These diagrams show a fleet built from the inventory plugin and the roles. The plays are in [`examples/playbooks/`](examples/playbooks/). **Automated**, **No Reboot**, and **Manual** are example PatchMon group names. The plugin maps each group to an Ansible group `patchmon_<slug>`.
 
 ### Who is eligible for what
 
@@ -131,16 +131,14 @@ Start from [`examples/patchmon_inventory_stats.yml`](examples/patchmon_inventory
 ```mermaid
 flowchart TD
   subgraph enroll [Enroll]
-    enrollAgent["patchmon.core.agent present"]
-    enrollGroup["patchmon.core.host sets the policy group"]
-    enrollAgent --> enrollGroup
+    enrollAgent["enroll.yml runs patchmon.core.agent present"]
   end
   subgraph maintain [Maintain]
-    refresh[Refresh inventory]
-    health["patchmon.core.report_health"]
-    securityUpd["Security-only updates when patchmon_update_state is security_required"]
+    refresh[maintain.yml refreshes inventory]
+    health["report_health.yml runs patchmon.core.report_health"]
+    securityUpd["apply_security_updates.yml when patchmon_update_state is security_required"]
     reportSec["patchmon.core.agent report"]
-    rebootHost["Reboot patchmon_automated one host at a time when patchmon_needs_reboot is true"]
+    rebootHost["reboot_needed.yml reboots patchmon_automated one host at a time"]
     reportReboot["patchmon.core.agent report"]
     refresh --> health
     health --> securityUpd
@@ -149,19 +147,28 @@ flowchart TD
     rebootHost --> reportReboot
   end
   subgraph allPending [All pending upgrades]
-    allUpdates["All pending packages on Automated and No Reboot"]
+    allUpdates["apply_all_updates.yml on Automated and No Reboot"]
   end
   subgraph retire [Retire]
-    removeAgent["patchmon.core.agent absent"]
+    removeAgent["retire.yml runs patchmon.core.agent absent"]
     deleteHost["patchmon.core.host absent when patchmon_id is set"]
     removeAgent --> deleteHost
   end
-  enrollGroup --> refresh
+  enrollAgent --> refresh
 ```
 
-Enroll runs when a host joins. Maintain is the recurring job. `patchmon.core.report_health` fails that host when the newest package report is missing or the status is not success, and other hosts continue. `dnf` and `dnf5` can take a security-only upgrade. `apt` has no matching flag, so the opt-in path lists packages with `patchmon.core.host_packages` (`updates_only: true`) and upgrades names where `is_security_update` is true. After those updates, and again after a reboot, run `patchmon.core.agent` with `agent_state: report`.
+| Playbook | When it runs |
+|----------|----------------|
+| [`examples/playbooks/enroll.yml`](examples/playbooks/enroll.yml) | A host joins. Installs the agent. The host stays in the Auto-Enrollment token's default group. |
+| [`examples/playbooks/maintain.yml`](examples/playbooks/maintain.yml) | Recurring job. Refreshes inventory, checks report health, applies security-only updates, then reboots Automated one host at a time. |
+| [`examples/playbooks/apply_all_updates.yml`](examples/playbooks/apply_all_updates.yml) | Separate from maintain. All pending packages on Automated and No Reboot. |
+| [`examples/playbooks/retire.yml`](examples/playbooks/retire.yml) | A host leaves. Removes the agent, then deletes the host record when `patchmon_id` is set. Requires `--limit`. |
 
-All pending upgrades (`apt` safe, `dnf` latest) are a separate play for Automated and No Reboot. Reboot stays on the maintain path. Retire removes the agent, then deletes the host record. An empty `patchmon_id` skips that delete, so a host that never enrolled can still be removed.
+`maintain.yml` imports [`report_health.yml`](examples/playbooks/report_health.yml), [`apply_security_updates.yml`](examples/playbooks/apply_security_updates.yml), and [`reboot_needed.yml`](examples/playbooks/reboot_needed.yml). Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
+
+Enroll runs when a host joins. The new host stays in the enrollment token's default group. There is no Integration route to set a policy group from a play. Maintain is the recurring job. `patchmon.core.report_health` fails that host when the newest package report is missing or the status is not success, and other hosts continue. `dnf` and `dnf5` can take a security-only upgrade. `apt` has no matching flag, so the opt-in path lists packages with `patchmon.core.host_packages` (`updates_only: true`) and upgrades names where `is_security_update` is true (`-e patchmon_try_listed_security=true`). After those updates, and again after a reboot, run `patchmon.core.agent` with `agent_state: report`.
+
+All pending upgrades (`apt` safe, `dnf` latest) are a separate play for Automated and No Reboot. Reboot stays on the maintain path. Retire removes the agent, then deletes the host record. An empty `patchmon_id` skips that delete, so a host that never enrolled can still be removed. Pass `--limit` to `retire.yml`.
 
 Inventory, report health, and package reads use an Integration token with `host:get`. Installing the agent and creating the host use Auto-Enrollment. See **[docs/permissions.md](docs/permissions.md)**.
 

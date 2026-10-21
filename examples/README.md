@@ -22,6 +22,36 @@ Start with the minimal file if you only need PatchMon as a host/group source. Us
 | [`playbooks/host_info_by_id.yml`](playbooks/host_info_by_id.yml) | Both modules on `localhost` with `-e patchmon_id=...` (no dynamic inventory) |
 | [`playbooks/lookup_system.yml`](playbooks/lookup_system.yml) | `host` lookup for `/system` |
 
+### Fleet lifecycle
+
+These match the enroll, maintain, and retire flow in the [collection README](../README.md#enroll-maintain-and-retire). Run maintain, all-pending upgrades, and retire against a stats inventory. `Automated` and `No Reboot` must exist in PatchMon so `patchmon_automated` and `patchmon_no_reboot` are in the inventory. `maintain.yml` imports the three plays under it; keep those files in the same directory.
+
+| File | What it does |
+|------|----------------|
+| [`playbooks/enroll.yml`](playbooks/enroll.yml) | Install the agent (`agent_state: present`). The host stays in the enrollment token's default group. |
+| [`playbooks/maintain.yml`](playbooks/maintain.yml) | Refresh inventory, report health, security-only updates, reboot Automated one host at a time. |
+| [`playbooks/report_health.yml`](playbooks/report_health.yml) | Fail a host whose newest package report is missing or not success. |
+| [`playbooks/apply_security_updates.yml`](playbooks/apply_security_updates.yml) | `dnf` / `dnf5` security upgrades. Apt only with `-e patchmon_try_listed_security=true`. |
+| [`playbooks/reboot_needed.yml`](playbooks/reboot_needed.yml) | Reboot `patchmon_automated` when `patchmon_needs_reboot` is true (`serial: 1`). |
+| [`playbooks/apply_all_updates.yml`](playbooks/apply_all_updates.yml) | All pending packages on Automated and No Reboot. Not part of maintain. |
+| [`playbooks/retire.yml`](playbooks/retire.yml) | Remove the agent, then delete the host when `patchmon_id` is set. Requires `--limit`. |
+
+```bash
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
+export PATCHMON_ENROLLMENT_KEY='...'
+export PATCHMON_ENROLLMENT_SECRET='...'
+ansible-playbook -i inventories/linux.yml \
+  examples/playbooks/enroll.yml --limit web01.example.com
+
+export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+export PATCHMON_API_KEY='...'
+export PATCHMON_API_SECRET='...'
+ansible-playbook -i inventories/patchmon.yml examples/playbooks/maintain.yml
+ansible-playbook -i inventories/patchmon.yml examples/playbooks/apply_all_updates.yml
+ansible-playbook -i inventories/patchmon.yml \
+  examples/playbooks/retire.yml --limit web01.example.com
+```
+
 ---
 
 ## Prerequisites

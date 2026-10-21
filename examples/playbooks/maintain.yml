@@ -1,0 +1,30 @@
+# Recurring maintenance. Refreshes inventory, then checks report health,
+# applies security-only updates, and reboots Automated hosts one at a time.
+# A host that fails report health drops out of the later plays. Other hosts
+# continue. All pending upgrades are apply_all_updates.yml and are not
+# imported here.
+#
+# Keep this file beside report_health.yml, apply_security_updates.yml, and
+# reboot_needed.yml. Run it against a stats inventory.
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/maintain.yml
+
+- name: Refresh PatchMon inventory
+  hosts: all
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Refresh inventory
+      ansible.builtin.meta: refresh_inventory
+
+- name: Check PatchMon package report health
+  ansible.builtin.import_playbook: report_health.yml
+
+- name: Apply security updates for PatchMon hosts
+  ansible.builtin.import_playbook: apply_security_updates.yml
+
+- name: Reboot PatchMon hosts that need a reboot
+  ansible.builtin.import_playbook: reboot_needed.yml

@@ -1,0 +1,24 @@
+# Fail a host when PatchMon has no package report, or the newest report
+# status is not success. Other hosts continue. Read-only Integration host:get.
+# A failed host drops out of later plays in maintain.yml.
+#
+# Requires a stats inventory so each host has patchmon_id, and the PatchMon
+# groups Automated and No Reboot (Ansible groups patchmon_automated and
+# patchmon_no_reboot).
+#
+# Requires:
+#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/report_health.yml
+
+- name: Check PatchMon package report health
+  hosts: patchmon_automated:patchmon_no_reboot
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Check newest PatchMon package report
+      ansible.builtin.import_role:
+        name: patchmon.core.report_health

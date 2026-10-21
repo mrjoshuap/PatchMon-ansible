@@ -1,0 +1,36 @@
+# Reboot patchmon_automated hosts one at a time when the inventory hostvar
+# patchmon_needs_reboot is true. Do not target the patchmon_needs_reboot
+# group: it exists only while a host matches, and this play does not gather
+# facts (a flat patchmon_* fact would override the hostvar).
+# patchmon_manual and patchmon_no_reboot are skipped via group_names.
+# After a reboot that changes the host, run patchmon.core.agent report.
+#
+# Requires a stats inventory (examples/patchmon_inventory_stats.yml).
+#
+# Example:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/reboot_needed.yml
+
+- name: Reboot automated hosts that PatchMon reports need a reboot
+  hosts: patchmon_automated
+  gather_facts: false
+  become: true
+  serial: 1
+
+  tasks:
+    - name: Reboot host when PatchMon reports needs reboot
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when:
+        - patchmon_needs_reboot | default(false) | bool
+        - "'patchmon_manual' not in group_names"
+        - "'patchmon_no_reboot' not in group_names"
+      register: patchmon_reboot_result
+
+    # Role imports cannot be handlers; this runs only after a changed reboot.
+    - name: Report package state to PatchMon after reboot  # noqa: no-handler
+      ansible.builtin.include_role:
+        name: patchmon.core.agent
+      vars:
+        agent_state: report
+      when: patchmon_reboot_result is changed

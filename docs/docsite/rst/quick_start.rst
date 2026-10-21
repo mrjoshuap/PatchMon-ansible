@@ -65,4 +65,18 @@ With ``include_stats: true`` and ``auto_groups: true``, expect groups such as ``
 
 Modules call the API from the control node (``delegate_to: localhost``). Copy-paste examples live in ``examples/playbooks/`` in the `collection repository <https://github.com/mrjoshuap/PatchMon-ansible/tree/main/examples>`_.
 
+7. Enroll, maintain, and retire
+-------------------------------
+
+The same directory has the fleet plays from the README diagram. ``maintain.yml`` refreshes inventory, checks report health, applies security-only updates, and reboots Automated hosts one at a time. All pending upgrades are ``apply_all_updates.yml``. ``retire.yml`` removes the agent and deletes the host record. It requires ``--limit``.
+
+``enroll.yml`` needs an Auto-Enrollment token (``PATCHMON_ENROLLMENT_KEY`` and ``PATCHMON_ENROLLMENT_SECRET``). The new host stays in that token's default group.
+
+.. code-block:: bash
+
+   ansible-playbook -i inventories/linux.yml examples/playbooks/enroll.yml --limit web01.example.com
+   ansible-playbook -i inventories/patchmon.yml examples/playbooks/maintain.yml
+   ansible-playbook -i inventories/patchmon.yml examples/playbooks/apply_all_updates.yml
+   ansible-playbook -i inventories/patchmon.yml examples/playbooks/retire.yml --limit web01.example.com
+
 If the graph is empty or the plugin is ignored, use :ref:`ansible_collections.patchmon.core.docsite.troubleshooting`.
