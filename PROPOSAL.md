@@ -2,6 +2,14 @@
 
 **Adopt patchmon.core 2.0 as the official Ansible collection**
 
+## Please upvote
+
+This request is open on the PatchMon feedback portal:
+
+**[Adopt patchmon.core 2.0 as the official Ansible collection](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma)**
+
+If this collection would help your Ansible estate, please upvote that post. An upvote tells PatchMon that Ansible users want `patchmon.core` 2.0 adopted as the official collection. [How the feedback portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) covers signing in and voting.
+
 ## Summary
 
 The published Ansible collection is still `patchmon.dynamic_inventory` 1.0.0: a dynamic inventory plugin, and only that. The Ansible ideas already on the feedback board (inventory, agent rollout, and scheduled patching) need more than a host list. They need groups and stats to target, a way to enroll and manage the agent, and a way to read or update host state from a play.
@@ -70,7 +78,7 @@ I developed it in Cursor with Grok, using Ansible best-practice skills for colle
 
 ## Related requests this can cover
 
-If you accept the collection, these look covered. Merging them into this request would keep the votes in one place:
+Please upvote the [adoption request](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma). If you accept the collection, these look covered:
 
 - [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2). `patchmon.core.inventory` lists hosts, groups, and optional stats hostvars.
 - [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf). `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent.

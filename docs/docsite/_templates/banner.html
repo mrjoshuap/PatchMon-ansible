@@ -1,12 +1,26 @@
 {# Included by sphinx_ansible_theme at the top of each page. #}
+{% set upvote_url = "https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma" %}
 {% if pagename == "index" %}
 <div class="patchmon-proposal-banner" role="note">
   <p><strong>Proposal: adopt patchmon.core 2.0 as the official Ansible collection</strong></p>
   <p>This fork replaces <code>patchmon.dynamic_inventory</code> 1.0.0. The breaking change is the dynamic inventory: install <code>patchmon.core</code> and set <code>plugin: patchmon.core.inventory</code>. The modules, roles, lookup, and inventory filters are documented for advanced Ansible users.</p>
-  <p><a href="{{ pathto('docsite/proposal') }}">Read the full proposal</a></p>
+  <p>Please upvote the request on the PatchMon feedback portal. An upvote tells PatchMon that Ansible users want this collection adopted.</p>
+  <p>
+    <a class="patchmon-upvote" href="{{ upvote_url }}">Upvote on the feedback portal</a>
+    <a href="{{ pathto('docsite/proposal') }}">Read the full proposal</a>
+  </p>
 </div>
-{% elif pagename != "docsite/proposal" %}
+{% elif pagename == "docsite/proposal" %}
+<div class="patchmon-proposal-banner" role="note">
+  <p><strong>Please upvote this proposal</strong> on the PatchMon feedback portal. An upvote tells PatchMon that Ansible users want <code>patchmon.core</code> 2.0 adopted as the official collection.</p>
+  <p><a class="patchmon-upvote" href="{{ upvote_url }}">Upvote: Adopt patchmon.core 2.0 as the official Ansible collection</a></p>
+</div>
+{% else %}
 <div class="patchmon-proposal-bar" role="note">
-  <p><a href="{{ pathto('docsite/proposal') }}">Proposal: adopt patchmon.core 2.0 as the official Ansible collection</a></p>
+  <p>
+    <a href="{{ pathto('docsite/proposal') }}">Proposal: adopt patchmon.core 2.0 as the official Ansible collection</a>
+    ·
+    <a href="{{ upvote_url }}">Upvote on the feedback portal</a>
+  </p>
 </div>
 {% endif %}

@@ -392,7 +392,9 @@ Changing a host's friendly name, notes, auto-update flag, host-down alerts, or g
 
 ## Feedback this collection addresses
 
-PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go. The request to adopt this collection is [PROPOSAL.md](PROPOSAL.md). Limits this collection does not paper over are in [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md).
+PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go, and how to upvote.
+
+Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma). That post asks PatchMon to adopt this collection as the official Ansible collection. The write-up is [PROPOSAL.md](PROPOSAL.md). Limits this collection does not paper over are in [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md).
 
 | Request | What this collection provides |
 |---------|-------------------------------|
@@ -436,6 +438,7 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 ## Links
 
 - [Module documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
+- [Upvote: adopt patchmon.core 2.0](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma)
 - [Proposal to adopt patchmon.core 2.0](PROPOSAL.md)
 - [Permissions](docs/permissions.md)
 - [Migrate from 1.x](docs/migrating_to_2.0.md)

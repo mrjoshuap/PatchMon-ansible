@@ -467,3 +467,20 @@ html.writer-html4 .rst-content dl:not(.docutils) dl > dt {
   font-weight: 700;
   text-decoration: underline;
 }
+
+.patchmon-proposal-banner a.patchmon-upvote,
+.patchmon-proposal-bar a.patchmon-upvote {
+  background: var(--patchmon-green);
+  border-radius: 6px;
+  color: #022c22 !important;
+  display: inline-block;
+  margin-right: 1rem;
+  padding: 0.35rem 0.8rem;
+  text-decoration: none !important;
+}
+
+.patchmon-proposal-banner a.patchmon-upvote:hover,
+.patchmon-proposal-bar a.patchmon-upvote:hover {
+  background: #4ade80;
+  color: #022c22 !important;
+}
