@@ -391,7 +391,17 @@ export PATCHMON_ENROLLMENT_SECRET=...
 
 ## Compliance note
 
-Host compliance status is **not** currently exposed on the scoped Integration API (`/api/v1/api/...`). Compliance routes live under `/api/v1/compliance/*` with session RBAC. This collection does not scrape session cookies. Tracking request: [PatchMon/PatchMon#1189](https://github.com/PatchMon/PatchMon/issues/1189). Once those fields land, a follow-up release will map `patchmon_compliance_*` hostvars and groups.
+Host compliance status is **not** currently exposed on the scoped Integration API (`/api/v1/api/...`). Compliance routes live under `/api/v1/compliance/*` with session RBAC. This collection does not scrape session cookies. Tracking request: [Expose compliance summary on the Integration API](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj). Once those fields land, a follow-up release will map `patchmon_compliance_*` hostvars and groups.
+
+## Feedback this collection addresses
+
+PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go.
+
+| Request | What this collection provides |
+|---------|-------------------------------|
+| [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2) | `patchmon.core.inventory` lists hosts, groups, and stats hostvars |
+| [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf) | `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent |
+| [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf) | Inventory groups and hostvars such as `patchmon_update_state` and `patchmon_needs_reboot`, so plays can patch and reboot selected hosts |
 
 ## Development
 
@@ -428,11 +438,20 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ## Links
 
-- Module documentation: https://mrjoshuap.github.io/PatchMon-ansible/
-- Permissions: [docs/permissions.md](docs/permissions.md)
-- Migrate from 1.x: [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md)
-- Examples guide: [examples/README.md](examples/README.md)
-- Repository: https://github.com/PatchMon/PatchMon-ansible
-- PatchMon Integration API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation
-- Auto-Enrollment API docs: https://patchmon.net/docs/patchmon-api-integrations-guide/auto-enrolment-api-docs
-- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- [Module documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
+- [Permissions](docs/permissions.md)
+- [Migrate from 1.x](docs/migrating_to_2.0.md)
+- [Examples guide](examples/README.md)
+- [Changelog](CHANGELOG.md)
+- [This fork](https://github.com/mrjoshuap/PatchMon-ansible)
+- [Upstream collection](https://github.com/PatchMon/PatchMon-ansible)
+- [PatchMon](https://patchmon.net)
+- [PatchMon source](https://github.com/PatchMon/PatchMon)
+- [PatchMon docs](https://patchmon.net/docs)
+- [PatchMon Integration API docs](https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation)
+- [Auto-Enrollment API docs](https://patchmon.net/docs/patchmon-api-integrations-guide/auto-enrolment-api-docs)
+- [Feedback portal](https://feedback.patchmon.net/)
+- [How the feedback portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works)
+- [Report a PatchMon bug](https://github.com/PatchMon/PatchMon/issues)
+- [Ask a PatchMon question](https://github.com/PatchMon/PatchMon/discussions)
+- [Discord](https://patchmon.net/discord)

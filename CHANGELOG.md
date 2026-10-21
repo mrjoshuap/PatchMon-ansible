@@ -80,7 +80,7 @@ history; this section is the release.
 ### Notes
 
 - Compliance metadata is not yet available on the scoped Integration API; tracked
-  upstream in [PatchMon/PatchMon#1189](https://github.com/PatchMon/PatchMon/issues/1189).
+  on the [feedback portal](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj).
 
 ## [2.0.0-rc1] - 2026-10-20
 
@@ -178,7 +178,7 @@ FQCN references. See [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md).
 ### Notes
 
 - Compliance metadata is not yet available on the scoped Integration API; tracked
-  upstream in [PatchMon/PatchMon#1189](https://github.com/PatchMon/PatchMon/issues/1189).
+  on the [feedback portal](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj).
 
 ## [1.0.0] - 2025-11-12
 

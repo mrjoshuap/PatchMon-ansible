@@ -124,4 +124,4 @@ Telemetry belongs in ``ansible_facts.patchmon`` from ``patchmon.core.host_info``
    ansible-doc patchmon.core.inventory
    ansible-doc patchmon.core.host_info
 
-Copy-paste examples: `examples guide <https://github.com/mrjoshuap/PatchMon-ansible/blob/main/examples/README.md>`_.
+Copy-paste examples: `quick start <quick_start.html>`_.

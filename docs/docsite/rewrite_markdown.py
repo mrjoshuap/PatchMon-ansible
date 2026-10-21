@@ -9,10 +9,13 @@ import sys
 
 GITHUB_BLOB = "https://github.com/mrjoshuap/PatchMon-ansible/blob/main/"
 GITHUB_TREE = "https://github.com/mrjoshuap/PatchMon-ansible/tree/main/"
+# MyST turns a link that ends in .md into a heading on the current page
+# (readme.html#permissions.md). Docsite pages are sibling HTML files.
 DOC_LINKS = {
-    "docs/permissions.md": "permissions.md",
-    "docs/migrating_to_2.0.md": "migrating_to_2.0.md",
-    "CHANGELOG.md": "changelog.md",
+    "docs/permissions.md": "permissions.html",
+    "docs/migrating_to_2.0.md": "migrating_to_2.0.html",
+    "CHANGELOG.md": "changelog.html",
+    "examples/README.md": "quick_start.html",
 }
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 
@@ -21,11 +24,12 @@ def rewrite_link(match: re.Match[str]) -> str:
     url = match.group(1)
     if url.startswith(("http://", "https://", "#", "mailto:")):
         return match.group(0)
-    path, _sep, _anchor = url.partition("#")
+    path, sep, anchor = url.partition("#")
     if path in DOC_LINKS:
-        return "](" + DOC_LINKS[path] + ")"
-    if path == "examples/README.md":
-        return "](quick_start.md)"
+        target = DOC_LINKS[path]
+        if sep:
+            target += "#" + anchor
+        return "](" + target + ")"
     if url.endswith("/"):
         return "](" + GITHUB_TREE + url + ")"
     return "](" + GITHUB_BLOB + url + ")"

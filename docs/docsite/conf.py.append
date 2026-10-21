@@ -3,6 +3,9 @@ import os
 extensions.extend(["myst_parser", "sphinxcontrib.mermaid"])
 
 myst_enable_extensions = ["colon_fence", "deflist", "tasklist"]
+# Relative .html links are sibling docsite pages. MyST otherwise turns them
+# into a heading on the current page.
+myst_all_links_external = True
 myst_fence_as_directive = ["mermaid"]
 myst_heading_anchors = 3
 suppress_warnings = ["myst.xref_missing", "myst.header"]

@@ -33,7 +33,7 @@ Credential types
      - Returned once at enrollment
      - Agent communication (not used directly by most collection modules)
 
-Integration API credentials are not the same as UI session RBAC. Compliance routes under ``/api/v1/compliance/*`` remain session-scoped; see `PatchMon/PatchMon#1189 <https://github.com/PatchMon/PatchMon/issues/1189>`_.
+Integration API credentials are not the same as UI session RBAC. Compliance routes under ``/api/v1/compliance/*`` remain session-scoped; see `Expose compliance summary on the Integration API <https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj>`_.
 
 Integration API scopes
 ----------------------
