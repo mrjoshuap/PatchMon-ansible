@@ -50,7 +50,7 @@ Tagged releases publish `patchmon-core-<version>.tar.gz` as a release asset:
 3. Install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-core-2.0.2.tar.gz
+ansible-galaxy collection install ./patchmon-core-2.0.3.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -58,7 +58,7 @@ Or install directly from a release URL when the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.2/patchmon-core-2.0.2.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.3/patchmon-core-2.0.3.tar.gz
 ```
 
 ### From source
@@ -432,13 +432,13 @@ Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-
 2. Tag the release commit (tag must match `galaxy.yml`, with a `v` prefix):
 
 ```bash
-git tag -a v2.0.2 -m "patchmon.core 2.0.2"
-git push origin v2.0.2
+git tag -a v2.0.3 -m "patchmon.core 2.0.3"
+git push origin v2.0.3
 ```
 
 3. The [Release collection](.github/workflows/release.yml) workflow runs tests, builds the collection tarball, and creates a GitHub Release with the `.tar.gz` attached for offline installs.
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.2`.
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.3`.
 
 ## License
 

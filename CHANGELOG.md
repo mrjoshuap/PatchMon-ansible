@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-10-22
+
 ### Changed
 
 - `apply_security_updates` fails an eligible host whose package manager is not
