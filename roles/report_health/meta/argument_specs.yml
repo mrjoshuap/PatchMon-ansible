@@ -6,6 +6,7 @@ argument_specs:
     description:
       - Reads C(GET /hosts/:id/package_reports) with Integration scope C(host:get).
       - Fails when PatchMon has no reports, or when the newest report status is not C(success).
+      - When that error message contains C(unsupported package manager), the failure includes a PatchMon feedback draft. Other report failures do not.
       - Does not install packages or talk to the agent.
       - Run this before a patch job so a host whose last report failed is not upgraded from stale inventory stats.
     author:

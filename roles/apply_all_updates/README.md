@@ -2,7 +2,7 @@
 
 All pending package upgrades, then a local agent report.
 
-Apt uses a safe upgrade. `dnf` and `dnf5` use `state: latest`. A host also in `patchmon_manual` is skipped. An eligible host whose package manager is not apt, dnf, or dnf5 fails. This role does not reboot and does not call the PatchMon API. The agent report is local.
+Apt uses a safe upgrade. `dnf` and `dnf5` use `state: latest`. A host also in `patchmon_manual` is skipped. An eligible host whose package manager is not apt, dnf, or dnf5 fails. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. This role does not reboot and does not call the PatchMon API. The agent report is local.
 
 The play must set `gather_facts: true` and `become: true`. This role has no role variables.
 

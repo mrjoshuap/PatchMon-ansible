@@ -115,6 +115,96 @@ def test_present_enrolls(monkeypatch):
     assert exits["host"]["id"] == "uuid-1"
 
 
+def _enrollment_module(exits, failures):
+    class FakeModule(object):
+        def __init__(self, *args, **kwargs):
+            self.check_mode = False
+            self.params = {
+                "state": "present",
+                "server_url": "https://patchmon.example.com",
+                "enrollment_key": "ek",
+                "enrollment_secret": "es",
+                "friendly_name": "web1",
+                "machine_id": "mid",
+                "host_id": None,
+                "metadata": None,
+                "force_enroll": True,
+                "api_url": None,
+                "api_key": None,
+                "api_secret": None,
+                "verify_ssl": True,
+                "timeout": 30,
+            }
+
+        def fail_json(self, **kwargs):
+            failures.update(kwargs)
+            raise SystemExit(1)
+
+        def exit_json(self, **kwargs):
+            exits.update(kwargs)
+            raise SystemExit(0)
+
+    return FakeModule
+
+
+def test_machine_id_match_without_host_id_fails(monkeypatch):
+    exits = {}
+    failures = {}
+
+    class FakeEnrollment(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def enroll(self, **kwargs):
+            return {
+                "error": "machine id matches an existing host",
+                "code": "machine_id_match",
+                "friendly_name": "web1",
+            }
+
+    monkeypatch.setattr(mod, "AnsibleModule", _enrollment_module(exits, failures))
+    monkeypatch.setattr(mod, "PatchMonEnrollmentClient", FakeEnrollment)
+    monkeypatch.setattr(mod, "HAS_REQUESTS", True)
+
+    with pytest.raises(SystemExit):
+        mod.run_module()
+
+    assert exits == {}
+    assert "Return host_id on enrollment machine_id_match" in failures["msg"]
+    assert "https://feedback.patchmon.net/" in failures["msg"]
+    assert failures["code"] == "machine_id_match"
+
+
+def test_machine_id_match_with_host_id_exits(monkeypatch):
+    exits = {}
+    failures = {}
+
+    class FakeEnrollment(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def enroll(self, **kwargs):
+            return {
+                "error": "machine id matches an existing host",
+                "code": "machine_id_match",
+                "friendly_name": "web1",
+                "host_id": "uuid-1",
+            }
+
+    monkeypatch.setattr(mod, "AnsibleModule", _enrollment_module(exits, failures))
+    monkeypatch.setattr(mod, "PatchMonEnrollmentClient", FakeEnrollment)
+    monkeypatch.setattr(mod, "HAS_REQUESTS", True)
+
+    with pytest.raises(SystemExit):
+        mod.run_module()
+
+    assert failures == {}
+    assert exits["changed"] is False
+    assert exits["already_exists"] is True
+    assert exits["host"]["id"] == "uuid-1"
+    assert exits["conflict_code"] == "machine_id_match"
+
+
 def test_absent_deletes(monkeypatch):
     exits = {}
 

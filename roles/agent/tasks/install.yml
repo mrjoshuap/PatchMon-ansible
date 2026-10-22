@@ -73,6 +73,46 @@
   delegate_to: localhost
   become: false
 
+- name: Record whether the enrollment script reported an unsupported platform
+  ansible.builtin.set_fact:
+    __agent_install_unsupported: >-
+      {{
+        __agent_unsupported_markers
+        | select('in', (
+            (__agent_install.stdout | default(''))
+            ~ (__agent_install.stderr | default(''))
+          ) | lower)
+        | list
+        | length > 0
+      }}
+  no_log: true
+  when: __agent_install is failed
+
+- name: Fail when the enrollment script reported an unsupported platform
+  ansible.builtin.fail:
+    msg: >-
+      The PatchMon enrollment script failed on {{ inventory_hostname }}
+      ({{ ansible_distribution | default('unknown') }}
+      {{ ansible_distribution_version | default('') }},
+      {{ ansible_architecture | default('unknown') }}).
+      patchmon.core.agent stopped.
+
+      Create a PatchMon feedback request: https://feedback.patchmon.net/
+
+      Subject: PatchMon agent installer does not support this operating system
+
+      Description:
+      The enrollment script failed on {{ inventory_hostname }}
+      ({{ ansible_distribution | default('unknown') }}
+      {{ ansible_distribution_version | default('') }},
+      {{ ansible_architecture | default('unknown') }}).
+      The script output reported an unsupported operating system, package
+      manager, or architecture. Please add support for this platform in the
+      PatchMon agent installer.
+  when:
+    - __agent_install is failed
+    - __agent_install_unsupported | default(false) | bool
+
 - name: Fail when enrollment / agent install script failed
   ansible.builtin.fail:
     msg: >-
@@ -84,4 +124,6 @@
       Set agent_keep_failed_script=true to copy it to {{ agent_failed_script_path }}.
       {% endif -%}
       stderr: {{ __agent_install.stderr | default('') }}
-  when: __agent_install is failed
+  when:
+    - __agent_install is failed
+    - not (__agent_install_unsupported | default(false) | bool)

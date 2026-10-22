@@ -7,3 +7,12 @@ __agent_valid_states:
   - stopped
   - absent
   - report
+
+# Substrings in a failed enrollment script that mean the platform is unsupported.
+# Matched case-insensitively. The script body is not copied into the fail message.
+__agent_unsupported_markers:
+  - unsupported
+  - not supported
+  - exec format error
+  - unknown architecture
+  - package manager

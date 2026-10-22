@@ -2,6 +2,8 @@
 
 Short requests for the [feedback portal](https://feedback.patchmon.net/). Each block under a heading is meant to be pasted as one post. The compliance item is already posted.
 
+Some role and module failures print their own subject and description. Paste those two lines from the job output. The requests below stay here because the collection does not call those routes.
+
 ## Update host fields on the Integration API
 
 ```text

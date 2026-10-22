@@ -1,6 +1,6 @@
 # patchmon.core.report_health
 
-Read-only check of the newest PatchMon package report. Fails the host when PatchMon has no reports or the newest report `status` is not `success`.
+Read-only check of the newest PatchMon package report. Fails the host when PatchMon has no reports or the newest report `status` is not `success`. When that report's `error_message` contains `unsupported package manager`, the failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. Other report failures stay as they are.
 
 Uses Integration scope `host:get` (`GET /hosts/:id/package_reports`). Does not install packages or talk to the agent.
 

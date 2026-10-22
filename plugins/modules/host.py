@@ -17,6 +17,8 @@ description:
   - C(state=absent) uses the Integration API and requires scope C(host:delete).
   - Friendly name, notes, auto-update, host-down alerts, and group membership are session
     routes. This module does not change them.
+  - A 409 C(machine_id_match) without C(host_id) fails with a PatchMon feedback draft.
+    The same code with C(host_id) is treated as already present.
   - See U(https://patchmon.net/docs/patchmon-api-integrations-guide) and the collection
     C(docs/permissions.md) for credential and scope guidance.
 options:
@@ -137,6 +139,21 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
     PatchMonEnrollmentClient,
 )
 
+_MACHINE_ID_MATCH_FEEDBACK = (
+    "Enrollment returned 409 machine_id_match without host_id. "
+    "patchmon.core.host stopped.\n"
+    "\n"
+    "Create a PatchMon feedback request: https://feedback.patchmon.net/\n"
+    "\n"
+    "Subject: Return host_id on enrollment machine_id_match\n"
+    "\n"
+    "Description:\n"
+    "POST /api/v1/auto-enrollment/enroll returns 409 machine_id_match with "
+    "friendly_name and without host_id. The other 409 codes include host_id.\n"
+    "\n"
+    "Please include host_id on machine_id_match as well."
+)
+
 
 def _integration_client(module):
     api_url = module.params.get("api_url") or module.params.get("server_url")
@@ -220,6 +237,11 @@ def _ensure_present(module):
     if isinstance(payload, dict) and payload.get("error"):
         code = payload.get("code")
         if code in ("machine_id_match", "host_reporting"):
+            if code == "machine_id_match" and not payload.get("host_id"):
+                extra = {
+                    key: value for key, value in payload.items() if key != "msg"
+                }
+                module.fail_json(msg=_MACHINE_ID_MATCH_FEEDBACK, **extra)
             module.exit_json(
                 changed=False,
                 already_exists=True,

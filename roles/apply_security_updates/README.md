@@ -2,7 +2,7 @@
 
 Security-only package updates for hosts PatchMon reports as needing them, then a local agent report.
 
-`dnf` and `dnf5` use `security: true` when inventory hostvar `patchmon_update_state` is `security_required`, or when `patchmon_security_updates_count` is greater than zero. A host also in `patchmon_manual` is skipped. Apt has no security-only flag, so apt hosts are unchanged unless `apply_security_updates_try_listed` is true. That path calls `patchmon.core.host_packages` (`updates_only: true`, Integration `host:get`) and upgrades names where `is_security_update` is true. Any other package manager is skipped. This role does not reboot.
+`dnf` and `dnf5` use `security: true` when inventory hostvar `patchmon_update_state` is `security_required`, or when `patchmon_security_updates_count` is greater than zero. A host also in `patchmon_manual` is skipped. Apt has no security-only flag, so apt hosts are unchanged unless `apply_security_updates_try_listed` is true. That path calls `patchmon.core.host_packages` (`updates_only: true`, Integration `host:get`) and upgrades names where `is_security_update` is true. Any other package manager fails the eligible host. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. This role does not reboot.
 
 The play must set `gather_facts: true` and `become: true`. Do not put `patchmon_security_required` in `hosts:`. That group exists only while a host matches. `patchmon_update_state` and `patchmon_security_updates_count` stay inventory hostvars.
 

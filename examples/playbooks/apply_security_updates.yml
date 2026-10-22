@@ -8,7 +8,8 @@
 # patchmon.core.apply_security_updates applies dnf and dnf5 with security: true.
 # apt is unchanged unless patchmon_try_listed_security or
 # apply_security_updates_try_listed is true. That option upgrades only names
-# host_packages marks is_security_update.
+# host_packages marks is_security_update. Any other package manager fails
+# the eligible host with a PatchMon feedback draft.
 #
 # The role reports with patchmon.core.agent (agent_state: report).
 # Does not reboot — reboot_needed.yml does that, and maintain.yml runs both.

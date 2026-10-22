@@ -1,5 +1,7 @@
 # Fail a host when PatchMon has no package report, or the newest report
-# status is not success. Other hosts continue. Read-only Integration host:get.
+# status is not success. When the error is an unsupported package manager,
+# the failure includes a PatchMon feedback draft. Other hosts continue.
+# Read-only Integration host:get.
 # A failed host drops out of later plays in maintain.yml.
 #
 # Requires a stats inventory so each host has patchmon_id, and the PatchMon

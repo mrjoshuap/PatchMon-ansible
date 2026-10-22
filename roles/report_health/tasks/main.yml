@@ -44,3 +44,28 @@
       status={{ report_health_latest.status | default('missing') }},
       date={{ report_health_latest.date | default('none') }},
       error={{ report_health_latest.error_message | default('') }}.
+  when: >-
+    'unsupported package manager' not in
+    (report_health_latest.error_message | default('') | lower)
+
+- name: Fail when the newest package report cites an unsupported package manager
+  ansible.builtin.fail:
+    msg: >-
+      Newest PatchMon package report for {{ inventory_hostname }}
+      ({{ report_health_host_id }}) failed because the agent reported an
+      unsupported package manager.
+
+      Create a PatchMon feedback request: https://feedback.patchmon.net/
+
+      Subject: PatchMon agent reports an unsupported package manager
+
+      Description:
+      The newest package report for {{ inventory_hostname }}
+      ({{ report_health_host_id }}) failed with an unsupported package manager.
+      error_message={{ report_health_latest.error_message | default('') }}.
+      Please support this host's package manager in the PatchMon agent.
+  when:
+    - (report_health_latest.status | default('')) != 'success'
+    - >-
+      'unsupported package manager' in
+      (report_health_latest.error_message | default('') | lower)

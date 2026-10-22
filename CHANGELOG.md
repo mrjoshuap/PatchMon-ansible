@@ -4,6 +4,16 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- `apply_security_updates` fails an eligible host whose package manager is not
+  apt, dnf, or dnf5. Apt with the listed-security opt-in left off stays a no-op.
+- `apply_all_updates`, `apply_security_updates`, `agent`, `report_health`, and
+  `host` include a PatchMon feedback subject and description when they stop
+  for an unsupported platform or for `machine_id_match` without `host_id`.
+  A package report that failed for another reason is unchanged.
+  `machine_id_match` that includes `host_id` is still success.
+
 ## [2.0.2] - 2026-10-21
 
 ### Added

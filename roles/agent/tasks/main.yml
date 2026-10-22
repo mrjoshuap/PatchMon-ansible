@@ -7,6 +7,27 @@
   ansible.builtin.include_tasks: install.yml
   when: agent_state == 'present'
 
+- name: Fail before managing the FreeBSD agent service
+  ansible.builtin.fail:
+    msg: >-
+      {{ inventory_hostname }} is FreeBSD. The enrollment script can install
+      the agent. patchmon.core.agent stopped before managing the service.
+
+      Create a PatchMon feedback request: https://feedback.patchmon.net/
+
+      Subject: Manage the FreeBSD rc.d agent service in patchmon.core.agent
+
+      Description:
+      The PatchMon enrollment script can install the FreeBSD agent on
+      {{ inventory_hostname }}. patchmon.core.agent then starts a service
+      named patchmon-agent. FreeBSD registers
+      /usr/local/etc/rc.d/patchmon_agent. Please manage that rc.d service,
+      and keep the Linux systemd unit for other hosts.
+  when:
+    - ansible_os_family is defined
+    - ansible_os_family == 'FreeBSD'
+    - agent_state in ['present', 'started', 'stopped']
+
 - name: Manage PatchMon agent service
   ansible.builtin.include_tasks: service.yml
   when: agent_state in ['present', 'started', 'stopped']

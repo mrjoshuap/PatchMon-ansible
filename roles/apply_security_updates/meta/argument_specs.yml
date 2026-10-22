@@ -9,9 +9,11 @@ argument_specs:
       - Skips a host that is also in C(patchmon_manual).
       - C(dnf) and C(dnf5) use C(security=true).
       - Apt has no matching flag, so apt hosts are unchanged unless C(apply_security_updates_try_listed) is true.
+      - That apt path is an opt-in, not an unsupported package manager.
       - The apt opt-in lists packages with C(patchmon.core.host_packages) and C(updates_only=true).
       - That read needs Integration scope C(host:get). It upgrades names where C(is_security_update) is true.
-      - An unsupported package manager is skipped. This role does not fail the host for that.
+      - An eligible host whose package manager is not apt, dnf, or dnf5 fails.
+      - That failure includes a subject and description for a PatchMon feedback request.
       - After a dnf, dnf5, or opted-in apt path, runs C(patchmon.core.agent) with C(agent_state=report).
       - The report is local and does not call the Integration API.
       - Does not reboot. Run C(patchmon.core.reboot_needed) for that.
