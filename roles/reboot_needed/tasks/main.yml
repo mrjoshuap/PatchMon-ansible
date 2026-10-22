@@ -1,0 +1,21 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate reboot inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Reboot host when PatchMon reports needs reboot
+  ansible.builtin.reboot:
+    reboot_timeout: "{{ reboot_needed_timeout | int }}"
+  when:
+    - patchmon_needs_reboot | default(false) | bool
+    - "'patchmon_manual' not in group_names"
+    - "'patchmon_no_reboot' not in group_names"
+  register: reboot_needed_result
+
+# Role imports cannot be handlers; this runs only after a changed reboot.
+- name: Report package state to PatchMon after reboot  # noqa: no-handler
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: report
+  when: reboot_needed_result is changed

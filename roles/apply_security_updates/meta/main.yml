@@ -1,0 +1,26 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+galaxy_info:
+  role_name: apply_security_updates
+  author: PatchMon contributors
+  description: Apply security-only package updates and report to PatchMon
+  license: AGPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags:
+    - patchmon
+    - patching
+    - security
+    - linux
+dependencies: []

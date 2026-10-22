@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require a positive reboot timeout
+  ansible.builtin.assert:
+    that:
+      - reboot_needed_timeout | int > 0
+    fail_msg: >-
+      reboot_needed_timeout must be a positive integer. Got
+      '{{ reboot_needed_timeout }}'.

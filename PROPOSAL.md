@@ -38,6 +38,8 @@ What 2.0.0 adds for advanced Ansible users:
 - A documented split between Integration credentials (`host:get` for reads, `host:delete` to remove a host) and Auto-Enrollment (create a host and install the agent)
 - Host field changes, group replacement, and host commands are left out until the Integration API has them. Paste-ready requests: [PATCHMON-FEEDBACK.md](PATCHMON-FEEDBACK.md)
 
+Releases after 2.0.0 add roles `apply_security_updates`, `apply_all_updates`, and `reboot_needed`. The example plays of the same name import them.
+
 The plugin, role, and guide pages are published here: [patchmon.core documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
 
 Permissions: [PatchMon API permissions](https://mrjoshuap.github.io/PatchMon-ansible/docsite/permissions.html)

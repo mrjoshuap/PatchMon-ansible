@@ -1,0 +1,20 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Reboot hosts PatchMon reports as needing a reboot, then report
+    description:
+      - Reboots when inventory hostvar C(patchmon_needs_reboot) is true.
+      - Skips a host in C(patchmon_manual) or C(patchmon_no_reboot).
+      - Does not set a fact named C(patchmon_needs_reboot). A flat fact of that name would override the inventory hostvar.
+      - After a reboot that changes the host, runs C(patchmon.core.agent) with C(agent_state=report). The report is local and does not call the Integration API.
+      - The play must set C(become=true), C(gather_facts=false), and C(serial=1).
+      - Do not target the C(patchmon_needs_reboot) group. That group exists only while a host matches.
+    author:
+      - PatchMon contributors
+    options:
+      reboot_needed_timeout:
+        description:
+          - Seconds to wait for the host to come back after reboot.
+        type: int
+        default: 600

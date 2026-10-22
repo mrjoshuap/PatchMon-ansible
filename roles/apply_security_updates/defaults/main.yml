@@ -1,0 +1,13 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.apply_security_updates.
+
+# Follows the extra var used by the example play and the AAP survey when this
+# role variable is left unset.
+apply_security_updates_try_listed: "{{ patchmon_try_listed_security | default(false) | bool }}"
+apply_security_updates_host_id: "{{ patchmon_id | default('') }}"
+apply_security_updates_api_url: "{{ lookup('env', 'PATCHMON_API_URL') | default('', true) }}"
+apply_security_updates_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') | default('', true) }}"
+apply_security_updates_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') | default('', true) }}"
+apply_security_updates_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+apply_security_updates_timeout: 30

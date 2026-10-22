@@ -49,7 +49,7 @@ Scopes are explicit. ``get`` does not imply ``delete``.
    * - Scope
      - Capabilities in this collection
    * - ``host:get``
-     - Inventory plugin, ``host_info`` (including ``notes``, ``package_reports``, ``agent_queue``), ``host_packages``, ``lookup('patchmon.core.host')``, ``report_health`` role, existence checks before enroll
+     - Inventory plugin, ``host_info`` (including ``notes``, ``package_reports``, ``agent_queue``), ``host_packages``, ``lookup('patchmon.core.host')``, ``report_health`` role, ``apply_security_updates`` apt opt-in (``host_packages``), existence checks before enroll
    * - ``host:delete``
      - ``patchmon.core.host`` with ``state=absent``, ``roles/host`` when ``host_state=absent``
 
@@ -126,6 +126,12 @@ Per-plugin summary
      - Integration ``host:get``
    * - ``patchmon.core.report_health``
      - Integration ``host:get`` (``package_reports``)
+   * - ``patchmon.core.apply_security_updates``
+     - None for dnf and dnf5. Integration ``host:get`` when ``apply_security_updates_try_listed`` is true and the package manager is apt (``host_packages``). Agent report is local.
+   * - ``patchmon.core.apply_all_updates``
+     - None. Local package upgrades and a local agent report.
+   * - ``patchmon.core.reboot_needed``
+     - None. Local reboot and a local agent report.
    * - ``patchmon.core.host`` present
      - Auto-Enrollment token
    * - ``patchmon.core.host`` absent

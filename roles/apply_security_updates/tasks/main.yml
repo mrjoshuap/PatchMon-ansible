@@ -1,0 +1,114 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate security update inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Record whether PatchMon reports security updates
+  ansible.builtin.set_fact:
+    apply_security_updates_pending: >-
+      {{
+        (patchmon_update_state | default('')) == 'security_required'
+        or (patchmon_security_updates_count | default(0) | int > 0)
+      }}
+
+- name: Record whether this host is eligible for security updates
+  ansible.builtin.set_fact:
+    apply_security_updates_eligible: >-
+      {{
+        apply_security_updates_pending | bool
+        and 'patchmon_manual' not in group_names
+      }}
+
+- name: Apply dnf security updates  # noqa: package-latest
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    security: true
+    update_cache: true
+  when:
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'dnf'
+
+- name: Apply dnf5 security updates  # noqa: package-latest
+  ansible.builtin.dnf5:
+    name: "*"
+    state: latest
+    security: true
+    update_cache: true
+  when:
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'dnf5'
+
+- name: Require PatchMon API access for listed security packages
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_host_id | length > 0
+      - apply_security_updates_api_url | length > 0
+      - apply_security_updates_api_key | length > 0
+      - apply_security_updates_api_secret | length > 0
+    fail_msg: >-
+      Listed apt security updates on {{ inventory_hostname }} need
+      apply_security_updates_host_id (inventory hostvar patchmon_id) and
+      PATCHMON_API_URL, PATCHMON_API_KEY, and PATCHMON_API_SECRET
+      (Integration host:get).
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'apt'
+
+- name: Fetch PatchMon packages with pending updates
+  patchmon.core.host_packages:
+    api_url: "{{ apply_security_updates_api_url }}"
+    api_key: "{{ apply_security_updates_api_key }}"
+    api_secret: "{{ apply_security_updates_api_secret }}"
+    verify_ssl: "{{ apply_security_updates_verify_ssl | bool }}"
+    timeout: "{{ apply_security_updates_timeout | int }}"
+    host_id: "{{ apply_security_updates_host_id }}"
+    updates_only: true
+  delegate_to: localhost
+  become: false
+  register: apply_security_updates_packages
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'apt'
+
+- name: Record PatchMon security package names
+  ansible.builtin.set_fact:
+    apply_security_updates_package_names: >-
+      {{
+        apply_security_updates_packages.packages
+        | selectattr('is_security_update')
+        | map(attribute='name')
+        | list
+      }}
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'apt'
+
+- name: Upgrade apt packages PatchMon marks as security updates  # noqa: package-latest
+  ansible.builtin.apt:
+    name: "{{ apply_security_updates_package_names }}"
+    state: latest
+    only_upgrade: true
+    update_cache: true
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_eligible | bool
+    - ansible_pkg_mgr == 'apt'
+    - apply_security_updates_package_names | default([]) | length > 0
+
+- name: Report package state to PatchMon after security updates
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: report
+  when:
+    - apply_security_updates_eligible | bool
+    - >-
+      ansible_pkg_mgr in ['dnf', 'dnf5']
+      or (
+        apply_security_updates_try_listed | bool
+        and ansible_pkg_mgr == 'apt'
+      )

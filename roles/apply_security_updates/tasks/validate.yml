@@ -1,0 +1,26 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require gathered package-manager facts
+  ansible.builtin.assert:
+    that:
+      - ansible_pkg_mgr is defined
+      - ansible_pkg_mgr | length > 0
+    fail_msg: >-
+      patchmon.core.apply_security_updates needs gather_facts: true and
+      become: true on the play so ansible_pkg_mgr is set.
+
+- name: Require a boolean listed-security opt-in
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_try_listed | bool in [true, false]
+    fail_msg: >-
+      apply_security_updates_try_listed must be a boolean. When that variable
+      is unset, the role reads patchmon_try_listed_security (default false).
+
+- name: Require a positive HTTP timeout
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_timeout | int > 0
+    fail_msg: >-
+      apply_security_updates_timeout must be a positive integer. Got
+      '{{ apply_security_updates_timeout }}'.

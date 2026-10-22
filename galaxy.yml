@@ -10,7 +10,7 @@ authors:
 description: >
   Dynamic inventory, modules, lookups, and roles for the PatchMon Integration
   and Auto-Enrollment APIs — including optional stats hostvars, constructed
-  groups, host enrollment, and agent lifecycle management.
+  groups, host enrollment, agent lifecycle, security updates, and reboot.
 license:
   - AGPL-3.0-or-later
 tags:

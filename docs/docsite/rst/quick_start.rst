@@ -68,7 +68,7 @@ Modules call the API from the control node (``delegate_to: localhost``). Copy-pa
 7. Enroll, maintain, and retire
 -------------------------------
 
-The same directory has the fleet plays from the README diagram. ``maintain.yml`` refreshes inventory, checks report health, applies security-only updates, and reboots Automated hosts one at a time. All pending upgrades are ``apply_all_updates.yml``. ``retire.yml`` removes the agent and deletes the host record. It requires ``--limit``.
+The same directory has the fleet plays from the README diagram. ``maintain.yml`` refreshes inventory, checks report health (``patchmon.core.report_health``), applies security-only updates (``patchmon.core.apply_security_updates``), and reboots Automated hosts one at a time (``patchmon.core.reboot_needed``). All pending upgrades are ``apply_all_updates.yml`` (``patchmon.core.apply_all_updates``). ``retire.yml`` removes the agent and deletes the host record. It requires ``--limit``.
 
 ``enroll.yml`` needs an Auto-Enrollment token (``PATCHMON_ENROLLMENT_KEY`` and ``PATCHMON_ENROLLMENT_SECRET``). The new host stays in that token's default group.
 

@@ -6,6 +6,10 @@ All notable changes to this collection are documented in this file.
 
 ### Added
 
+- Roles `apply_security_updates`, `apply_all_updates`, and `reboot_needed`.
+  The example plays of the same name import those roles. `dnf` and `dnf5`
+  security updates do not call the API. The apt opt-in uses Integration
+  `host:get`. Reboot and the agent report are local.
 - Example playbooks for the enroll, maintain, all-pending, and retire flow
   under `examples/playbooks/`. Policy group membership stays on the
   Auto-Enrollment token. There is no Integration route to set it from a play.

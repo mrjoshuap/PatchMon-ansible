@@ -1,0 +1,63 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Apply security-only package updates and report to PatchMon
+    description:
+      - Applies security-only upgrades when inventory hostvar C(patchmon_update_state) is C(security_required).
+      - Also applies them when C(patchmon_security_updates_count) is greater than zero.
+      - Skips a host that is also in C(patchmon_manual).
+      - C(dnf) and C(dnf5) use C(security=true).
+      - Apt has no matching flag, so apt hosts are unchanged unless C(apply_security_updates_try_listed) is true.
+      - The apt opt-in lists packages with C(patchmon.core.host_packages) and C(updates_only=true).
+      - That read needs Integration scope C(host:get). It upgrades names where C(is_security_update) is true.
+      - An unsupported package manager is skipped. This role does not fail the host for that.
+      - After a dnf, dnf5, or opted-in apt path, runs C(patchmon.core.agent) with C(agent_state=report).
+      - The report is local and does not call the Integration API.
+      - Does not reboot. Run C(patchmon.core.reboot_needed) for that.
+      - The play must set C(gather_facts=true) and C(become=true).
+      - Keep C(patchmon_security_required) out of C(hosts). That group exists only while a host matches.
+    author:
+      - PatchMon contributors
+    options:
+      apply_security_updates_try_listed:
+        description:
+          - When true, upgrade apt packages PatchMon marks as security updates.
+          - When omitted, defaults to extra var C(patchmon_try_listed_security), or C(false) when that variable is unset.
+          - C(dnf) and C(dnf5) ignore this option.
+        type: bool
+        default: false
+      apply_security_updates_host_id:
+        description:
+          - PatchMon host UUID for the apt package list.
+          - Required only when C(apply_security_updates_try_listed) is true and the package manager is apt.
+          - When omitted, defaults to C(patchmon_id) when that inventory variable is set.
+        type: str
+      apply_security_updates_api_url:
+        description:
+          - Integration API URL for the apt package list.
+          - Required only on the apt opt-in path. Needs scope C(host:get).
+          - When omitted, defaults to C(PATCHMON_API_URL).
+        type: str
+      apply_security_updates_api_key:
+        description:
+          - Integration API token key for the apt package list.
+          - Required only on the apt opt-in path.
+          - When omitted, defaults to C(PATCHMON_API_KEY).
+        type: str
+      apply_security_updates_api_secret:
+        description:
+          - Integration API token secret for the apt package list.
+          - Required only on the apt opt-in path.
+          - When omitted, defaults to C(PATCHMON_API_SECRET).
+        type: str
+      apply_security_updates_verify_ssl:
+        description:
+          - Verify the PatchMon TLS certificate on the apt package list.
+          - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
+        type: bool
+      apply_security_updates_timeout:
+        description:
+          - HTTP timeout in seconds for the apt package list.
+        type: int
+        default: 30

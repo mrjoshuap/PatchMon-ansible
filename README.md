@@ -19,6 +19,9 @@ Companion content:
 | Role | `patchmon.core.agent` | Install / start / stop / report / remove agent |
 | Role | `patchmon.core.host` | Create or delete host entries |
 | Role | `patchmon.core.report_health` | Fail unless the newest package report succeeded |
+| Role | `patchmon.core.apply_security_updates` | Security-only package updates, then a local agent report |
+| Role | `patchmon.core.apply_all_updates` | All pending package upgrades, then a local agent report |
+| Role | `patchmon.core.reboot_needed` | Reboot when `patchmon_needs_reboot` is true, then a local agent report |
 
 **Permissions matter.** Read plugins need Integration `host:get`. Creating hosts and installing agents need **Auto-Enrollment** credentials — not Integration Basic Auth. See **[docs/permissions.md](docs/permissions.md)**.
 
@@ -136,9 +139,9 @@ flowchart TD
   subgraph maintain [Maintain]
     refresh[maintain.yml refreshes inventory]
     health["report_health.yml runs patchmon.core.report_health"]
-    securityUpd["apply_security_updates.yml when patchmon_update_state is security_required"]
+    securityUpd["apply_security_updates.yml runs patchmon.core.apply_security_updates"]
     reportSec["patchmon.core.agent report"]
-    rebootHost["reboot_needed.yml reboots patchmon_automated one host at a time"]
+    rebootHost["reboot_needed.yml runs patchmon.core.reboot_needed"]
     reportReboot["patchmon.core.agent report"]
     refresh --> health
     health --> securityUpd
@@ -147,7 +150,7 @@ flowchart TD
     rebootHost --> reportReboot
   end
   subgraph allPending [All pending upgrades]
-    allUpdates["apply_all_updates.yml on Automated and No Reboot"]
+    allUpdates["apply_all_updates.yml runs patchmon.core.apply_all_updates"]
   end
   subgraph retire [Retire]
     removeAgent["retire.yml runs patchmon.core.agent absent"]
@@ -164,13 +167,13 @@ flowchart TD
 | [`examples/playbooks/apply_all_updates.yml`](examples/playbooks/apply_all_updates.yml) | Separate from maintain. All pending packages on Automated and No Reboot. |
 | [`examples/playbooks/retire.yml`](examples/playbooks/retire.yml) | A host leaves. Removes the agent, then deletes the host record when `patchmon_id` is set. Requires `--limit`. |
 
-`maintain.yml` imports [`report_health.yml`](examples/playbooks/report_health.yml), [`apply_security_updates.yml`](examples/playbooks/apply_security_updates.yml), and [`reboot_needed.yml`](examples/playbooks/reboot_needed.yml). Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
+`maintain.yml` imports [`report_health.yml`](examples/playbooks/report_health.yml), [`apply_security_updates.yml`](examples/playbooks/apply_security_updates.yml), and [`reboot_needed.yml`](examples/playbooks/reboot_needed.yml). Those plays import `patchmon.core.report_health`, `patchmon.core.apply_security_updates`, and `patchmon.core.reboot_needed`. Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
 
-Enroll runs when a host joins. The new host stays in the enrollment token's default group. There is no Integration route to set a policy group from a play. Maintain is the recurring job. `patchmon.core.report_health` fails that host when the newest package report is missing or the status is not success, and other hosts continue. `dnf` and `dnf5` can take a security-only upgrade. `apt` has no matching flag, so the opt-in path lists packages with `patchmon.core.host_packages` (`updates_only: true`) and upgrades names where `is_security_update` is true (`-e patchmon_try_listed_security=true`). After those updates, and again after a reboot, run `patchmon.core.agent` with `agent_state: report`.
+Enroll runs when a host joins. The new host stays in the enrollment token's default group. There is no Integration route to set a policy group from a play. Maintain is the recurring job. `patchmon.core.report_health` fails that host when the newest package report is missing or the status is not success, and other hosts continue. `patchmon.core.apply_security_updates` applies a security-only upgrade on `dnf` and `dnf5`. `apt` has no matching flag, so the opt-in path lists packages with `patchmon.core.host_packages` (`updates_only: true`) and upgrades names where `is_security_update` is true (`-e patchmon_try_listed_security=true` or `-e apply_security_updates_try_listed=true`). After those updates, and again after a reboot, the role runs `patchmon.core.agent` with `agent_state: report`.
 
-All pending upgrades (`apt` safe, `dnf` latest) are a separate play for Automated and No Reboot. Reboot stays on the maintain path. Retire removes the agent, then deletes the host record. An empty `patchmon_id` skips that delete, so a host that never enrolled can still be removed. Pass `--limit` to `retire.yml`.
+All pending upgrades (`apt` safe, `dnf` latest) are `patchmon.core.apply_all_updates`, called by a separate play for Automated and No Reboot. Reboot stays on the maintain path. `patchmon.core.reboot_needed` reboots when `patchmon_needs_reboot` is true. The play sets `serial: 1`. Retire removes the agent, then deletes the host record. An empty `patchmon_id` skips that delete, so a host that never enrolled can still be removed. Pass `--limit` to `retire.yml`.
 
-Inventory, report health, and package reads use an Integration token with `host:get`. Installing the agent and creating the host use Auto-Enrollment. See **[docs/permissions.md](docs/permissions.md)**.
+Inventory, report health, and the apt listed-security path use an Integration token with `host:get`. `dnf` and `dnf5` security updates, all pending upgrades, reboot, and the agent report do not call the API. Installing the agent and creating the host use Auto-Enrollment. See **[docs/permissions.md](docs/permissions.md)**.
 
 ## Inventory configuration
 
@@ -354,6 +357,10 @@ Runnable copies: [`examples/playbooks/`](examples/playbooks/).
 |------|---------------|---------|
 | `patchmon.core.agent` | [`playbooks/agent.yml`](playbooks/agent.yml) | Install/start/stop/report/remove agent |
 | `patchmon.core.host` | [`playbooks/host.yml`](playbooks/host.yml) | Enroll or delete host entries |
+| `patchmon.core.report_health` | [`examples/playbooks/report_health.yml`](examples/playbooks/report_health.yml) | Fail unless the newest package report succeeded |
+| `patchmon.core.apply_security_updates` | [`examples/playbooks/apply_security_updates.yml`](examples/playbooks/apply_security_updates.yml) | Security-only updates, then a local agent report |
+| `patchmon.core.apply_all_updates` | [`examples/playbooks/apply_all_updates.yml`](examples/playbooks/apply_all_updates.yml) | All pending upgrades, then a local agent report |
+| `patchmon.core.reboot_needed` | [`examples/playbooks/reboot_needed.yml`](examples/playbooks/reboot_needed.yml) | Reboot when `patchmon_needs_reboot` is true (`serial: 1` on the play), then a local agent report |
 
 See each role’s README for variables and required credentials.
 
@@ -407,7 +414,7 @@ Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https
 |---------|-------------------------------|
 | [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2) | `patchmon.core.inventory` lists hosts, groups, and stats hostvars |
 | [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf) | `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent |
-| [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf) | Inventory groups and hostvars such as `patchmon_update_state` and `patchmon_needs_reboot`, so plays can patch and reboot selected hosts |
+| [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf) | `patchmon.core.apply_security_updates`, `patchmon.core.apply_all_updates`, and `patchmon.core.reboot_needed`, gated by hostvars such as `patchmon_update_state` and `patchmon_needs_reboot` |
 
 ## Development
 

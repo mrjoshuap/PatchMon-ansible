@@ -1,0 +1,10 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require gathered package-manager facts
+  ansible.builtin.assert:
+    that:
+      - ansible_pkg_mgr is defined
+      - ansible_pkg_mgr | length > 0
+    fail_msg: >-
+      patchmon.core.apply_all_updates needs gather_facts: true and
+      become: true on the play so ansible_pkg_mgr is set.

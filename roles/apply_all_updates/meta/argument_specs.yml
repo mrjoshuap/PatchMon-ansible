@@ -1,0 +1,15 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Apply all pending package upgrades and report to PatchMon
+    description:
+      - Upgrades every pending package. Apt uses a safe upgrade. C(dnf) and C(dnf5) use C(state=latest).
+      - Skips a host that is also in C(patchmon_manual).
+      - Fails the host when it is eligible and C(ansible_pkg_mgr) is not apt, dnf, or dnf5.
+      - After a supported upgrade, runs C(patchmon.core.agent) with C(agent_state=report). The report is local and does not call the Integration API.
+      - Does not reboot. Run C(patchmon.core.reboot_needed) for that.
+      - Separate from C(patchmon.core.apply_security_updates). This role has no role variables.
+      - The play must set C(gather_facts=true) and C(become=true).
+    author:
+      - PatchMon contributors

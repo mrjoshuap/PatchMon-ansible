@@ -21,7 +21,7 @@ Scopes are explicit. `get` does **not** imply `delete`.
 
 | Scope | Capabilities in this collection |
 |-------|----------------------------------|
-| `host:get` | Inventory plugin, `host_info` (including `notes`, `package_reports`, `agent_queue`), `host_packages`, `lookup('patchmon.core.host')`, `report_health` role, existence checks before enroll |
+| `host:get` | Inventory plugin, `host_info` (including `notes`, `package_reports`, `agent_queue`), `host_packages`, `lookup('patchmon.core.host')`, `report_health` role, `apply_security_updates` apt opt-in (`host_packages`), existence checks before enroll |
 | `host:delete` | `patchmon.core.host` with `state=absent`, `roles/host` when `host_state=absent` |
 
 There is **no** Integration `host:create` scope. Host creation uses the **Auto-Enrollment** API. There is no Integration route for host field changes, group replacement, or host commands. Those stay on the signed-in UI API.
@@ -66,6 +66,9 @@ Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on 
 | `patchmon.core.inventory` | Integration `host:get` |
 | `patchmon.core.host_info` / `host_packages` / lookup `host` | Integration `host:get` |
 | `patchmon.core.report_health` | Integration `host:get` (`package_reports`) |
+| `patchmon.core.apply_security_updates` | None for `dnf` and `dnf5`. Integration `host:get` when `apply_security_updates_try_listed` is true and the package manager is apt. Agent report is local. |
+| `patchmon.core.apply_all_updates` | None. Local package upgrades and a local agent report. |
+| `patchmon.core.reboot_needed` | None. Local reboot and a local agent report. |
 | `patchmon.core.host` present | Auto-Enrollment token |
 | `patchmon.core.host` absent | Integration `host:delete` |
 | `patchmon.core.host_token` script | Auto-Enrollment token |
