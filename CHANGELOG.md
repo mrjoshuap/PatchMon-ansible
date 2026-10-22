@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-21
+
 ### Added
 
 - Roles `apply_security_updates`, `apply_all_updates`, and `reboot_needed`.
