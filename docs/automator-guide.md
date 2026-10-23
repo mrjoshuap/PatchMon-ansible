@@ -407,7 +407,7 @@ Start from [`examples/patchmon_inventory_stats.yml`](../examples/patchmon_invent
 ### Enroll, maintain, and retire
 
 ```mermaid
-flowchart LR
+flowchart TD
   subgraph lifecycle ["System Lifecycle"]
     direction TB
     subgraph enroll [Enroll]
