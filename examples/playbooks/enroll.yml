@@ -2,6 +2,12 @@
 # Auto-Enrollment creates the host record. The host stays in that token's
 # default group. There is no Integration route to set a policy group.
 #
+# The host may be absent from the inventory. The first play checks on the
+# control node and adds it before the install play. Pass
+# -e enroll_host=<hostname>. Pass -e enroll_ansible_host=<address> when
+# that name is not the SSH target. --limit selects hosts already in the
+# inventory.
+#
 # Requires:
 #   - SSH access and privilege escalation on the targets
 #   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_ENROLLMENT_KEY,
@@ -9,14 +15,48 @@
 #     PATCHMON_ENROLLMENT_URL overrides the derived enrollment URL and is
 #     discouraged. PATCHMON_API_URL is a last resort.
 #
-# Example:
+# Examples:
+#   ansible-playbook -i inventories/linux.yml \
+#     examples/playbooks/enroll.yml \
+#     -e enroll_host=web01.example.com
+#
 #   ansible-playbook -i inventories/linux.yml \
 #     examples/playbooks/enroll.yml --limit web01.example.com
 #
 # After enroll, refresh a stats inventory and run maintain.yml.
 
+- name: Ensure the enrollment host is in the inventory
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+    - name: Require enroll_host to be a hostname
+      ansible.builtin.assert:
+        that:
+          - enroll_host is string
+          - enroll_host | length > 0
+        fail_msg: >-
+          Pass -e enroll_host=<hostname>. enroll_ansible_host is optional
+          when that name is not the SSH address.
+      when: enroll_host is defined
+
+    - name: Check whether the host is already in the inventory
+      ansible.builtin.set_fact:
+        enroll_host_in_inventory: "{{ enroll_host in groups['all'] }}"
+      when: enroll_host | default('') | length > 0
+
+    - name: Add the host when it is not in the inventory
+      ansible.builtin.add_host:
+        name: "{{ enroll_host }}"
+        ansible_host: "{{ enroll_ansible_host | default(omit, true) }}"
+      when:
+        - enroll_host | default('') | length > 0
+        - not enroll_host_in_inventory | default(false)
+
 - name: Enroll hosts with the PatchMon agent
-  hosts: all
+  hosts: "{{ enroll_host | default('all', true) }}"
   gather_facts: true
   become: true
 

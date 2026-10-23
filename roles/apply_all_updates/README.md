@@ -20,4 +20,4 @@ The play must set `gather_facts: true` and `become: true`. This role has no role
         name: patchmon.core.apply_all_updates
 ```
 
-Thin playbook: [examples/playbooks/apply_all_updates.yml](../../examples/playbooks/apply_all_updates.yml). `maintain.yml` does not import that play.
+Thin playbook: [examples/playbooks/apply_all_updates.yml](../../examples/playbooks/apply_all_updates.yml). `maintain.yml` imports that play when `-e apply_all_updates=true`.

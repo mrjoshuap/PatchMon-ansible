@@ -12,7 +12,8 @@
 # the eligible host with a PatchMon feedback draft.
 #
 # The role reports with patchmon.core.agent (agent_state: report).
-# Does not reboot — reboot_needed.yml does that, and maintain.yml runs both.
+# Does not reboot — reboot_needed.yml does that. maintain.yml runs both
+# unless -e apply_all_updates=true selects apply_all_updates.yml instead.
 #
 # Requires:
 #   - Stats inventory (examples/patchmon_inventory_stats.yml)

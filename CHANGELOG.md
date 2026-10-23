@@ -4,6 +4,12 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- `examples/playbooks/maintain.yml` applies security updates by default.
+  `-e apply_all_updates=true` imports `apply_all_updates.yml` instead of
+  `apply_security_updates.yml`.
+
 ## [2.0.5] - 2026-10-23
 
 ### Changed

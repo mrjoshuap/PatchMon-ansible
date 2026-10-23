@@ -414,18 +414,18 @@ flowchart TD
   subgraph maintain [Maintain]
     refresh[maintain.yml refreshes inventory]
     health["report_health.yml runs patchmon.core.report_health"]
-    securityUpd["apply_security_updates.yml runs patchmon.core.apply_security_updates"]
+    securityUpd["default: apply_security_updates.yml"]
+    allUpdates["-e apply_all_updates=true: apply_all_updates.yml"]
     reportSec["patchmon.core.agent report"]
     rebootHost["reboot_needed.yml runs patchmon.core.reboot_needed"]
     reportReboot["patchmon.core.agent report"]
     refresh --> health
     health --> securityUpd
+    health --> allUpdates
     securityUpd --> reportSec
+    allUpdates --> reportSec
     reportSec --> rebootHost
     rebootHost --> reportReboot
-  end
-  subgraph allPending [All pending upgrades]
-    allUpdates["apply_all_updates.yml runs patchmon.core.apply_all_updates"]
   end
   subgraph retire [Retire]
     removeAgent["retire.yml runs patchmon.core.agent absent"]
@@ -437,12 +437,12 @@ flowchart TD
 
 | Playbook | When it runs |
 |----------|----------------|
-| [`examples/playbooks/enroll.yml`](../examples/playbooks/enroll.yml) | A host joins. Installs the agent. The host stays in the Auto-Enrollment token's default group |
-| [`examples/playbooks/maintain.yml`](../examples/playbooks/maintain.yml) | Recurring job. Refreshes inventory, checks report health, applies security-only updates, then reboots Automated one host at a time |
-| [`examples/playbooks/apply_all_updates.yml`](../examples/playbooks/apply_all_updates.yml) | Separate from maintain. All pending packages on Automated and No Reboot |
+| [`examples/playbooks/enroll.yml`](../examples/playbooks/enroll.yml) | A host joins. On the control node, adds the host when it is missing from the inventory, then installs the agent. The host stays in the Auto-Enrollment token's default group |
+| [`examples/playbooks/maintain.yml`](../examples/playbooks/maintain.yml) | Recurring job. Refreshes inventory, checks report health, applies security updates by default, then reboots Automated one host at a time. `-e apply_all_updates=true` applies all pending upgrades instead |
+| [`examples/playbooks/apply_all_updates.yml`](../examples/playbooks/apply_all_updates.yml) | All pending packages on Automated and No Reboot. `maintain.yml` imports this play when `-e apply_all_updates=true` |
 | [`examples/playbooks/retire.yml`](../examples/playbooks/retire.yml) | A host leaves. Removes the agent, then deletes the host record when `patchmon_id` is set. Requires `--limit` |
 
-`maintain.yml` imports [`report_health.yml`](../examples/playbooks/report_health.yml), [`apply_security_updates.yml`](../examples/playbooks/apply_security_updates.yml), and [`reboot_needed.yml`](../examples/playbooks/reboot_needed.yml). Those plays import `patchmon.core.report_health`, `patchmon.core.apply_security_updates`, and `patchmon.core.reboot_needed`. Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
+`maintain.yml` imports [`report_health.yml`](../examples/playbooks/report_health.yml), then either [`apply_security_updates.yml`](../examples/playbooks/apply_security_updates.yml) or [`apply_all_updates.yml`](../examples/playbooks/apply_all_updates.yml), then [`reboot_needed.yml`](../examples/playbooks/reboot_needed.yml). Security updates are the default. `-e apply_all_updates=true` selects all pending upgrades. Those plays import `patchmon.core.report_health`, the matching update role, and `patchmon.core.reboot_needed`. Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
 
 ```bash
 export PATCHMON_SERVER_URL='https://patchmon.example.com'
@@ -451,23 +451,25 @@ export PATCHMON_ENROLLMENT_SECRET='...'
 # Optional TLS. true is the default. false is for a lab only.
 # export PATCHMON_VERIFY_SSL=true
 ansible-playbook -i inventories/linux.yml examples/playbooks/enroll.yml \
-  --limit web01.example.com
+  -e enroll_host=web01.example.com
 
 export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/maintain.yml
+ansible-playbook -i inventories/patchmon.yml examples/playbooks/maintain.yml \
+  -e apply_all_updates=true
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/apply_all_updates.yml
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/retire.yml \
   --limit web01.example.com
 ```
 
-`enroll.yml` needs an Auto-Enrollment token (`PATCHMON_ENROLLMENT_KEY` and `PATCHMON_ENROLLMENT_SECRET`) and `PATCHMON_SERVER_URL`. The new host stays in that token's default group. There is no Integration route to set a policy group from a play. Setting `PATCHMON_ENROLLMENT_URL` directly is discouraged.
+`enroll.yml` checks the control node first. Pass `-e enroll_host=<hostname>` for a host that is missing from the inventory; the play adds that host, then installs the agent. Optional `-e enroll_ansible_host=<address>` sets the SSH target when the inventory name is not the address. `--limit` selects hosts that are already in the inventory. The play needs an Auto-Enrollment token (`PATCHMON_ENROLLMENT_KEY` and `PATCHMON_ENROLLMENT_SECRET`) and `PATCHMON_SERVER_URL`. The new host stays in that token's default group. There is no Integration route to set a policy group from a play. Setting `PATCHMON_ENROLLMENT_URL` directly is discouraged.
 
 `patchmon.core.report_health` fails that host when the newest package report is missing or the status is not success, and other hosts continue. When that report's error is an unsupported package manager, the failure includes a subject and description for a [PatchMon feedback](https://feedback.patchmon.net/) request. Variables: [`roles/report_health/README.md`](../roles/report_health/README.md).
 
 `patchmon.core.apply_security_updates` applies a security-only upgrade on `dnf` and `dnf5`. `apt` has no matching flag, so the opt-in path lists packages with `patchmon.core.host_packages` (`updates_only: true`) and upgrades names where `is_security_update` is true (`-e patchmon_try_listed_security=true` or `-e apply_security_updates_try_listed=true`). An eligible host whose package manager is not apt, dnf, or dnf5 fails with a feedback draft. After supported updates, and again after a reboot, the role runs `patchmon.core.agent` with `agent_state: report`. Variables: [`roles/apply_security_updates/README.md`](../roles/apply_security_updates/README.md).
 
-All pending upgrades (`apt` safe, `dnf` latest) are `patchmon.core.apply_all_updates`, called by a separate play for Automated and No Reboot. An eligible host whose package manager is not apt, dnf, or dnf5 fails with a feedback draft. Variables: [`roles/apply_all_updates/README.md`](../roles/apply_all_updates/README.md).
+All pending upgrades (`apt` safe, `dnf` latest) are `patchmon.core.apply_all_updates`, for Automated and No Reboot. `maintain.yml` imports that play when `-e apply_all_updates=true`. Otherwise it imports the security-only play. An eligible host whose package manager is not apt, dnf, or dnf5 fails with a feedback draft. Variables: [`roles/apply_all_updates/README.md`](../roles/apply_all_updates/README.md).
 
 Reboot stays on the maintain path. `patchmon.core.reboot_needed` reboots when `patchmon_needs_reboot` is true. The play sets `serial: 1`. Variables: [`roles/reboot_needed/README.md`](../roles/reboot_needed/README.md).
 

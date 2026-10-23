@@ -2,7 +2,8 @@
 # and dnf and dnf5 latest. Manual is reporting only, so a host also in
 # patchmon_manual is skipped. Hosts with no policy group are not in hosts:.
 # Any other package manager fails with a PatchMon feedback draft.
-# Not imported by maintain.yml. Does not reboot — reboot_needed.yml does.
+# maintain.yml imports this play when -e apply_all_updates=true.
+# Does not reboot — reboot_needed.yml does.
 # After the upgrades, patchmon.core.apply_all_updates runs
 # patchmon.core.agent with agent_state report.
 #
