@@ -22,7 +22,7 @@ See [docs/permissions.md](../../docs/permissions.md).
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `agent_state` | `present` | `present`, `started`, `stopped`, `absent`, `report` |
-| `agent_server_url` | env `PATCHMON_SERVER_URL` / `PATCHMON_API_URL` | PatchMon instance root |
+| `agent_server_url` | derived from `PATCHMON_SERVER_URL` | Auto-enrollment URL (`/api/v1/auto-enrollment`). `PATCHMON_ENROLLMENT_URL` overrides it and is discouraged. `PATCHMON_API_URL` is a last resort |
 | `agent_enrollment_key` / `agent_enrollment_secret` | env | Auto-enrollment credentials |
 | `agent_script_type` | `direct-host` | Or `proxmox-lxc` |
 | `agent_force_new_host` | `false` | Sets `FORCE_NEW_HOST` for the installer |

@@ -47,14 +47,34 @@ if [[ -f .env ]]; then
   source .env
 fi
 
+# Older .env files may set only PATCHMON_SERVER_URL. Derive the enrollment and
+# hosts URLs when those overrides are unset. An explicit value still wins.
+_patchmon_server="${PATCHMON_SERVER_URL:-}"
+_patchmon_server="${_patchmon_server%/}"
+if [[ -n "${_patchmon_server}" ]]; then
+  _patchmon_enrollment="${_patchmon_server}/api/v1/auto-enrollment"
+  _patchmon_api="${_patchmon_server}/api/v1/api/hosts"
+  if [[ -n "${PATCHMON_ENROLLMENT_URL:-}" && "${PATCHMON_ENROLLMENT_URL}" != "${_patchmon_enrollment}" ]]; then
+    echo "PATCHMON_ENROLLMENT_URL is set. Prefer PATCHMON_SERVER_URL and leave PATCHMON_ENROLLMENT_URL unset."
+  fi
+  if [[ -n "${PATCHMON_API_URL:-}" && "${PATCHMON_API_URL}" != "${_patchmon_api}" ]]; then
+    echo "PATCHMON_API_URL is set. Prefer PATCHMON_SERVER_URL and leave PATCHMON_API_URL unset."
+  fi
+  export PATCHMON_ENROLLMENT_URL="${PATCHMON_ENROLLMENT_URL:-${_patchmon_enrollment}}"
+  export PATCHMON_API_URL="${PATCHMON_API_URL:-${_patchmon_api}}"
+fi
+unset _patchmon_server _patchmon_enrollment _patchmon_api
+
 # if PATCHMON environment variables are not set, print a message instructing the user to export the environment variables
-if [[ -z "${PATCHMON_ENROLLMENT_KEY:-}" || -z "${PATCHMON_ENROLLMENT_SECRET:-}" || -z "${PATCHMON_API_KEY:-}" || -z "${PATCHMON_API_SECRET:-}" || -z "${PATCHMON_SERVER_URL:-}" || -z "${PATCHMON_API_URL:-}" ]]; then
+if [[ -z "${PATCHMON_ENROLLMENT_KEY:-}" || -z "${PATCHMON_ENROLLMENT_SECRET:-}" || -z "${PATCHMON_API_KEY:-}" || -z "${PATCHMON_API_SECRET:-}" || -z "${PATCHMON_SERVER_URL:-}" ]]; then
   echo "Please export the following environment variables:"
   echo "export PATCHMON_ENROLLMENT_KEY"
   echo "export PATCHMON_ENROLLMENT_SECRET"
   echo "export PATCHMON_API_KEY"
   echo "export PATCHMON_API_SECRET"
   echo "export PATCHMON_SERVER_URL"
-  echo "export PATCHMON_API_URL"
+  echo "Prefer PATCHMON_SERVER_URL. Do not set PATCHMON_ENROLLMENT_URL or PATCHMON_API_URL unless you must override the derived URLs."
+  echo "Optional: export PATCHMON_VERIFY_SSL=true"
+  echo "Optional lab only: export PATCHMON_VERIFY_SSL=false"
 fi
 

@@ -89,10 +89,13 @@ Quick path:
 ```bash
 # After installing the collection and enabling the plugin (see examples/README.md)
 cp examples/patchmon_inventory_stats.yml inventories/patchmon.yml
-# Edit api_url; then:
-export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+# Omit api_url. PATCHMON_SERVER_URL is preferred.
+# PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
 export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
+# Optional TLS. true is the default. false is for a lab only.
+# export PATCHMON_VERIFY_SSL=true
 ansible-inventory -i inventories/patchmon.yml --graph
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/pending_updates.yml \
   --limit patchmon_security_required
@@ -177,26 +180,24 @@ Inventory, report health, and the apt listed-security path use an Integration to
 
 ## Inventory configuration
 
-Create an inventory file, or copy an example from [`examples/`](examples/) and edit `api_url`:
+Create an inventory file, or copy an example from [`examples/`](examples/). Export `PATCHMON_SERVER_URL` and omit `api_url`:
 
 ```yaml
 ---
 plugin: patchmon.core.inventory
-api_url: https://patchmon.example.com/api/v1/api/hosts
-api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
 verify_ssl: true
 ```
 
-Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`  
-(`api_url` may also be the instance root; the plugin appends `/api/v1/api/hosts`.)
+Export `PATCHMON_API_KEY` and `PATCHMON_API_SECRET` as well. The inventory file is not templated, so `lookup()` and other Jinja in `api_url`, `api_key`, or `api_secret` are not expanded. `compose`, `groups`, and `keyed_groups` are expressions the plugin evaluates.
+
+Prefer `PATCHMON_SERVER_URL=https://<patchmon-host>`. The plugin derives `https://<patchmon-host>/api/v1/api/hosts`. Setting `api_url` or `PATCHMON_API_URL` overrides that URL and is discouraged. An instance root passed as `api_url` still works; the plugin appends `/api/v1/api/hosts`. Enrollment workflows derive `https://<patchmon-host>/api/v1/auto-enrollment`. Setting `PATCHMON_ENROLLMENT_URL` overrides that URL and is discouraged.
 
 ### Configuration options
 
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
 | `plugin` | yes | — | Must be `patchmon.core.inventory` |
-| `api_url` | yes | — | Hosts endpoint or instance root (`PATCHMON_API_URL`) |
+| `api_url` | unless `PATCHMON_SERVER_URL` is set | — | Hosts endpoint. Prefer `PATCHMON_SERVER_URL`. `PATCHMON_API_URL` overrides it and is discouraged |
 | `api_key` | yes | — | Token Key (`PATCHMON_API_KEY`) |
 | `api_secret` | yes | — | Token Secret (`PATCHMON_API_SECRET`) |
 | `verify_ssl` | no | `true` | TLS verify (`PATCHMON_VERIFY_SSL`) |
@@ -214,7 +215,7 @@ Canonical API URL: `https://<patchmon-host>/api/v1/api/hosts`
 ```yaml
 ---
 plugin: patchmon.core.inventory
-api_url: https://patchmon.example.com/api/v1/api/hosts
+# Omit api_url when PATCHMON_SERVER_URL is set.
 include_stats: true
 compose:
   patchmon_has_security_updates: patchmon_security_updates_count | int > 0
@@ -313,7 +314,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 ```yaml
 - name: Gather PatchMon host details
   patchmon.core.host_info:
-    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     host_id: "{{ patchmon_id }}"
@@ -323,7 +324,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 
 - name: Read telemetry as nested facts (does not override patchmon_* hostvars)
   patchmon.core.host_info:
-    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     host_id: "{{ patchmon_id }}"
@@ -333,7 +334,7 @@ Call PatchMon from the control node (`delegate_to: localhost`). Prefer a stats i
 
 - name: List packages with updates
   patchmon.core.host_packages:
-    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     host_id: "{{ patchmon_id }}"
@@ -384,16 +385,20 @@ See each role’s README for variables and required credentials.
 
 Full matrix and least-privilege guidance: **[docs/permissions.md](docs/permissions.md)**.
 
-Prefer environment variables, Ansible Vault, or AAP credentials over plaintext secrets:
+Prefer environment variables, Ansible Vault, or AAP credentials over plaintext secrets. Set `PATCHMON_SERVER_URL` and leave `PATCHMON_ENROLLMENT_URL` and `PATCHMON_API_URL` unset. The collection derives `https://<patchmon-host>/api/v1/auto-enrollment` and `https://<patchmon-host>/api/v1/api/hosts` from the instance root. Setting either derived variable directly overrides that URL and is discouraged.
 
 ```bash
-export PATCHMON_API_URL=https://patchmon.example.com/api/v1/api/hosts
+export PATCHMON_SERVER_URL=https://patchmon.example.com
 export PATCHMON_API_KEY=...
 export PATCHMON_API_SECRET=...
 # Provisioning (separate from read-only tokens when possible):
-export PATCHMON_SERVER_URL=https://patchmon.example.com
 export PATCHMON_ENROLLMENT_KEY=...
 export PATCHMON_ENROLLMENT_SECRET=...
+# Optional TLS. true is the default. false is for a lab only.
+# export PATCHMON_VERIFY_SSL=true
+# Discouraged overrides:
+# export PATCHMON_ENROLLMENT_URL=https://patchmon.example.com/api/v1/auto-enrollment
+# export PATCHMON_API_URL=https://patchmon.example.com/api/v1/api/hosts
 ```
 
 ## Compliance note

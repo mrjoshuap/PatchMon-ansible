@@ -18,6 +18,8 @@ Prefer separate credentials for read-only inventory vs provisioning. Never commi
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `host_state` | `present` | `present` or `absent` |
+| `host_server_url` | derived from `PATCHMON_SERVER_URL` | Auto-enrollment URL (`/api/v1/auto-enrollment`). `PATCHMON_ENROLLMENT_URL` overrides it and is discouraged |
+| `host_api_url` | derived from `PATCHMON_SERVER_URL` | Integration hosts URL (`/api/v1/api/hosts`). `PATCHMON_API_URL` overrides it and is discouraged |
 | `host_friendly_name` | `inventory_hostname` | Display name for enrollment |
 | `host_enrollment_key` / `host_enrollment_secret` | env | Auto-enrollment token |
 | `host_api_key` / `host_api_secret` | env | Integration API (list + delete) |

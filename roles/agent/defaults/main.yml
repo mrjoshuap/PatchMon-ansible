@@ -5,8 +5,10 @@
 # Desired agent lifecycle: present (install+start), started, stopped, absent, report
 agent_state: present
 
-# PatchMon instance root (https://patchmon.example.com)
-agent_server_url: "{{ lookup('env', 'PATCHMON_SERVER_URL') | default(lookup('env', 'PATCHMON_API_URL'), true) }}"
+# Auto-enrollment URL. Prefer PATCHMON_SERVER_URL; the lookup derives
+# {server}/api/v1/auto-enrollment. PATCHMON_ENROLLMENT_URL overrides that
+# and is discouraged. PATCHMON_API_URL is a last resort.
+agent_server_url: "{{ lookup('patchmon.core.endpoint', 'enrollment') }}"
 
 # Auto-enrollment credentials (for script-based install)
 agent_enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') | default('', true) }}"

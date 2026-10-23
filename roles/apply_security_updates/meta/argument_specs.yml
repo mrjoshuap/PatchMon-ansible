@@ -37,9 +37,10 @@ argument_specs:
         type: str
       apply_security_updates_api_url:
         description:
-          - Integration API URL for the apt package list.
+          - Integration hosts URL for the apt package list.
           - Required only on the apt opt-in path. Needs scope C(host:get).
-          - When omitted, defaults to C(PATCHMON_API_URL).
+          - When omitted, derived from C(PATCHMON_SERVER_URL) as C(/api/v1/api/hosts).
+          - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_API_URL) overrides the derived URL and is discouraged.
         type: str
       apply_security_updates_api_key:
         description:

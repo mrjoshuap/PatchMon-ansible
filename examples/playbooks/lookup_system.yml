@@ -5,7 +5,8 @@
 # newest agent report. agent_queue: failed agent jobs.
 #
 # Requires:
-#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #   - Extra var: -e patchmon_id=<uuid>
 #
 # Example:

@@ -31,14 +31,13 @@ ansible-galaxy collection remove patchmon.dynamic_inventory
 enable_plugins = patchmon.core.inventory
 ```
 
-Inventory file:
+Inventory file. Prefer `PATCHMON_SERVER_URL` and omit `api_url`. The plugin derives `https://patchmon.example.com/api/v1/api/hosts`. Setting `api_url` or `PATCHMON_API_URL` overrides that URL and is discouraged.
+
+The inventory file is not templated. Do not put `lookup()` or other Jinja in `api_url`, `api_key`, or `api_secret`. Export `PATCHMON_API_KEY` and `PATCHMON_API_SECRET`. `compose`, `groups`, and `keyed_groups` are expressions the plugin evaluates.
 
 ```yaml
 ---
 plugin: patchmon.core.inventory
-api_url: https://patchmon.example.com/api/v1/api/hosts
-api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
 verify_ssl: true
 ```
 
@@ -82,9 +81,12 @@ Telemetry belongs in `ansible_facts.patchmon` from `patchmon.core.host_info` (`i
 ## 6. Smoke-test after migration
 
 ```bash
-export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
 export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
+# Optional TLS. true is the default. false is for a lab only.
+# export PATCHMON_VERIFY_SSL=true
+# PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 
 ansible-inventory -i inventories/patchmon.yml --graph
 ansible-doc patchmon.core.inventory

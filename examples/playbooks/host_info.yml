@@ -6,7 +6,8 @@
 # Requires:
 #   - Collection installed; inventory that sets patchmon_id (use include_stats
 #     or any inventory that maps the host UUID — stats inventory is easiest)
-#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
@@ -20,7 +21,7 @@
   hosts: all
   gather_facts: false
   vars:
-    patchmon_api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    patchmon_api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     patchmon_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     patchmon_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     patchmon_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"

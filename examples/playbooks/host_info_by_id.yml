@@ -2,7 +2,8 @@
 # Call PatchMon modules against a single host UUID without dynamic inventory.
 #
 # Requires:
-#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #   - Extra var: -e patchmon_id=<uuid>
 #
 # Example:
@@ -14,7 +15,7 @@
   connection: local
   gather_facts: false
   vars:
-    patchmon_api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    patchmon_api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     patchmon_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     patchmon_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     patchmon_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"

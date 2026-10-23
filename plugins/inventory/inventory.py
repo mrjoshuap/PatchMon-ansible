@@ -95,15 +95,17 @@ author:
 """
 
 EXAMPLES = r"""
-# Minimal inventory (backward compatible)
+# Minimal inventory. Export PATCHMON_SERVER_URL, PATCHMON_API_KEY, and
+# PATCHMON_API_SECRET. Omit them here. Inventory sources are not templated,
+# so lookup() in api_url, api_key, or api_secret is not expanded.
+# PATCHMON_API_URL or api_url overrides the derived hosts URL. Setting either
+# directly is discouraged.
 plugin: patchmon.core.inventory
-api_url: https://patchmon.example.com/api/v1/api/hosts
-api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+verify_ssl: true
 
-# Rich metadata with auto groups and constructed selection
+# Rich metadata with auto groups and constructed selection.
+# compose, groups, and keyed_groups are expressions the plugin evaluates.
 plugin: patchmon.core.inventory
-api_url: https://patchmon.example.com/api/v1/api/hosts
 include_stats: true
 auto_groups: true
 compose:

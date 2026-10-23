@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+import os
 from urllib.parse import urlencode, urlsplit, urlunsplit
 
 try:
@@ -23,6 +24,14 @@ except ImportError as exc:  # pragma: no cover - exercised when requests missing
 
 HOSTS_PATH = "/api/v1/api/hosts"
 AUTO_ENROLLMENT_PATH = "/api/v1/auto-enrollment"
+# Longer paths first. Enrollment paths are matched separately so a token id
+# under /tokens still strips back to the instance root.
+_INSTANCE_SUFFIXES = (
+    "/api/v1/api/hosts",
+    "/api/v1/api",
+    "/api/v1",
+    "/hosts",
+)
 
 
 class PatchMonAPIError(Exception):
@@ -34,25 +43,89 @@ class PatchMonAPIError(Exception):
         self.payload = payload
 
 
+def _strip_instance_suffix(path):
+    """Remove a known PatchMon API suffix and return the instance path."""
+    path = (path or "").rstrip("/")
+    marker_at = path.find(AUTO_ENROLLMENT_PATH)
+    if marker_at != -1:
+        after = path[marker_at + len(AUTO_ENROLLMENT_PATH) :]
+        if after == "" or after.startswith("/"):
+            return path[:marker_at].rstrip("/")
+    for suffix in _INSTANCE_SUFFIXES:
+        if path.endswith(suffix):
+            return path[: -len(suffix)].rstrip("/")
+    return path
+
+
 def normalize_instance_url(api_url):
     """Return the PatchMon instance root (scheme + netloc + optional base path).
 
-    Accepts instance roots or Integration hosts URLs and strips
-    ``/api/v1/api/hosts`` (and shorter ``/api/v1/api`` / ``/api/v1``) suffixes.
+    Accepts an instance root, an Integration hosts URL, or an auto-enrollment
+    URL. Strips ``/api/v1/api/hosts``, ``/api/v1/auto-enrollment`` (including
+    ``/enroll``, ``/script``, and ``/tokens``), and the shorter ``/api/v1``
+    and ``/hosts`` suffixes.
     """
     if not api_url:
         raise PatchMonAPIError("api_url is required")
 
     url = api_url.strip()
     parts = urlsplit(url)
-    path = (parts.path or "").rstrip("/")
-
-    for suffix in ("/api/v1/api/hosts", "/api/v1/api", "/api/v1", "/hosts"):
-        if path.endswith(suffix):
-            path = path[: -len(suffix)].rstrip("/")
-            break
+    path = _strip_instance_suffix(parts.path or "")
 
     return urlunsplit((parts.scheme, parts.netloc, path, "", ""))
+
+
+def normalize_enrollment_url(server_url):
+    """Return the auto-enrollment base URL without a trailing slash.
+
+    Accepts an instance root, an Integration hosts URL, or an already
+    canonical ``.../api/v1/auto-enrollment`` URL.
+    """
+    if not server_url or not str(server_url).strip():
+        raise PatchMonAPIError("server_url is required")
+    return normalize_instance_url(server_url).rstrip("/") + AUTO_ENROLLMENT_PATH
+
+
+def _nonempty_env(name, environ):
+    source = os.environ if environ is None else environ
+    value = source.get(name, "")
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def resolve_api_url(environ=None):
+    """Return the Integration hosts URL from the environment, or ``""``.
+
+    Prefer ``PATCHMON_SERVER_URL``. ``PATCHMON_API_URL`` overrides the derived
+    hosts URL. Setting that override directly is discouraged.
+    """
+    api_url = _nonempty_env("PATCHMON_API_URL", environ)
+    if api_url:
+        return normalize_hosts_url(api_url)
+    server_url = _nonempty_env("PATCHMON_SERVER_URL", environ)
+    if server_url:
+        return normalize_hosts_url(server_url)
+    return ""
+
+
+def resolve_enrollment_url(environ=None):
+    """Return the auto-enrollment URL from the environment, or ``""``.
+
+    Prefer ``PATCHMON_SERVER_URL``. ``PATCHMON_ENROLLMENT_URL`` overrides the
+    derived enrollment URL. ``PATCHMON_API_URL`` is a last resort so older
+    plays keep working. Setting either override directly is discouraged.
+    """
+    enrollment_url = _nonempty_env("PATCHMON_ENROLLMENT_URL", environ)
+    if enrollment_url:
+        return normalize_enrollment_url(enrollment_url)
+    server_url = _nonempty_env("PATCHMON_SERVER_URL", environ)
+    if server_url:
+        return normalize_enrollment_url(server_url)
+    api_url = _nonempty_env("PATCHMON_API_URL", environ)
+    if api_url:
+        return normalize_enrollment_url(api_url)
+    return ""
 
 
 def normalize_hosts_url(api_url):

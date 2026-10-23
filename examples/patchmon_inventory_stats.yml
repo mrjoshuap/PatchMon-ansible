@@ -14,10 +14,15 @@
 #
 # QUICK START
 #   1. Copy this file (e.g. inventories/patchmon.yml).
-#   2. Set api_url to your PatchMon hosts endpoint (or set PATCHMON_API_URL).
+#   2. Export PATCHMON_SERVER_URL (preferred) and omit api_url.
+#      The plugin derives https://<server>/api/v1/api/hosts.
+#      Setting api_url or PATCHMON_API_URL directly is discouraged.
 #   3. Export credentials (recommended) or uncomment api_key / api_secret below:
+#        export PATCHMON_SERVER_URL='https://patchmon.example.com'
 #        export PATCHMON_API_KEY='<token key>'
 #        export PATCHMON_API_SECRET='<token secret>'
+#        # Optional TLS. true is the default. false is for a lab only.
+#        # export PATCHMON_VERIFY_SSL=true
 #   4. Enable the plugin in ansible.cfg if needed:
 #        [inventory]
 #        enable_plugins = patchmon.core.inventory
@@ -30,10 +35,16 @@
 #          --limit patchmon_needs_reboot
 #
 # CREDENTIALS (pick one)
-#   - Environment: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Environment: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY,
+#     PATCHMON_API_SECRET
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #     (optional) PATCHMON_VERIFY_SSL=true|false
 #   - ansible.cfg [patchmon] api_url / api_key / api_secret / verify_ssl
-#   - Inline options below (avoid committing secrets)
+#     Setting api_url there overrides PATCHMON_SERVER_URL and is discouraged.
+#   - Literal api_key / api_secret in this file (avoid committing secrets).
+#     This file is not templated. lookup() and other Jinja are not expanded
+#     for connection options. compose, groups, and keyed_groups are the
+#     exception: the plugin evaluates those expressions.
 #
 # AUTO GROUPS (when include_stats + auto_groups)
 #   patchmon_needs_reboot, patchmon_security_required, patchmon_updates_pending,
@@ -60,16 +71,16 @@ plugin: patchmon.core.inventory
 # Connection (required unless provided via env / ansible.cfg)
 # ---------------------------------------------------------------------------
 
-# Canonical hosts list URL. Instance root also works; the plugin appends
-# /api/v1/api/hosts when needed.
+# Prefer PATCHMON_SERVER_URL and omit api_url. The plugin derives
+# /api/v1/api/hosts. Uncomment api_url only to override that URL.
+# Setting api_url or PATCHMON_API_URL directly is discouraged.
 # api_url: https://patchmon.example.com/api/v1/api/hosts
 # api_key: your_token_key
 # api_secret: your_token_secret
 
-# Prefer env vars in real use. Uncomment only for local experiments.
-# api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
-# api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-# api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+# Do not put lookup() or other Jinja in api_url, api_key, or api_secret.
+# Ansible does not template those inventory options. Export the environment
+# variables above, or set literal values.
 
 # TLS verification (default: true). Set false only for lab / self-signed certs.
 verify_ssl: true

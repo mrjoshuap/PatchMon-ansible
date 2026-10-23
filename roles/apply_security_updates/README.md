@@ -12,7 +12,7 @@ The play must set `gather_facts: true` and `become: true`. Do not put `patchmon_
 |----------|---------|-------------|
 | `apply_security_updates_try_listed` | `patchmon_try_listed_security`, else `false` | Upgrade apt packages PatchMon marks as security updates |
 | `apply_security_updates_host_id` | `patchmon_id` | Host UUID for the apt package list |
-| `apply_security_updates_api_url` | `PATCHMON_API_URL` | Integration API URL for the apt package list |
+| `apply_security_updates_api_url` | derived from `PATCHMON_SERVER_URL` | Integration hosts URL for the apt package list. `PATCHMON_API_URL` overrides it and is discouraged |
 | `apply_security_updates_api_key` / `apply_security_updates_api_secret` | env | Integration Basic Auth for the apt package list |
 | `apply_security_updates_verify_ssl` | `PATCHMON_VERIFY_SSL`, else `true` | TLS verify for the apt package list |
 | `apply_security_updates_timeout` | `30` | HTTP timeout in seconds for the apt package list |

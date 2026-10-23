@@ -4,6 +4,19 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Prefer `PATCHMON_SERVER_URL`. The collection derives
+  `PATCHMON_ENROLLMENT_URL` (`/api/v1/auto-enrollment`) and `PATCHMON_API_URL`
+  (`/api/v1/api/hosts`) from that instance root. Setting either derived
+  variable directly still overrides the URL and is discouraged.
+- `lookup('patchmon.core.endpoint', 'api'|'enrollment')` returns those URLs
+  from plays and roles. Inventory and the host lookup also accept
+  `PATCHMON_SERVER_URL` when `api_url` and `PATCHMON_API_URL` are unset.
+  Inventory sources are not templated, so `lookup()` in `api_url`, `api_key`,
+  or `api_secret` is not expanded. `compose`, `groups`, and `keyed_groups`
+  are still evaluated by the plugin.
+
 ## [2.0.3] - 2026-10-22
 
 ### Changed

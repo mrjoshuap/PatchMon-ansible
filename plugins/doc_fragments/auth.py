@@ -15,12 +15,13 @@ options:
   api_url:
     description:
       - PatchMon hosts endpoint or instance root.
-      - Canonical form is C(https://patchmon.example.com/api/v1/api/hosts).
+      - Prefer C(PATCHMON_SERVER_URL). The collection derives C(https://patchmon.example.com/api/v1/api/hosts) from that instance root.
+      - C(PATCHMON_API_URL) overrides the derived hosts URL. Setting it directly is discouraged.
       - Instance root is accepted; the collection appends C(/api/v1/api/hosts) when needed.
       - These options authenticate to the Integration API (HTTP Basic), not Auto-Enrollment.
       - Typical minimum scope is C(host:get). Destructive modules require C(host:delete).
       - See the collection C(docs/permissions.md) for the full scope matrix.
-      - Environment variable C(PATCHMON_API_URL). Ini section C(patchmon), key C(api_url).
+      - Environment variable C(PATCHMON_SERVER_URL), or C(PATCHMON_API_URL) as a discouraged override. Ini section C(patchmon), key C(api_url).
     required: true
     type: str
   api_key:

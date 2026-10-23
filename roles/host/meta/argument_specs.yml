@@ -20,15 +20,19 @@ argument_specs:
         choices: [present, absent]
       host_server_url:
         description:
-          - PatchMon instance root used for auto-enrollment.
+          - Auto-enrollment URL used for C(host_state=present).
+          - An instance root is also accepted.
           - Required for C(host_state=present).
-          - When omitted, defaults to C(PATCHMON_SERVER_URL), then C(PATCHMON_API_URL).
+          - When omitted, derived from C(PATCHMON_SERVER_URL).
+          - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_ENROLLMENT_URL) overrides the derived URL and is discouraged.
+          - C(PATCHMON_API_URL) is used only when both of those are unset.
         type: str
       host_api_url:
         description:
-          - Integration API URL used for existence checks and delete.
+          - Integration hosts URL used for existence checks and delete.
           - Required when C(host_state=absent).
-          - When omitted, defaults to C(PATCHMON_API_URL), then C(host_server_url).
+          - When omitted, derived from C(PATCHMON_SERVER_URL) as C(/api/v1/api/hosts).
+          - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_API_URL) overrides the derived URL and is discouraged.
         type: str
       host_enrollment_key:
         description:

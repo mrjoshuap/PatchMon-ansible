@@ -144,10 +144,148 @@ def test_get_hosts_http_error(monkeypatch):
             "https://patchmon.example.com/api/v1/api",
             "https://patchmon.example.com",
         ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/enroll",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/script",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/tokens/abc",
+            "https://patchmon.example.com",
+        ),
+        (
+            "https://patchmon.example.com/prefix/api/v1/auto-enrollment",
+            "https://patchmon.example.com/prefix",
+        ),
     ],
 )
 def test_normalize_instance_url(given, expected):
     assert api.normalize_instance_url(given) == expected
+
+
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        (
+            "https://patchmon.example.com",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+        (
+            "https://patchmon.example.com/",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/api/hosts",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+        (
+            "https://patchmon.example.com/api/v1/auto-enrollment/script",
+            "https://patchmon.example.com/api/v1/auto-enrollment",
+        ),
+    ],
+)
+def test_normalize_enrollment_url(given, expected):
+    assert api.normalize_enrollment_url(given) == expected
+
+
+def test_resolve_urls_from_server_url_only():
+    environ = {"PATCHMON_SERVER_URL": "https://patchmon.example.com/"}
+    assert api.resolve_api_url(environ) == (
+        "https://patchmon.example.com/api/v1/api/hosts"
+    )
+    assert api.resolve_enrollment_url(environ) == (
+        "https://patchmon.example.com/api/v1/auto-enrollment"
+    )
+
+
+def test_resolve_urls_prefer_explicit_overrides():
+    environ = {
+        "PATCHMON_SERVER_URL": "https://patchmon.example.com",
+        "PATCHMON_API_URL": "https://api.example.com/api/v1/api/hosts",
+        "PATCHMON_ENROLLMENT_URL": "https://enroll.example.com/api/v1/auto-enrollment",
+    }
+    assert api.resolve_api_url(environ) == (
+        "https://api.example.com/api/v1/api/hosts"
+    )
+    assert api.resolve_enrollment_url(environ) == (
+        "https://enroll.example.com/api/v1/auto-enrollment"
+    )
+
+
+def test_resolve_urls_ignore_empty_overrides():
+    environ = {
+        "PATCHMON_SERVER_URL": "https://patchmon.example.com",
+        "PATCHMON_API_URL": "  ",
+        "PATCHMON_ENROLLMENT_URL": "",
+    }
+    assert api.resolve_api_url(environ) == (
+        "https://patchmon.example.com/api/v1/api/hosts"
+    )
+    assert api.resolve_enrollment_url(environ) == (
+        "https://patchmon.example.com/api/v1/auto-enrollment"
+    )
+
+
+def test_enrollment_client_accepts_derived_enrollment_url(monkeypatch):
+    seen = {}
+
+    class FakeResponse(object):
+        status_code = 201
+        content = b'{"host":{"id":"abc"}}'
+        is_redirect = False
+        headers = {"Content-Type": "application/json"}
+
+        def json(self):
+            return {"host": {"id": "abc"}}
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            seen["method"] = method
+            seen["url"] = url
+            return FakeResponse()
+
+    monkeypatch.setattr(api.requests, "Session", FakeSession)
+    client = api.PatchMonEnrollmentClient(
+        "https://patchmon.example.com/api/v1/auto-enrollment",
+        "ek",
+        "es",
+    )
+    client.enroll("web-01")
+    assert seen["method"] == "POST"
+    assert seen["url"] == (
+        "https://patchmon.example.com/api/v1/auto-enrollment/enroll"
+    )
+
+
+def test_resolve_enrollment_url_falls_back_to_api_url():
+    environ = {"PATCHMON_API_URL": "https://patchmon.example.com/api/v1/api/hosts"}
+    assert api.resolve_enrollment_url(environ) == (
+        "https://patchmon.example.com/api/v1/auto-enrollment"
+    )
+    assert api.resolve_api_url({}) == ""
+    assert api.resolve_enrollment_url({}) == ""
 
 
 def test_resolve_hostgroup_filter_passes_exact_names_through():

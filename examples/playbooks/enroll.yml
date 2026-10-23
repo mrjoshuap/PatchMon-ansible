@@ -4,8 +4,10 @@
 #
 # Requires:
 #   - SSH access and privilege escalation on the targets
-#   - Env: PATCHMON_SERVER_URL (or PATCHMON_API_URL), PATCHMON_ENROLLMENT_KEY,
+#   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_ENROLLMENT_KEY,
 #     PATCHMON_ENROLLMENT_SECRET
+#     PATCHMON_ENROLLMENT_URL overrides the derived enrollment URL and is
+#     discouraged. PATCHMON_API_URL is a last resort.
 #
 # Example:
 #   ansible-playbook -i inventories/linux.yml \

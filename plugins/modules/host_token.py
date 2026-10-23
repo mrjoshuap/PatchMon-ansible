@@ -28,7 +28,10 @@ options:
     choices: [script, present, absent]
     default: script
   server_url:
-    description: PatchMon instance root (for example C(https://patchmon.example.com)).
+    description:
+      - Auto-enrollment URL or PatchMon instance root (for example C(https://patchmon.example.com)).
+      - Prefer C(PATCHMON_SERVER_URL). The collection derives C(/api/v1/auto-enrollment) from it.
+      - C(PATCHMON_ENROLLMENT_URL) overrides that derived URL. Setting it directly is discouraged.
     type: str
     required: true
   enrollment_key:
@@ -101,7 +104,7 @@ EXAMPLES = r"""
 - name: Fetch direct-host enrollment script to a local file
   patchmon.core.host_token:
     state: script
-    server_url: https://patchmon.example.com
+    server_url: "{{ lookup('patchmon.core.endpoint', 'enrollment') }}"
     enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') }}"
     enrollment_secret: "{{ lookup('env', 'PATCHMON_ENROLLMENT_SECRET') }}"
     script_type: direct-host
@@ -113,7 +116,7 @@ EXAMPLES = r"""
 - name: Create an auto-enrollment token (admin JWT)
   patchmon.core.host_token:
     state: present
-    server_url: https://patchmon.example.com
+    server_url: "{{ lookup('patchmon.core.endpoint', 'enrollment') }}"
     admin_token: "{{ patchmon_admin_jwt }}"
     token_name: ansible-provisioning
     max_hosts_per_day: 50

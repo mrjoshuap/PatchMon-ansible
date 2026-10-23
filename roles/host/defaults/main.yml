@@ -5,9 +5,12 @@
 # present = enroll host entry; absent = delete via Integration API
 host_state: present
 
-# PatchMon instance / Integration API
-host_server_url: "{{ lookup('env', 'PATCHMON_SERVER_URL') | default(lookup('env', 'PATCHMON_API_URL'), true) }}"
-host_api_url: "{{ lookup('env', 'PATCHMON_API_URL') | default(host_server_url, true) }}"
+# Enrollment URL and Integration hosts URL. Prefer PATCHMON_SERVER_URL.
+# The lookup derives {server}/api/v1/auto-enrollment and
+# {server}/api/v1/api/hosts. PATCHMON_ENROLLMENT_URL and PATCHMON_API_URL
+# override those derived URLs and are discouraged.
+host_server_url: "{{ lookup('patchmon.core.endpoint', 'enrollment') }}"
+host_api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
 
 # Auto-enrollment (state=present)
 host_enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') | default('', true) }}"

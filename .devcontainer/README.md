@@ -19,7 +19,10 @@ Copy `.env.template` to `.env` and fill in the values. `post-create.sh` sources 
 - `PATCHMON_API_KEY`
 - `PATCHMON_API_SECRET`
 - `PATCHMON_SERVER_URL`
-- `PATCHMON_API_URL`
+
+Set `PATCHMON_SERVER_URL` to the instance root, for example `https://patchmon.example.com`. The template derives `PATCHMON_ENROLLMENT_URL` (`/api/v1/auto-enrollment`) and `PATCHMON_API_URL` (`/api/v1/api/hosts`) when those variables are unset. Setting either URL directly overrides the derived value and is discouraged. `post-create.sh` prints a note when an override does not match the URL derived from `PATCHMON_SERVER_URL`.
+
+`PATCHMON_VERIFY_SSL` is optional. `true` is the default. Set `false` only in a lab.
 
 ## Optional commit signing
 

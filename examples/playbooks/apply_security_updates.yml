@@ -16,8 +16,9 @@
 #
 # Requires:
 #   - Stats inventory (examples/patchmon_inventory_stats.yml)
-#   - Env for the apt opt-in and for nothing else on dnf: PATCHMON_API_URL,
-#     PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Env for the apt opt-in and for nothing else on dnf: PATCHMON_SERVER_URL
+#     (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET.
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \

@@ -40,12 +40,15 @@ These match the enroll, maintain, and retire flow in the [collection README](../
 export PATCHMON_SERVER_URL='https://patchmon.example.com'
 export PATCHMON_ENROLLMENT_KEY='...'
 export PATCHMON_ENROLLMENT_SECRET='...'
+# Optional TLS. true is the default. false is for a lab only.
+# export PATCHMON_VERIFY_SSL=true
 ansible-playbook -i inventories/linux.yml \
   examples/playbooks/enroll.yml --limit web01.example.com
 
-export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
 export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
+# PATCHMON_SERVER_URL above is enough. PATCHMON_API_URL and
+# PATCHMON_ENROLLMENT_URL override the derived URLs and are discouraged.
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/maintain.yml
 ansible-playbook -i inventories/patchmon.yml examples/playbooks/apply_all_updates.yml
 ansible-playbook -i inventories/patchmon.yml \
@@ -87,37 +90,35 @@ cp examples/patchmon_inventory.yml inventories/patchmon.yml
 cp examples/patchmon_inventory_stats.yml inventories/patchmon.yml
 ```
 
-### 2. Point `api_url` at your PatchMon
+### 2. Point the inventory at your PatchMon
 
-Edit the copy and set:
-
-```yaml
-api_url: https://patchmon.example.com/api/v1/api/hosts
-```
-
-You may also use the instance root (`https://patchmon.example.com`); the plugin appends `/api/v1/api/hosts`.
-
-Alternatively leave `api_url` as-is and export:
+Prefer `PATCHMON_SERVER_URL` and leave `api_url` unset. The plugin derives `https://patchmon.example.com/api/v1/api/hosts`. Setting `api_url` or `PATCHMON_API_URL` overrides that URL and is discouraged.
 
 ```bash
-export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
 ```
+
+An instance root passed as `api_url` still works; the plugin appends `/api/v1/api/hosts`.
 
 ### 3. Provide credentials (do not commit secrets)
 
 Recommended:
 
 ```bash
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
 export PATCHMON_API_KEY='<token key>'
 export PATCHMON_API_SECRET='<token secret>'
-# Optional:
+# Optional TLS. true is the default. false is for a lab only.
 # export PATCHMON_VERIFY_SSL=true
+# Discouraged overrides:
+# export PATCHMON_ENROLLMENT_URL='https://patchmon.example.com/api/v1/auto-enrollment'
+# export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
 ```
 
 Other options (documented inside each example file):
 
-- Uncomment `api_key` / `api_secret` with `lookup('env', ...)` or vaulted values
-- Set `[patchmon]` keys in `ansible.cfg`
+- Set literal `api_key` / `api_secret` in the inventory file, or vault-encrypted scalars. The inventory source is not templated, so `lookup()` and other Jinja in `api_url`, `api_key`, and `api_secret` are sent to PatchMon as literal text. `compose`, `groups`, and `keyed_groups` are evaluated by the plugin.
+- Set `[patchmon]` keys in `ansible.cfg`. `api_url` there overrides `PATCHMON_SERVER_URL` and is discouraged.
 
 ### 4. List the inventory
 
@@ -202,10 +203,13 @@ API modules always talk to PatchMon from the control node — use `delegate_to: 
 ### Shared environment
 
 ```bash
-export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+export PATCHMON_SERVER_URL='https://patchmon.example.com'
 export PATCHMON_API_KEY='...'
 export PATCHMON_API_SECRET='...'
-# optional: export PATCHMON_VERIFY_SSL=false
+# Optional TLS. true is the default. false is for a lab only.
+# export PATCHMON_VERIFY_SSL=true
+# export PATCHMON_VERIFY_SSL=false
+# PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 ```
 
 ### With PatchMon dynamic inventory
@@ -214,7 +218,7 @@ Use a stats inventory so each host has `patchmon_id`:
 
 ```bash
 cp examples/patchmon_inventory_stats.yml inventories/patchmon.yml
-# edit api_url, then:
+# export PATCHMON_SERVER_URL and omit api_url, then:
 
 ansible-playbook -i inventories/patchmon.yml \
   examples/playbooks/host_info.yml
@@ -258,20 +262,22 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 | Plugin not found / ignored | Collection installed? `enable_plugins` includes `patchmon.core.inventory`? Filename ends in `.yml` / `.yaml`? |
 | Auth / HTTP 401 or 403 | `PATCHMON_API_KEY` / `PATCHMON_API_SECRET`; credential has `host:get` |
 | Empty inventory | Hosts enrolled and active in PatchMon? `hostgroup` filter too narrow? |
-| Redirect / empty body errors | Prefer URL **without** a trailing slash that 302s; use `.../api/v1/api/hosts` |
+| Redirect / empty body errors | Prefer `PATCHMON_SERVER_URL` without a trailing slash that 302s. The derived hosts URL is `.../api/v1/api/hosts` |
 | TLS errors | Lab only: `verify_ssl: false` or `PATCHMON_VERIFY_SSL=false` |
 | No `patchmon_needs_reboot` group | Using stats example? `include_stats: true` and `auto_groups: true`? |
 
 Test the API outside Ansible:
 
 ```bash
+# Prefer PATCHMON_SERVER_URL. PATCHMON_API_URL overrides it and is discouraged.
+patchmon_api_url="${PATCHMON_API_URL:-${PATCHMON_SERVER_URL%/}/api/v1/api/hosts}"
 curl -u "$PATCHMON_API_KEY:$PATCHMON_API_SECRET" \
   -H 'Accept: application/json' \
-  "$PATCHMON_API_URL"
+  "$patchmon_api_url"
 # With stats:
 curl -u "$PATCHMON_API_KEY:$PATCHMON_API_SECRET" \
   -H 'Accept: application/json' \
-  "${PATCHMON_API_URL}?include=stats"
+  "${patchmon_api_url}?include=stats"
 ```
 
 ---

@@ -9,7 +9,7 @@ Uses Integration scope `host:get` (`GET /hosts/:id/package_reports`). Does not i
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `report_health_host_id` | `patchmon_id` | PatchMon host UUID |
-| `report_health_api_url` | `PATCHMON_API_URL` | Integration API URL |
+| `report_health_api_url` | derived from `PATCHMON_SERVER_URL` | Integration hosts URL (`/api/v1/api/hosts`). `PATCHMON_API_URL` overrides it and is discouraged |
 | `report_health_api_key` / `report_health_api_secret` | env | Integration Basic Auth |
 | `report_health_limit` | `10` | `limit` query parameter |
 

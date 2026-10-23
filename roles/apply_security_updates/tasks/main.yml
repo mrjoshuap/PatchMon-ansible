@@ -48,8 +48,9 @@
       - apply_security_updates_api_secret | length > 0
     fail_msg: >-
       Listed apt security updates on {{ inventory_hostname }} need
-      apply_security_updates_host_id (inventory hostvar patchmon_id) and
-      PATCHMON_API_URL, PATCHMON_API_KEY, and PATCHMON_API_SECRET
+      apply_security_updates_host_id (inventory hostvar patchmon_id),
+      PATCHMON_SERVER_URL (preferred; PATCHMON_API_URL overrides it and is
+      discouraged), PATCHMON_API_KEY, and PATCHMON_API_SECRET
       (Integration host:get).
   when:
     - apply_security_updates_try_listed | bool

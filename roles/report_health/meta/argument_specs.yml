@@ -20,9 +20,10 @@ argument_specs:
         type: str
       report_health_api_url:
         description:
-          - Integration API URL.
+          - Integration hosts URL.
           - Required.
-          - When omitted, defaults to C(PATCHMON_API_URL).
+          - When omitted, derived from C(PATCHMON_SERVER_URL) as C(/api/v1/api/hosts).
+          - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_API_URL) overrides the derived URL and is discouraged.
         type: str
       report_health_api_key:
         description:

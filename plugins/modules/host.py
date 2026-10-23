@@ -29,8 +29,10 @@ options:
     default: present
   server_url:
     description:
-      - PatchMon instance root (for example C(https://patchmon.example.com)).
+      - Auto-enrollment URL or PatchMon instance root (for example C(https://patchmon.example.com)).
       - Used for auto-enrollment when O(state=present).
+      - Prefer C(PATCHMON_SERVER_URL). The collection derives C(/api/v1/auto-enrollment) from it.
+      - C(PATCHMON_ENROLLMENT_URL) overrides that derived URL. Setting it directly is discouraged.
       - Falls back to O(api_url) when omitted.
     type: str
   enrollment_key:
@@ -66,6 +68,8 @@ options:
     description:
       - Integration API hosts URL or instance root.
       - Required for O(state=absent) and for present-state existence checks.
+      - Prefer C(PATCHMON_SERVER_URL). The collection derives C(/api/v1/api/hosts) from it.
+      - C(PATCHMON_API_URL) overrides that derived URL. Setting it directly is discouraged.
     type: str
   api_key:
     description:
@@ -93,7 +97,7 @@ EXAMPLES = r"""
 - name: Enroll a new host via auto-enrollment
   patchmon.core.host:
     state: present
-    server_url: https://patchmon.example.com
+    server_url: "{{ lookup('patchmon.core.endpoint', 'enrollment') }}"
     enrollment_key: "{{ lookup('env', 'PATCHMON_ENROLLMENT_KEY') }}"
     enrollment_secret: "{{ lookup('env', 'PATCHMON_ENROLLMENT_SECRET') }}"
     friendly_name: "{{ inventory_hostname }}"
@@ -104,7 +108,7 @@ EXAMPLES = r"""
 - name: Delete a host (requires host:delete)
   patchmon.core.host:
     state: absent
-    api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+    api_url: "{{ lookup('patchmon.core.endpoint', 'api') }}"
     api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     host_id: "{{ patchmon_id }}"

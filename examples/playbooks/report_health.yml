@@ -9,7 +9,8 @@
 # patchmon_no_reboot).
 #
 # Requires:
-#   - Env: PATCHMON_API_URL, PATCHMON_API_KEY, PATCHMON_API_SECRET
+#   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
+#     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \

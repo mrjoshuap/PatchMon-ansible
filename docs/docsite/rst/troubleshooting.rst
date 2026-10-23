@@ -7,12 +7,14 @@ Check the API from the control node before debugging Ansible. Use the same Integ
 
 .. code-block:: bash
 
+   # Prefer PATCHMON_SERVER_URL. PATCHMON_API_URL overrides it and is discouraged.
+   patchmon_api_url="${PATCHMON_API_URL:-${PATCHMON_SERVER_URL%/}/api/v1/api/hosts}"
    curl -u "$PATCHMON_API_KEY:$PATCHMON_API_SECRET" \
      -H 'Accept: application/json' \
-     "$PATCHMON_API_URL"
+     "$patchmon_api_url"
    curl -u "$PATCHMON_API_KEY:$PATCHMON_API_SECRET" \
      -H 'Accept: application/json' \
-     "${PATCHMON_API_URL}?include=stats"
+     "${patchmon_api_url}?include=stats"
 
 .. list-table::
    :header-rows: 1
@@ -27,7 +29,7 @@ Check the API from the control node before debugging Ansible. Use the same Integ
    * - Empty inventory
      - Hosts are enrolled in PatchMon, and ``hostgroup`` is not filtering them out. Pass a group id or the exact PatchMon name. ``No Reboot`` is not the same group as ``No_Reboot``, and a ``patchmon_<slug>`` token is not translated.
    * - Redirect or empty body
-     - Use ``https://<patchmon>/api/v1/api/hosts`` without a trailing slash that returns a redirect.
+     - Prefer ``PATCHMON_SERVER_URL`` without a trailing slash that returns a redirect. The derived hosts URL is ``https://<patchmon>/api/v1/api/hosts``.
    * - TLS errors
      - Outside a lab, leave ``verify_ssl: true``. In a lab, set ``verify_ssl: false`` or ``PATCHMON_VERIFY_SSL=false``.
    * - No ``patchmon_needs_reboot`` group

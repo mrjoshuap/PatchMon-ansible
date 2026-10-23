@@ -31,7 +31,7 @@ Air-gapped installs use the release tarball described in the README.
    mkdir -p inventories
    cp examples/patchmon_inventory_stats.yml inventories/patchmon.yml
 
-Edit ``api_url`` so it is ``https://<your-patchmon>/api/v1/api/hosts``. The instance root also works. The plugin appends ``/api/v1/api/hosts``.
+Export ``PATCHMON_SERVER_URL`` and leave ``api_url`` unset. The plugin derives ``https://<your-patchmon>/api/v1/api/hosts``. Setting ``api_url`` or ``PATCHMON_API_URL`` overrides that URL and is discouraged. An instance root passed as ``api_url`` still works. The plugin appends ``/api/v1/api/hosts``.
 
 4. Export Integration API credentials
 -------------------------------------
@@ -40,9 +40,14 @@ Create a token under **Settings → Integrations → API** with at least ``host:
 
 .. code-block:: bash
 
-   export PATCHMON_API_URL='https://patchmon.example.com/api/v1/api/hosts'
+   export PATCHMON_SERVER_URL='https://patchmon.example.com'
    export PATCHMON_API_KEY='<token key>'
    export PATCHMON_API_SECRET='<token secret>'
+   # Optional TLS. true is the default. false is for a lab only.
+   # export PATCHMON_VERIFY_SSL=true
+   # PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
+   # Enrollment uses the same server URL. PATCHMON_ENROLLMENT_URL overrides
+   # the derived /api/v1/auto-enrollment URL and is discouraged.
 
 Do not commit the key or secret. Installing an agent or creating a host needs a separate Auto-Enrollment token. See :ref:`ansible_collections.patchmon.core.docsite.permissions`.
 
@@ -70,7 +75,7 @@ Modules call the API from the control node (``delegate_to: localhost``). Copy-pa
 
 The same directory has the fleet plays from the README diagram. ``maintain.yml`` refreshes inventory, checks report health (``patchmon.core.report_health``), applies security-only updates (``patchmon.core.apply_security_updates``), and reboots Automated hosts one at a time (``patchmon.core.reboot_needed``). All pending upgrades are ``apply_all_updates.yml`` (``patchmon.core.apply_all_updates``). ``retire.yml`` removes the agent and deletes the host record. It requires ``--limit``.
 
-``enroll.yml`` needs an Auto-Enrollment token (``PATCHMON_ENROLLMENT_KEY`` and ``PATCHMON_ENROLLMENT_SECRET``). The new host stays in that token's default group.
+``enroll.yml`` needs an Auto-Enrollment token (``PATCHMON_ENROLLMENT_KEY`` and ``PATCHMON_ENROLLMENT_SECRET``) and ``PATCHMON_SERVER_URL``. The new host stays in that token's default group. Setting ``PATCHMON_ENROLLMENT_URL`` directly is discouraged.
 
 .. code-block:: bash
 

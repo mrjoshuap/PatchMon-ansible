@@ -30,9 +30,12 @@ argument_specs:
         choices: [present, started, stopped, absent, report]
       agent_server_url:
         description:
-          - PatchMon instance root, for example C(https://patchmon.example.com).
+          - Auto-enrollment URL, for example C(https://patchmon.example.com/api/v1/auto-enrollment).
+          - An instance root is also accepted.
           - Required when C(agent_state=present).
-          - When omitted, defaults to C(PATCHMON_SERVER_URL), then C(PATCHMON_API_URL).
+          - When omitted, derived from C(PATCHMON_SERVER_URL).
+          - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_ENROLLMENT_URL) overrides the derived URL and is discouraged.
+          - C(PATCHMON_API_URL) is used only when both of those are unset.
         type: str
       agent_enrollment_key:
         description:
