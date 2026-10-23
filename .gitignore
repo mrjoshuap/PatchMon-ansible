@@ -11,4 +11,4 @@ htmlcov/
 *.egg-info/
 .venv/
 built-docs/
-
+.env

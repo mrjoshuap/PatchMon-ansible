@@ -42,14 +42,19 @@ echo "pytest:"
 pytest --version
 ansible-galaxy collection list patchmon.core
 
-# print a message instructing the user to export the environment variables
-echo "Please export the following environment variables:"
-echo "export PATCHMON_ENROLLMENT_KEY"
-echo "export PATCHMON_ENROLLMENT_SECRET"
-echo "export PATCHMON_API_KEY"
-echo "export PATCHMON_API_SECRET"
-echo "export PATCHMON_SERVER_URL"
-echo "export PATCHMON_API_URL"
-echo ""
-echo "You should then be able to run view your inventory with:"
-echo "  ansible-inventory -i examples/patchmon_inventory.yml --list --yaml"
+# if .env exists, source it
+if [[ -f .env ]]; then
+  source .env
+fi
+
+# if PATCHMON environment variables are not set, print a message instructing the user to export the environment variables
+if [[ -z "${PATCHMON_ENROLLMENT_KEY:-}" || -z "${PATCHMON_ENROLLMENT_SECRET:-}" || -z "${PATCHMON_API_KEY:-}" || -z "${PATCHMON_API_SECRET:-}" || -z "${PATCHMON_SERVER_URL:-}" || -z "${PATCHMON_API_URL:-}" ]]; then
+  echo "Please export the following environment variables:"
+  echo "export PATCHMON_ENROLLMENT_KEY"
+  echo "export PATCHMON_ENROLLMENT_SECRET"
+  echo "export PATCHMON_API_KEY"
+  echo "export PATCHMON_API_SECRET"
+  echo "export PATCHMON_SERVER_URL"
+  echo "export PATCHMON_API_URL"
+fi
+
