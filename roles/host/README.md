@@ -11,7 +11,7 @@ Create (auto-enroll) or delete PatchMon host entries.
 
 Integration tokens with only `host:get` **cannot** create hosts. There is no `host:create` Integration scope; use Auto-Enrollment.
 
-Prefer separate credentials for read-only inventory vs provisioning. Never commit secrets. See [docs/permissions.md](../../docs/permissions.md).
+Prefer separate credentials for read-only inventory and provisioning. Keep secrets out of git. See [Credentials](../../docs/automator-guide.md#chapter-3-credentials).
 
 ## Variables
 

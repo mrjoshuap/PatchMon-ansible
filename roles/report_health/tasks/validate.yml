@@ -15,4 +15,4 @@
     fail_msg: >-
       report_health_host_id, report_health_api_url, report_health_api_key,
       and report_health_api_secret are required. Integration scope host:get
-      reads package_reports. See docs/permissions.md.
+      reads package_reports. See docs/automator-guide.md (Credentials).

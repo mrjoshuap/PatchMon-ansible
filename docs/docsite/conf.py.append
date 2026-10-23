@@ -50,10 +50,8 @@ templates_path = [_templates]
 def _insert_markdown(app, docname, source):
     """Insert rewritten Markdown after rstcheck has already linted the stub pages."""
     pages = {
-        "docsite/readme": (
-            "README.md",
-            "Ansible Collection - patchmon.core",
-        ),
+        "docsite/automator_guide": ("automator-guide.md", "Automator guide"),
+        "docsite/developer_guide": ("developer-guide.md", "Developer guide"),
         "docsite/changelog": ("CHANGELOG.md", "Changelog"),
         "docsite/proposal": ("PROPOSAL.md", "Proposal"),
         "docsite/patchmon_feedback": ("PATCHMON-FEEDBACK.md", "PatchMon feedback"),

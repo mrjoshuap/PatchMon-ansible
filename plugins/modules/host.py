@@ -19,8 +19,9 @@ description:
     routes. This module does not change them.
   - A 409 C(machine_id_match) without C(host_id) fails with a PatchMon feedback draft.
     The same code with C(host_id) is treated as already present.
-  - See U(https://patchmon.net/docs/patchmon-api-integrations-guide) and the collection
-    C(docs/permissions.md) for credential and scope guidance.
+  - See U(https://patchmon.net/docs/patchmon-api-integrations-guide) and the
+    Credentials chapter of the collection automator guide
+    (C(docs/automator-guide.md)) for credential and scope guidance.
 options:
   state:
     description: Desired host entry state.

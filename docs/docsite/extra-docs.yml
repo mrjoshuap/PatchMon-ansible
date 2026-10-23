@@ -1,14 +1,11 @@
 ---
 sections:
-  - title: Start here
-    toctree:
-      - proposal
-      - readme
-      - quick_start
-      - troubleshooting
   - title: Guides
     toctree:
-      - permissions
-      - patchmon_feedback
-      - migrating_to_2.0
+      - automator_guide
+      - developer_guide
+  - title: Project
+    toctree:
       - changelog
+      - proposal
+      - patchmon_feedback

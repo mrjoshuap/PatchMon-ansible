@@ -23,7 +23,8 @@
       host_server_url, host_enrollment_key, host_enrollment_secret, and
       host_friendly_name are required when host_state=present.
       Auto-Enrollment tokens create host entries; Integration API credentials
-      with only host:get cannot create hosts. See docs/permissions.md.
+      with only host:get cannot create hosts. See docs/automator-guide.md
+      (Credentials).
   when: host_state == 'present'
 
 - name: Validate absent-state Integration credentials

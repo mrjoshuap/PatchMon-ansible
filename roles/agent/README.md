@@ -15,7 +15,7 @@ If the enrollment script fails and its output reports an unsupported operating s
 | Install (`agent_state=present`) | Auto-Enrollment key + secret | Not an Integration API token. Create under **Settings → Integrations → Auto-Enrollment**. |
 | Start / stop / report / absent | None (local host) | Uses `systemctl` / agent binary on the target. |
 
-See [docs/permissions.md](../../docs/permissions.md).
+See [Credentials](../../docs/automator-guide.md#chapter-3-credentials).
 
 ## Variables
 

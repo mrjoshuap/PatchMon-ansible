@@ -20,7 +20,8 @@ options:
       - Instance root is accepted; the collection appends C(/api/v1/api/hosts) when needed.
       - These options authenticate to the Integration API (HTTP Basic), not Auto-Enrollment.
       - Typical minimum scope is C(host:get). Destructive modules require C(host:delete).
-      - See the collection C(docs/permissions.md) for the full scope matrix.
+      - See the Credentials chapter of the collection automator guide
+        (C(docs/automator-guide.md)) for the full scope matrix.
       - Environment variable C(PATCHMON_SERVER_URL), or C(PATCHMON_API_URL) as a discouraged override. Ini section C(patchmon), key C(api_url).
     required: true
     type: str

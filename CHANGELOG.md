@@ -6,6 +6,10 @@ All notable changes to this collection are documented in this file.
 
 ### Changed
 
+- Documentation is two guides: `docs/automator-guide.md` for playbook
+  authors and `docs/developer-guide.md` for collection development.
+  Credentials, the 2.0 migration, the first inventory, and troubleshooting
+  are chapters of the automator guide.
 - Prefer `PATCHMON_SERVER_URL`. The collection derives
   `PATCHMON_ENROLLMENT_URL` (`/api/v1/auto-enrollment`) and `PATCHMON_API_URL`
   (`/api/v1/api/hosts`) from that instance root. Setting either derived
@@ -206,7 +210,7 @@ Collection renamed from `patchmon.dynamic_inventory` to `patchmon.core`.
 Install with `ansible-galaxy collection install patchmon.core`.
 
 **This release is not backward compatible.** Update inventory `plugin:` values and
-FQCN references. See [docs/migrating_to_2.0.md](docs/migrating_to_2.0.md).
+FQCN references. See [Migrating from 1.0](docs/automator-guide.md#chapter-9-migrating-from-1-0).
 
 ### Breaking
 

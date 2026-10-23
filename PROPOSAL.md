@@ -27,7 +27,7 @@ Current users change two names:
 - Collection: `patchmon.dynamic_inventory` becomes `patchmon.core`
 - Inventory plugin: `patchmon.dynamic_inventory.dynamic_inventory` becomes `patchmon.core.inventory`
 
-Migration, with the inventory snippet: [Migrating to patchmon.core 2.0.0](https://mrjoshuap.github.io/PatchMon-ansible/docsite/migrating_to_2.0.html)
+Migration, with the inventory snippet: [Migrating from 1.0](https://mrjoshuap.github.io/PatchMon-ansible/docsite/automator_guide.html#chapter-9-migrating-from-1-0)
 
 What 2.0.0 adds for advanced Ansible users:
 
@@ -42,9 +42,9 @@ Releases after 2.0.0 add roles `apply_security_updates`, `apply_all_updates`, an
 
 The plugin, role, and guide pages are published here: [patchmon.core documentation](https://mrjoshuap.github.io/PatchMon-ansible/)
 
-Permissions: [PatchMon API permissions](https://mrjoshuap.github.io/PatchMon-ansible/docsite/permissions.html)
+Credentials: [Automator guide, Credentials](https://mrjoshuap.github.io/PatchMon-ansible/docsite/automator_guide.html#chapter-3-credentials)
 
-Quick start: [Quick start](https://mrjoshuap.github.io/PatchMon-ansible/docsite/quick_start.html)
+First inventory: [Automator guide, First inventory](https://mrjoshuap.github.io/PatchMon-ansible/docsite/automator_guide.html#chapter-4-first-inventory)
 
 Inventory plugin: [patchmon.core.inventory](https://mrjoshuap.github.io/PatchMon-ansible/inventory_inventory.html)
 

@@ -4,7 +4,7 @@
 # =============================================================================
 #
 # Full walkthrough (prereqs, copy/configure, troubleshooting):
-#   examples/README.md
+#   docs/automator-guide.md
 #
 # WHAT THIS DOES
 #   Queries PatchMon's Integration API and builds an Ansible inventory.

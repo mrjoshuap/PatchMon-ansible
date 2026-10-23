@@ -44,7 +44,7 @@
       agent_server_url, agent_enrollment_key, and agent_enrollment_secret are
       required when agent_state is present (auto-enrollment script install).
       Create an Auto-Enrollment token under Settings → Integrations in PatchMon.
-      See docs/permissions.md.
+      See docs/automator-guide.md (Credentials).
   when: agent_state == 'present'
 
 - name: Warn when TLS verification is disabled

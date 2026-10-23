@@ -140,7 +140,7 @@ jobs:
 
           ### Migration from 1.0.0
 
-          See [docs/migrating_to_2.0.md](https://github.com/{repo}/blob/v{version}/docs/migrating_to_2.0.md).
+          See [Migrating from 1.0](https://github.com/{repo}/blob/v{version}/docs/automator-guide.md#chapter-9-migrating-from-10).
           This release does not provide FQCN redirects — update inventories to
           `plugin: patchmon.core.inventory`.
 
