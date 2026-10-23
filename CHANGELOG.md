@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.6] - 2026-10-23
+
 ### Changed
 
 - Roles read gathered facts from `ansible_facts` (`pkg_mgr`, `os_family`,
@@ -13,6 +15,17 @@ All notable changes to this collection are documented in this file.
 - `examples/playbooks/maintain.yml` applies security updates by default.
   `-e apply_all_updates=true` imports `apply_all_updates.yml` instead of
   `apply_security_updates.yml`.
+- GitHub CI runs one check suite before a tagged release or a development
+  prerelease: pytest, the dev-container pre-commit config, and collection
+  doc lint. A `main` push that does not bump `galaxy.yml` `version:` and
+  that changes collection content publishes `vX.Y.Z-dev.<run id>`. The
+  stable GitHub Release is still the annotated tag, and only after that
+  suite passes.
+
+### Added
+
+- `examples/README.md` has a demo script for enrolling a host and running
+  `maintain.yml` against it.
 
 ## [2.0.5] - 2026-10-23
 
