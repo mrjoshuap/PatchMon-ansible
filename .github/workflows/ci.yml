@@ -41,4 +41,12 @@ jobs:
         run: pytest -q
 
       - name: Lint example playbooks and collection playbooks
-        run: ansible-lint examples/playbooks playbooks
+        env:
+          # pytest links this checkout at .collections. ansible-lint also
+          # installs it under .ansible/collections. Keep one path so galaxy
+          # does not warn that patchmon.core is installed twice. Pass files
+          # so directory expansion does not warn about the playbook set.
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ansible/collections
+        run: |
+          mkdir -p "$ANSIBLE_COLLECTIONS_PATH"
+          ansible-lint examples/playbooks/*.yml playbooks/*.yml

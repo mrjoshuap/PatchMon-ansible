@@ -48,7 +48,20 @@ jobs:
           "${VENV}/bin/pip" install "ansible-core>=2.15" "requests>=2.25.1" pytest
           echo "${VENV}/bin" >> "${GITHUB_PATH}"
 
+      - name: Link checkout as patchmon.core
+        run: |
+          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
+          mkdir -p "$(dirname "$link")"
+          if [[ -e "$link" && ! -L "$link" ]]; then
+            rm -rf "$link"
+          fi
+          ln -sfn "$GITHUB_WORKSPACE" "$link"
+
       - name: Run unit tests
+        env:
+          # A pre-set ANSIBLE_COLLECTIONS_PATH overrides ansible.cfg and hides
+          # this checkout. Point it at the link created above.
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.collections
         run: pytest -q
 
       - name: Build collection tarball

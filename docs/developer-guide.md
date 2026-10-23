@@ -57,12 +57,14 @@ Commit signing through a forwarded SSH agent is optional. The checklist is [`.de
 ```bash
 pip install -r requirements.txt pytest ansible-lint
 pytest
-ansible-lint examples/playbooks playbooks
+mkdir -p .ansible/collections
+ANSIBLE_COLLECTIONS_PATH="$PWD/.ansible/collections" \
+  ansible-lint examples/playbooks/*.yml playbooks/*.yml
 ```
 
-Unit tests and local Ansible both import this checkout through `.collections`.
+Unit tests and local Ansible both import this checkout through `.collections`. ansible-lint installs this collection under `.ansible/collections`. `ANSIBLE_COLLECTIONS_PATH` keeps galaxy on that install, which is the copy lint uses. The arguments are the playbook files. A directory argument makes current ansible-lint report how many files that directory expanded to.
 
-Pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): pytest, then ansible-lint on `examples/playbooks` and `playbooks`.
+Pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): pytest, then ansible-lint on the playbooks under `examples/playbooks` and `playbooks`. The release workflow and the Gitea publish workflow create the same `.collections` link before pytest. The publish workflow also sets `ANSIBLE_COLLECTIONS_PATH` to that link so a runner-level path does not hide the checkout.
 
 ## Chapter 4: Where documentation lives
 
