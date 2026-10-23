@@ -111,16 +111,20 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 
 ## Chapter 6: Cutting a release
 
-1. Bump `galaxy.yml` `version`, update `CHANGELOG.md`, and merge to `main`.
-2. Tag the release commit. The tag must match `galaxy.yml`, with a `v` prefix:
+The GitHub Release is the annotated tag. Pushing the version bump to `main` does not create it. Tag that commit in the same release.
+
+1. Bump `galaxy.yml` `version`, update `CHANGELOG.md`, commit, and push `main`.
+2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. The commit's [Release collection](../.github/workflows/release.yml) workflow must link this checkout before pytest.
 
 ```bash
-git tag -a v2.0.4 -m "patchmon.core 2.0.4"
-git push origin v2.0.4
+git tag -a v2.0.5 -m "patchmon.core 2.0.5"
+git push origin v2.0.5
 ```
 
-3. The [Release collection](../.github/workflows/release.yml) workflow runs tests, builds the collection tarball, and creates a GitHub Release with the `.tar.gz` attached for offline installs.
+3. That workflow checks out the tag, links the checkout, runs tests, builds the collection tarball, and creates the GitHub Release with the `.tar.gz` attached.
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.4`.
+v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
+
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.5`.
 
 The release notes include a link to [Migrating from 1.0](automator-guide.md#chapter-9-migrating-from-1-0) in the automator guide.

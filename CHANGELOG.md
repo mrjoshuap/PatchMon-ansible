@@ -4,6 +4,18 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.5] - 2026-10-23
+
+### Changed
+
+- Cutting a release includes the annotated tag. Pushing the version bump to
+  `main` does not create the GitHub Release. The release workflow runs when
+  `vX.Y.Z` is pushed, and that tag's workflow must link this checkout before
+  pytest.
+- v2.0.4 was first tagged on the version-bump commit. That copy of the release
+  workflow ran unit tests without the checkout link, and the job failed. The
+  tag was moved to the later commit that creates the link.
+
 ## [2.0.4] - 2026-10-23
 
 ### Changed

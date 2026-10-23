@@ -76,7 +76,7 @@ Tagged releases publish `patchmon-core-<version>.tar.gz` as a release asset.
 3. Install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-core-2.0.4.tar.gz
+ansible-galaxy collection install ./patchmon-core-2.0.5.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -84,7 +84,7 @@ When the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.4/patchmon-core-2.0.4.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.5/patchmon-core-2.0.5.tar.gz
 ```
 
 ### From source
@@ -565,7 +565,7 @@ This is a breaking upgrade from `patchmon.dynamic_inventory` 1.0.0. There are no
 ```bash
 ansible-galaxy collection install patchmon.core
 # or from a release tarball:
-# ansible-galaxy collection install ./patchmon-core-2.0.4.tar.gz
+# ansible-galaxy collection install ./patchmon-core-2.0.5.tar.gz
 ```
 
 Remove the old collection if it is still installed:
