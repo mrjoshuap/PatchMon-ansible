@@ -37,3 +37,66 @@ These match [Fleet lifecycle](../docs/automator-guide.md#chapter-6-fleet-lifecyc
 | [`playbooks/retire.yml`](playbooks/retire.yml) | Remove the agent, then delete the host when `patchmon_id` is set. Requires `--limit` |
 
 Thin plays for the agent and host roles live next to the collection, not in this directory: [`playbooks/agent.yml`](../playbooks/agent.yml) and [`playbooks/host.yml`](../playbooks/host.yml).
+
+## Demo Script
+
+In this demonstration, we have valid API and enrollment keys with the necessary permissions for PatchMon. We’ve already followed the Automator Guide and have our development container running with PatchMon-related environment variables configured. Our demo host, `patchmon-test` (IP: 192.168.8.20), is prepared with SSH keys and passwordless sudo access. At this stage, the host has not yet been added to the PatchMon inventory.
+
+Let’s confirm this by inspecting the current inventory:
+
+```
+ansible-inventory --graph
+ansible-inventory --graph | grep patchmon-test
+ansible-inventory --host patchmon-test
+```
+
+Since the host does not appear in the inventory and we don’t have DNS set up, let’s enroll it directly using its IP address:
+
+```
+ansible-playbook examples/playbooks/enroll.yml -e enroll_host=192.168.8.20
+```
+
+After enrollment completes, let’s verify that the host is now part of the inventory:
+
+```
+ansible-inventory --host patchmon-test
+```
+
+The host is ready—we can immediately begin automating tasks with Ansible. For example, check connectivity:
+
+```
+ansible -m ping patchmon-test
+```
+
+For ongoing management, you might schedule the `maintain.yml` playbook or trigger it as needed with Ansible limits. For this demo, let’s run maintenance against just our test instance:
+
+```
+ansible-playbook examples/playbooks/maintain.yml --limit patchmon-test
+```
+
+You’ll notice that all tasks are skipped initially. This is expected—newly enrolled systems are not automatically patched by default. This allows us to control when they become fully managed.
+
+To see the group assignment, check which manual hosts are present:
+
+```
+ansible-inventory --graph patchmon_manual
+```
+
+Next, let’s open the PatchMon interface, assign the appropriate groups to our new system, and then re-run the maintenance playbook:
+
+```
+ansible-playbook examples/playbooks/maintain.yml --limit patchmon-test
+```
+
+By default, this playbook only applies security updates. If you want to apply all pending updates instead, simply include the `apply_all_updates=true` extra variable:
+
+```
+ansible-playbook examples/playbooks/maintain.yml --limit patchmon-test -e apply_all_updates=true
+```
+
+Eventually, when you need to decommission the host, you can retire it with the following commands and verify its removal from the inventory:
+
+```
+ansible-playbook examples/playbooks/retire.yml --limit patchmon-test
+ansible-inventory --host patchmon-test
+```
