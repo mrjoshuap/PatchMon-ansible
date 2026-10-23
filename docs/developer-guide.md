@@ -113,12 +113,12 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 2. Tag the release commit. The tag must match `galaxy.yml`, with a `v` prefix:
 
 ```bash
-git tag -a v2.0.3 -m "patchmon.core 2.0.3"
-git push origin v2.0.3
+git tag -a v2.0.4 -m "patchmon.core 2.0.4"
+git push origin v2.0.4
 ```
 
 3. The [Release collection](../.github/workflows/release.yml) workflow runs tests, builds the collection tarball, and creates a GitHub Release with the `.tar.gz` attached for offline installs.
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.3`.
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.4`.
 
 The release notes include a link to [Migrating from 1.0](automator-guide.md#chapter-9-migrating-from-1-0) in the automator guide.

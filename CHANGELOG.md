@@ -4,6 +4,8 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-10-23
+
 ### Changed
 
 - Documentation is two guides: `docs/automator-guide.md` for playbook
