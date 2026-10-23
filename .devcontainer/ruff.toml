@@ -1,5 +1,5 @@
 # plugins/ and tests/ target Python 3.9 and keep the Ansible module header.
-# E402 is that header. E501 is line length, which this tree does not follow.
+# E402 is that header. Black owns formatting, including line length.
 target-version = "py39"
 
 [lint]

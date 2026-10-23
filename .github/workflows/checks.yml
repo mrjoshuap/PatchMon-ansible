@@ -33,6 +33,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
 
+      - name: Install actionlint
+        run: bash .devcontainer/install-actionlint.sh
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -45,7 +48,8 @@ jobs:
             antsibull-docs \
             pre-commit==4.7.0 \
             pymarkdownlnt==0.9.41 \
-            ruff==0.17.2
+            ruff==0.17.2 \
+            black==26.10.1
 
       - name: Link checkout as patchmon.core
         run: |

@@ -1,6 +1,6 @@
 # patchmon.core dev container
 
-Open this repository and reopen it in the dev container. The image builds from `ghcr.io/ansible/community-ansible-dev-tools:latest`. The Dockerfile adds `sudo`, `tree`, `jq`, ShellCheck, `requests`, pre-commit, ruff, and pymarkdown. It creates the `dev` user and sets `HOME=/home/dev`. Ansible, ansible-lint, yamllint, and pytest come from the base image.
+Open this repository and reopen it in the dev container. The image builds from `ghcr.io/ansible/community-ansible-dev-tools:latest`. The Dockerfile adds `sudo`, `tree`, `jq`, ShellCheck, actionlint, `requests`, pre-commit, ruff, and pymarkdown. It creates the `dev` user and sets `HOME=/home/dev`. Ansible, ansible-lint, yamllint, black, and pytest come from the base image.
 
 ## Open
 
@@ -36,10 +36,16 @@ When those files are present, `post-start.sh` copies the SSH files into the cont
 
 ## Checks
 
-`post-create.sh` installs a git hook from `.devcontainer/pre-commit-config.yaml`. Run the same checks by hand with:
+`post-create.sh` installs the commit and pre-push hooks from `.devcontainer/pre-commit-config.yaml`. Run the commit checks by hand with:
 
 ```bash
 pre-commit run --all-files -c .devcontainer/pre-commit-config.yaml
+```
+
+Run the pre-push check with:
+
+```bash
+pre-commit run pytest --hook-stage pre-push -c .devcontainer/pre-commit-config.yaml
 ```
 
 The hook covers:
@@ -48,7 +54,10 @@ The hook covers:
 - yamllint, using `.devcontainer/yamllint.yaml` (line length 160, document start optional, `on` allowed as a mapping key)
 - pymarkdown, with the heading, line-length, and changelog rules this tree already violates turned off
 - ruff `E` and `F` rules for Python 3.9, using `.devcontainer/ruff.toml`. It does not reformat
+- black, using the copy already in the base image. It formats Python files that do not match
 - ShellCheck at warning severity
 - ansible-lint on `examples/playbooks/*.yml` and `playbooks/*.yml`, the same set as CI, when a playbook or role YAML file is committed
+- actionlint on `.github/workflows/`. The binary is actionlint 1.7.12 from `.devcontainer/install-actionlint.sh`, which Checks runs too
+- pytest on pre-push. Commit checks do not run the unit tests
 
 `jq` is on `PATH` for inventory and API output. It is not a hook.

@@ -13,6 +13,9 @@ RUN dnf update -y \
     ShellCheck \
   && dnf clean all --enablerepo='*'
 
+COPY install-actionlint.sh /tmp/install-actionlint.sh
+RUN bash /tmp/install-actionlint.sh && rm /tmp/install-actionlint.sh
+
 # requests is a collection dependency. The others back the git hook in
 # .devcontainer/pre-commit-config.yaml. yamllint and ansible-lint are in the base image.
 RUN pip3 install \
