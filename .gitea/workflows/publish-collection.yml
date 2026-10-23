@@ -1,101 +1,83 @@
-# Build patchmon.core and publish to private Automation Hub.
+# Publish a GitHub Release tarball to private Automation Hub.
 #
 # Runs on the Gitea mirror (home-mrjoshuap/PatchMon-ansible). GitHub-hosted
 # runners cannot reach aap.home.mrjoshuap.com.
-# A galaxy.yml version change uploads that version to staging (approve into
-# published). Any other main push uploads {version}-dev.{run_id} to the
-# development repository, which has no approval pipeline.
+# Does not build. Downloads the tarball already attached on
+# github.com/mrjoshuap/PatchMon-ansible:
+#   vX.Y.Z               → staging (approve into published)
+#   vX.Y.Z-dev.<run id>  → development repository (no approval)
+# A tag can reach this mirror before release.yml finishes attaching the
+# asset, so the download waits for that file.
 name: publish-collection
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "galaxy.yml"
-      - "plugins/**"
-      - "roles/**"
-      - "playbooks/**"
-      - "meta/**"
-      - ".gitea/workflows/publish-collection.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "galaxy.yml"
-      - "plugins/**"
-      - "roles/**"
-      - "playbooks/**"
-      - "meta/**"
-      - ".gitea/workflows/publish-collection.yml"
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (vX.Y.Z or vX.Y.Z-dev.N)"
+        required: true
+        type: string
 
 jobs:
-  validate:
-    runs-on: amd64
-    name: Validate collection build
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install ansible-core and pytest
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq python3-venv python3-pip
-
-          VENV="${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv"
-          python3 -m venv "${VENV}"
-          "${VENV}/bin/pip" install --upgrade pip
-          "${VENV}/bin/pip" install "ansible-core>=2.15" "requests>=2.25.1" pytest
-          echo "${VENV}/bin" >> "${GITHUB_PATH}"
-
-      - name: Link checkout as patchmon.core
-        run: |
-          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
-          mkdir -p "$(dirname "$link")"
-          if [[ -e "$link" && ! -L "$link" ]]; then
-            rm -rf "$link"
-          fi
-          ln -sfn "$GITHUB_WORKSPACE" "$link"
-
-      - name: Run unit tests
-        env:
-          # A pre-set ANSIBLE_COLLECTIONS_PATH overrides ansible.cfg and hides
-          # this checkout. Point it at the link created above.
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.collections
-        run: pytest -q
-
-      - name: Build collection tarball
-        run: |
-          ansible-galaxy collection build
-          ls -la patchmon-core-*.tar.gz
-
   publish:
     runs-on: amd64
-    name: Publish to Automation Hub
-    needs: validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Publish GitHub release to Automation Hub
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check for galaxy.yml version bump
-        id: version_bump
+      - name: Resolve tag and channel
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if git diff HEAD~1 HEAD -- galaxy.yml | grep -qE '^[+-]version:'; then
-            echo "bumped=true" >> "${GITHUB_OUTPUT}"
-            echo "galaxy.yml version changed — staging publish"
+          set -euo pipefail
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            TAG="${INPUT_TAG}"
           else
-            echo "bumped=false" >> "${GITHUB_OUTPUT}"
-            echo "No galaxy.yml version change — development publish"
+            TAG="${REF_NAME}"
           fi
+          if [ -z "${TAG}" ]; then
+            echo "ERROR: tag is required"
+            exit 1
+          fi
+          case "${TAG}" in
+            v[0-9]*.[0-9]*.[0-9]*-dev.*|v[0-9]*.[0-9]*.[0-9]*-dev-*)
+              CHANNEL=development
+              ;;
+            v[0-9]*.[0-9]*.[0-9]*)
+              case "${TAG#v}" in
+                *-*)
+                  echo "Skipping ${TAG}: not a full version or development release"
+                  echo "channel=skip" >> "${GITHUB_OUTPUT}"
+                  exit 0
+                  ;;
+              esac
+              CHANNEL=staging
+              ;;
+            *)
+              echo "Skipping ${TAG}: not a full version or development release"
+              echo "channel=skip" >> "${GITHUB_OUTPUT}"
+              exit 0
+              ;;
+          esac
+          VERSION="${TAG#v}"
+          {
+            echo "channel=${CHANNEL}"
+            echo "tag=${TAG}"
+            echo "version=${VERSION}"
+            echo "tarball=patchmon-core-${VERSION}.tar.gz"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Publishing ${TAG} to ${CHANNEL}"
 
       - name: Install ansible-core
+        if: steps.meta.outputs.channel != 'skip'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq python3-venv python3-pip
+          sudo apt-get install -y -qq python3-venv python3-pip curl
 
           VENV="${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv"
           python3 -m venv "${VENV}"
@@ -103,56 +85,63 @@ jobs:
           "${VENV}/bin/pip" install "ansible-core>=2.15"
           echo "${VENV}/bin" >> "${GITHUB_PATH}"
 
-      - name: Set development prerelease version
-        if: steps.version_bump.outputs.bumped != 'true'
+      - name: Download GitHub release asset
+        if: steps.meta.outputs.channel != 'skip'
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          TARBALL: ${{ steps.meta.outputs.tarball }}
         run: |
           set -euo pipefail
-          BASE="$(awk '/^version:/{gsub(/["'\'']/, "", $2); print $2; exit}' galaxy.yml)"
-          case "${BASE}" in
-            *-*) BASE="${BASE%%-*}" ;;
-          esac
-          DEV_VERSION="${BASE}-dev.${GITHUB_RUN_ID}"
-          sed -i "s/^version:.*/version: ${DEV_VERSION}/" galaxy.yml
-          echo "Development version ${DEV_VERSION} (workspace only)"
-
-      - name: Build collection tarball
-        run: |
-          set -euo pipefail
-          ansible-galaxy collection build
-          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
-          if tar -tzf "${ARTIFACT}" | grep -q '^\.ansible/'; then
-            echo "ERROR: ${ARTIFACT} contains .ansible/"
+          URL="https://github.com/mrjoshuap/PatchMon-ansible/releases/download/${TAG}/${TARBALL}"
+          ok=0
+          for attempt in $(seq 1 40); do
+            rm -f "${TARBALL}"
+            if curl -fsSL -o "${TARBALL}" "${URL}"; then
+              ok=1
+              break
+            fi
+            echo "Asset not ready (attempt ${attempt}/40): ${URL}"
+            sleep 30
+          done
+          if [ "${ok}" -ne 1 ]; then
+            echo "ERROR: ${URL} was not available"
             exit 1
           fi
+          tar -tzf "${TARBALL}" >/dev/null
+          ls -la "${TARBALL}"
 
       - name: Publish release to staging
-        if: steps.version_bump.outputs.bumped == 'true'
+        if: steps.meta.outputs.channel == 'staging'
+        env:
+          TARBALL: ${{ steps.meta.outputs.tarball }}
+          UPLOAD_URL: ${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_UPLOAD_URL }}
+          HUB_TOKEN: ${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}
         run: |
           set -euo pipefail
-          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
-          UPLOAD_URL="${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_UPLOAD_URL }}"
-          if [[ -z "${UPLOAD_URL}" ]]; then
+          if [ -z "${UPLOAD_URL}" ]; then
             echo "ERROR: Set secret ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_UPLOAD_URL to the patchmon namespace staging URL"
             exit 1
           fi
-          ansible-galaxy collection publish "${ARTIFACT}" \
+          ansible-galaxy collection publish "${TARBALL}" \
             --server "${UPLOAD_URL}" \
-            --token "${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}" \
+            --token "${HUB_TOKEN}" \
             --ignore-certs
           echo "After import completes, approve patchmon.core in Automation Content → Approval"
 
       - name: Publish development prerelease
-        if: steps.version_bump.outputs.bumped != 'true'
+        if: steps.meta.outputs.channel == 'development'
+        env:
+          TARBALL: ${{ steps.meta.outputs.tarball }}
+          DEV_URL: ${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL }}
+          HUB_TOKEN: ${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}
         run: |
           set -euo pipefail
-          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
-          DEV_URL="${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL }}"
-          if [[ -z "${DEV_URL}" ]]; then
+          if [ -z "${DEV_URL}" ]; then
             echo "ERROR: Set secret ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL to the development repository URL"
             exit 1
           fi
-          ansible-galaxy collection publish "${ARTIFACT}" \
+          ansible-galaxy collection publish "${TARBALL}" \
             --server "${DEV_URL}" \
-            --token "${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_TOKEN }}" \
+            --token "${HUB_TOKEN}" \
             --ignore-certs
-          echo "Published ${ARTIFACT} to the development repository (no approval)"
+          echo "Published ${TARBALL} to the development repository (no approval)"

@@ -63,7 +63,7 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 
 Unit tests and local Ansible both import this checkout through `.collections`. The pre-commit ansible-lint hook installs this collection under `.ansible/collections` and points galaxy at that copy. It lints the playbook files under `examples/playbooks/` and `playbooks/`.
 
-Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. A tagged release runs the same suite before it builds a tarball. A `main` push that does not change `galaxy.yml` `version:` and that touches `galaxy.yml`, `plugins/`, `roles/`, `playbooks/`, or `meta/` publishes `vX.Y.Z-dev.<run id>` as a GitHub prerelease after the suite passes. The Gitea publish workflow creates the same `.collections` link before pytest and sets `ANSIBLE_COLLECTIONS_PATH` to that link.
+Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. A tagged release runs the same suite before it builds a tarball. A `main` push that does not change `galaxy.yml` `version:` and that touches `galaxy.yml`, `plugins/`, `roles/`, `playbooks/`, or `meta/` publishes `vX.Y.Z-dev.<run id>` as a GitHub prerelease after the suite passes. The Gitea publish workflow does not build or test. It downloads that GitHub Release tarball. A full `vX.Y.Z` tag goes to Automation Hub staging. A `vX.Y.Z-dev.<run id>` tag goes to the development repository.
 
 ## Chapter 4: Where documentation lives
 
@@ -120,9 +120,9 @@ git tag -a v2.0.6 -m "patchmon.core 2.0.6"
 git push origin v2.0.6
 ```
 
-3. After the checks pass, that workflow builds the collection tarball and creates the GitHub Release with the `.tar.gz` attached.
+3. After the checks pass, that workflow builds the collection tarball and creates the GitHub Release with the `.tar.gz` attached. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
 
-A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI. The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow.
+A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI. The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
 
 v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
 
