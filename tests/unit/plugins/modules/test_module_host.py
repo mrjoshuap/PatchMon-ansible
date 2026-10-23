@@ -254,4 +254,3 @@ def test_absent_deletes(monkeypatch):
 
     assert exits["changed"] is True
     assert exits["host"]["id"] == "uuid-1"
-
