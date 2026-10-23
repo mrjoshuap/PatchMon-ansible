@@ -28,8 +28,10 @@ dependencies: {}
 build_ignore:
   - .git
   - .github
+  - .devcontainer
   - .ansible
   - .collections
   - .pytest_cache
   - .pytest_collections
+  - "*.code-workspace"
   - "*.tar.gz"

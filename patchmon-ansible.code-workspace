@@ -1,0 +1,17 @@
+{
+  "folders": [
+    { "name": "patchmon.core", "path": "." }
+  ],
+  "settings": {
+    "ansible.ansible.path": "ansible",
+    "ansible.python.interpreterPath": "/usr/bin/python3",
+    "ansible.validation.lint.path": "ansible-lint",
+    "ansible.validation.lint.enabled": true,
+    "ansible.lightspeed.enabled": false,
+    "ansible.lightspeed.suggestions.enabled": false,
+    "ansible.mcpServer.enabled": true,
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": ["tests/unit"]
+  }
+}

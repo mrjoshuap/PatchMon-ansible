@@ -52,14 +52,14 @@ plugin: patchmon.core.inventory
 
 # Canonical hosts list URL. Instance root also works; the plugin appends
 # /api/v1/api/hosts when needed.
-api_url: https://patchmon.example.com/api/v1/api/hosts
-# api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
-
-# Prefer env vars in real use. Uncomment only for local experiments.
-# api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
-# api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+# api_url: https://patchmon.example.com/api/v1/api/hosts
 # api_key: your_token_key
 # api_secret: your_token_secret
+
+# Prefer env vars in real use. Uncomment only for local experiments.
+# api_url: "{{ lookup('env', 'PATCHMON_API_URL') }}"
+# api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
+# api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
 
 # TLS verification (default: true). Set false only for lab / self-signed certs.
 verify_ssl: true

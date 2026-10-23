@@ -1,0 +1,50 @@
+{
+  "name": "patchmon-core",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "remoteUser": "dev",
+  "updateRemoteUserUID": true,
+  "workspaceFolder": "/workspaces/PatchMon-ansible",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/PatchMon-ansible,type=bind",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "mounts": [
+    "source=/run/host-services/ssh-auth.sock,target=/run/host-services/ssh-auth.sock,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/tmp/host.gitconfig,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh/config,target=/tmp/host-ssh/config,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh/id_rsa.pub,target=/tmp/host-ssh/id_rsa.pub,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh/known_hosts,target=/tmp/host-ssh/known_hosts,type=bind,readonly",
+    "source=${localEnv:HOME}/.config/git/allowed_signers,target=/tmp/host-ssh/allowed_signers,type=bind,readonly"
+  ],
+  "containerEnv": {
+    "ANSIBLE_COLLECTIONS_PATH": "/workspaces/PatchMon-ansible/.collections:/home/dev/.ansible/collections:/usr/share/ansible/collections"
+  },
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "/run/host-services/ssh-auth.sock"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.ansible",
+        "redhat.vscode-yaml",
+        "redhat.vscode-redhat-account",
+        "ms-python.python",
+        "wholroyd.jinja"
+      ],
+      "settings": {
+        "ansible.ansible.path": "ansible",
+        "ansible.python.interpreterPath": "/usr/bin/python3",
+        "ansible.validation.lint.path": "ansible-lint",
+        "ansible.validation.lint.enabled": true,
+        "ansible.lightspeed.enabled": false,
+        "ansible.lightspeed.suggestions.enabled": false,
+        "ansible.mcpServer.enabled": true,
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests/unit"]
+      }
+    }
+  }
+}
