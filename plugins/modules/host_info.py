@@ -148,7 +148,6 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
     PatchMonClient,
 )
 
-
 _DETAIL_SUBSETS = [
     "info",
     "stats",
@@ -282,9 +281,7 @@ def run_module():
         }
         for subset in subsets:
             if subset == "package_reports":
-                result[subset] = client.get_host_package_reports(
-                    host_id, limit=limit
-                )
+                result[subset] = client.get_host_package_reports(host_id, limit=limit)
             elif subset == "agent_queue":
                 result[subset] = client.get_host_agent_queue(host_id, limit=limit)
             else:
@@ -294,9 +291,7 @@ def run_module():
 
     payload = {"changed": False, "host": result}
     if module.params.get("inject_facts"):
-        payload["ansible_facts"] = {
-            "patchmon": _build_patchmon_facts(host_id, result)
-        }
+        payload["ansible_facts"] = {"patchmon": _build_patchmon_facts(host_id, result)}
     module.exit_json(**payload)
 
 

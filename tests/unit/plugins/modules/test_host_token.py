@@ -52,7 +52,7 @@ def test_script_fetch_writes_dest(monkeypatch, tmp_path):
             pass
 
         def get_script(self, script_type="direct-host", force=False):
-            return "#!/bin/bash\nexport AUTO_ENROLLMENT_KEY=\"ek\"\necho ok\n"
+            return '#!/bin/bash\nexport AUTO_ENROLLMENT_KEY="ek"\necho ok\n'
 
     monkeypatch.setattr(mod, "AnsibleModule", FakeModule)
     monkeypatch.setattr(mod, "PatchMonEnrollmentClient", FakeEnrollment)
@@ -66,7 +66,7 @@ def test_script_fetch_writes_dest(monkeypatch, tmp_path):
     assert "script" not in exits
     assert os.path.isfile(dest)
     body = open(dest, encoding="utf-8").read()
-    assert "AUTO_ENROLLMENT_KEY=\"ek\"" in body
+    assert 'AUTO_ENROLLMENT_KEY="ek"' in body
     assert oct(os.stat(dest).st_mode & 0o777) == "0o700"
 
 

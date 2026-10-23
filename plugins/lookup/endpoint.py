@@ -61,9 +61,7 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if not terms:
-            raise AnsibleOptionsError(
-                "endpoint kind is required: api or enrollment"
-            )
+            raise AnsibleOptionsError("endpoint kind is required: api or enrollment")
 
         resolvers = {
             "api": resolve_api_url,
@@ -75,9 +73,7 @@ class LookupModule(LookupBase):
             resolver = resolvers.get(kind)
             if resolver is None:
                 raise AnsibleOptionsError(
-                    "endpoint kind must be 'api' or 'enrollment', not {0}".format(
-                        term
-                    )
+                    "endpoint kind must be 'api' or 'enrollment', not {0}".format(term)
                 )
             results.append(resolver())
         return results

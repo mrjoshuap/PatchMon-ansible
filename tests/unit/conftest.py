@@ -14,9 +14,7 @@ import sys
 def pytest_configure(config):
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     collections_root = os.path.join(repo_root, ".collections")
-    namespace_dir = os.path.join(
-        collections_root, "ansible_collections", "patchmon"
-    )
+    namespace_dir = os.path.join(collections_root, "ansible_collections", "patchmon")
     collection_link = os.path.join(namespace_dir, "core")
 
     os.makedirs(namespace_dir, exist_ok=True)

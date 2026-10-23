@@ -87,7 +87,9 @@ def main() -> int:
     for name, base in SOURCES:
         with open(os.path.join(root, name), encoding="utf-8") as handle:
             rewritten = rewrite(handle.read(), base)
-        with open(os.path.join(dest, os.path.basename(name)), "w", encoding="utf-8") as handle:
+        with open(
+            os.path.join(dest, os.path.basename(name)), "w", encoding="utf-8"
+        ) as handle:
             handle.write(rewritten)
     return 0
 

@@ -204,7 +204,9 @@ def _fetch_script(module):
             handle.write(script)
         os.chmod(dest, 0o700)
     except OSError as exc:
-        module.fail_json(msg="Unable to write enrollment script to dest: {0}".format(exc))
+        module.fail_json(
+            msg="Unable to write enrollment script to dest: {0}".format(exc)
+        )
 
     # Do not return script body — no_log would replace key/secret with ********.
     module.exit_json(changed=False, dest=dest)

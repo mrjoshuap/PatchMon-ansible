@@ -399,9 +399,7 @@ class PatchMonClient(_BaseClient):
                 (entry.get("friendly_name") or "").lower() == friendly_name.lower()
             ):
                 return entry
-            if hostname and (
-                (entry.get("hostname") or "").lower() == hostname.lower()
-            ):
+            if hostname and ((entry.get("hostname") or "").lower() == hostname.lower()):
                 return entry
         return None
 
@@ -437,9 +435,7 @@ class PatchMonClient(_BaseClient):
         query = {"limit": int(limit)} if limit is not None else None
         return self.request(
             "GET",
-            host_resource_url(
-                self.api_url, host_id, "package_reports", query=query
-            ),
+            host_resource_url(self.api_url, host_id, "package_reports", query=query),
         )
 
     def get_host_agent_queue(self, host_id, limit=None):
@@ -505,9 +501,7 @@ class PatchMonEnrollmentClient(_BaseClient):
             return "{0}?{1}".format(base, urlencode(query))
         return base
 
-    def enroll(
-        self, friendly_name, machine_id=None, host_id=None, metadata=None
-    ):
+    def enroll(self, friendly_name, machine_id=None, host_id=None, metadata=None):
         """POST /api/v1/auto-enrollment/enroll — create or re-key a host entry."""
         body = {"friendly_name": friendly_name}
         if machine_id:

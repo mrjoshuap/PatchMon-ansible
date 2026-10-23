@@ -108,17 +108,13 @@ def assign_ansible_group_names(groups):
     assigned = {}
     for row in items:
         preferred = row["preferred"]
-        if len(buckets[preferred]) == 1 and not is_reserved_ansible_group(
-            preferred
-        ):
+        if len(buckets[preferred]) == 1 and not is_reserved_ansible_group(preferred):
             assigned[row["key"]] = preferred
             continue
         if not row["id"]:
             raise GroupNameError(
                 "PatchMon group {0!r} needs its id to build a unique Ansible "
-                "group name. It collides with {1}.".format(
-                    row["name"], preferred
-                )
+                "group name. It collides with {1}.".format(row["name"], preferred)
             )
         assigned[row["key"]] = "{0}_{1}".format(
             preferred, sanitize_group_name(row["id"]).lower()
@@ -152,9 +148,7 @@ def _candidate_slugs(token):
 
 
 def _format_candidates(rows):
-    return ", ".join(
-        "{0!r} (id {1})".format(row["name"], row["id"]) for row in rows
-    )
+    return ", ".join("{0!r} (id {1})".format(row["name"], row["id"]) for row in rows)
 
 
 def resolve_group_id(token, groups):
@@ -166,9 +160,7 @@ def resolve_group_id(token, groups):
     """
     text = to_text(token).strip() if token is not None else ""
     if not text:
-        raise GroupNameError(
-            "groups entries must be non-empty names or UUIDs"
-        )
+        raise GroupNameError("groups entries must be non-empty names or UUIDs")
 
     catalog = []
     for group in groups or []:
@@ -193,9 +185,7 @@ def resolve_group_id(token, groups):
     if len(exact) > 1:
         raise GroupNameError(
             "host group {0!r} matches more than one PatchMon group. "
-            "Pass the group id. Candidates: {1}".format(
-                text, _format_candidates(exact)
-            )
+            "Pass the group id. Candidates: {1}".format(text, _format_candidates(exact))
         )
 
     assigned = assign_ansible_group_names(named)

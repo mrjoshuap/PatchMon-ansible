@@ -50,7 +50,10 @@ def test_build_hosts_url_with_stats_and_hostgroup():
     )
     assert url.startswith("https://patchmon.example.com/api/v1/api/hosts?")
     assert "include=stats" in url
-    assert "hostgroup=Production%2CDevelopment" in url or "hostgroup=Production,Development" in url
+    assert (
+        "hostgroup=Production%2CDevelopment" in url
+        or "hostgroup=Production,Development" in url
+    )
 
 
 def test_host_resource_url_packages_updates_only():
@@ -223,9 +226,7 @@ def test_resolve_urls_prefer_explicit_overrides():
         "PATCHMON_API_URL": "https://api.example.com/api/v1/api/hosts",
         "PATCHMON_ENROLLMENT_URL": "https://enroll.example.com/api/v1/auto-enrollment",
     }
-    assert api.resolve_api_url(environ) == (
-        "https://api.example.com/api/v1/api/hosts"
-    )
+    assert api.resolve_api_url(environ) == ("https://api.example.com/api/v1/api/hosts")
     assert api.resolve_enrollment_url(environ) == (
         "https://enroll.example.com/api/v1/auto-enrollment"
     )
@@ -274,9 +275,7 @@ def test_enrollment_client_accepts_derived_enrollment_url(monkeypatch):
     )
     client.enroll("web-01")
     assert seen["method"] == "POST"
-    assert seen["url"] == (
-        "https://patchmon.example.com/api/v1/auto-enrollment/enroll"
-    )
+    assert seen["url"] == ("https://patchmon.example.com/api/v1/auto-enrollment/enroll")
 
 
 def test_resolve_enrollment_url_falls_back_to_api_url():
@@ -322,9 +321,7 @@ def test_delete_host(monkeypatch):
             assert url.endswith("/abc-123")
             return FakeResponse()
 
-    client = api.PatchMonClient(
-        "https://patchmon.example.com", "key", "secret"
-    )
+    client = api.PatchMonClient("https://patchmon.example.com", "key", "secret")
     monkeypatch.setattr(client, "_session", FakeSession())
     result = client.delete_host("abc-123")
     assert result["message"] == "Host deleted successfully"
@@ -351,9 +348,7 @@ def test_enrollment_enroll(monkeypatch):
             assert kwargs["headers"]["X-Auto-Enrollment-Key"] == "ek"
             return FakeResponse()
 
-    client = api.PatchMonEnrollmentClient(
-        "https://patchmon.example.com", "ek", "es"
-    )
+    client = api.PatchMonEnrollmentClient("https://patchmon.example.com", "ek", "es")
     monkeypatch.setattr(client, "_session", FakeSession())
     result = client.enroll(friendly_name="web1")
     assert result["host"]["id"] == "1"
@@ -385,9 +380,7 @@ def test_enrollment_get_script_uses_params(monkeypatch):
             assert kwargs["params"]["force"] == "true"
             return FakeResponse()
 
-    client = api.PatchMonEnrollmentClient(
-        "https://patchmon.example.com", "ek", "es"
-    )
+    client = api.PatchMonEnrollmentClient("https://patchmon.example.com", "ek", "es")
     monkeypatch.setattr(client, "_session", FakeSession())
     result = client.get_script(script_type="direct-host", force=True)
     assert result.startswith("#!/bin/bash")

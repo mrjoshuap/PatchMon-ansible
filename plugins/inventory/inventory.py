@@ -136,7 +136,6 @@ from ansible_collections.patchmon.core.plugins.module_utils.patchmon_api import 
     PatchMonClient,
 )
 
-
 # Stats fields copied onto hosts when include_stats is true.
 # Telemetry keys are omitted when stats_var_scope is targeting. Groups are
 # still built from the API payload, not from the exported hostvars.
@@ -284,9 +283,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             hostvars = self._build_hostvars(entry)
             membership = []
             for row in _host_group_rows(entry):
-                ansible_name = self._sanitize_group_name(
-                    assigned[group_key(row)]
-                )
+                ansible_name = self._sanitize_group_name(assigned[group_key(row)])
                 membership.append(
                     {
                         "id": row.get("id"),
@@ -295,9 +292,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     }
                 )
                 self._add_to_group(name, ansible_name)
-            membership.sort(
-                key=lambda item: (item["name"], item.get("id") or "")
-            )
+            membership.sort(key=lambda item: (item["name"], item.get("id") or ""))
             hostvars["patchmon_groups"] = membership
             for key, value in hostvars.items():
                 self.inventory.set_variable(name, key, value)

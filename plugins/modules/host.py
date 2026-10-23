@@ -243,9 +243,7 @@ def _ensure_present(module):
         code = payload.get("code")
         if code in ("machine_id_match", "host_reporting"):
             if code == "machine_id_match" and not payload.get("host_id"):
-                extra = {
-                    key: value for key, value in payload.items() if key != "msg"
-                }
+                extra = {key: value for key, value in payload.items() if key != "msg"}
                 module.fail_json(msg=_MACHINE_ID_MATCH_FEEDBACK, **extra)
             module.exit_json(
                 changed=False,

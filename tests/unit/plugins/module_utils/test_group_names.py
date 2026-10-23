@@ -14,7 +14,6 @@ from ansible_collections.patchmon.core.plugins.module_utils.group_names import (
     resolve_group_id,
 )
 
-
 SPACE_AND_UNDERSCORE = [
     {"id": "g-space", "name": "No Reboot"},
     {"id": "g-under", "name": "No_Reboot"},
@@ -22,9 +21,7 @@ SPACE_AND_UNDERSCORE = [
 
 
 def test_unique_space_uses_patchmon_slug():
-    assigned = assign_ansible_group_names(
-        [{"id": "g1", "name": "No Reboot"}]
-    )
+    assigned = assign_ansible_group_names([{"id": "g1", "name": "No Reboot"}])
     assert assigned["g1"] == "patchmon_no_reboot"
 
 
@@ -53,9 +50,7 @@ def test_sanitized_token_matches_the_only_group():
 
 def test_id_suffixed_ansible_group_resolves_when_names_collide():
     assigned = assign_ansible_group_names(SPACE_AND_UNDERSCORE)
-    assert (
-        resolve_group_id(assigned["g-space"], SPACE_AND_UNDERSCORE) == "g-space"
-    )
+    assert resolve_group_id(assigned["g-space"], SPACE_AND_UNDERSCORE) == "g-space"
 
 
 def test_reserved_stats_group_name_does_not_select_a_host_group():

@@ -109,10 +109,12 @@ def test_populate_sets_stats_hostvars_and_auto_groups():
             "ansible_group": "patchmon_production",
         }
     ]
-    assert plugin.inventory.group_vars["patchmon_production"]["patchmon_group_name"] == (
-        "Production"
+    assert plugin.inventory.group_vars["patchmon_production"][
+        "patchmon_group_name"
+    ] == ("Production")
+    assert (
+        plugin.inventory.group_vars["patchmon_production"]["patchmon_group_id"] == "g1"
     )
-    assert plugin.inventory.group_vars["patchmon_production"]["patchmon_group_id"] == "g1"
     assert "patchmon_needs_reboot" in plugin.inventory.groups
     assert "patchmon_security_required" in plugin.inventory.groups
     assert "patchmon_os_ubuntu" in plugin.inventory.groups
