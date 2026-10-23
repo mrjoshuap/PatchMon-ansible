@@ -12,7 +12,7 @@
 - name: Fail when the host is Windows
   ansible.builtin.fail:
     msg: >-
-      {{ inventory_hostname }} is {{ ansible_os_family }}.
+      {{ inventory_hostname }} is {{ ansible_facts['os_family'] }}.
       patchmon.core.agent stopped before running the enrollment script.
 
       Create a PatchMon feedback request: https://feedback.patchmon.net/
@@ -22,14 +22,14 @@
       Description:
       patchmon.core.agent runs the POSIX enrollment script
       (direct-host or proxmox-lxc).
-      {{ inventory_hostname }} is {{ ansible_os_family }}
-      ({{ ansible_distribution | default('unknown') }}
-      {{ ansible_distribution_version | default('') }}).
+      {{ inventory_hostname }} is {{ ansible_facts['os_family'] }}
+      ({{ ansible_facts['distribution'] | default('unknown') }}
+      {{ ansible_facts['distribution_version'] | default('') }}).
       PatchMon's Windows installer is a PowerShell script.
       Please add a windows script type to the collection.
   when:
-    - ansible_os_family is defined
-    - ansible_os_family == 'Windows'
+    - ansible_facts['os_family'] is defined
+    - ansible_facts['os_family'] == 'Windows'
 
 - name: Validate enrollment credentials for install states
   ansible.builtin.assert:

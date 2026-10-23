@@ -7,7 +7,7 @@ argument_specs:
       - Installs the PatchMon agent with an Auto-Enrollment script, or manages the local agent service.
       - Install (C(agent_state=present)) needs an Auto-Enrollment key and secret, not an Integration API token.
       - Start, stop, report, and remove run on the managed host and do not call the PatchMon API.
-      - When facts are present and C(ansible_os_family) is Windows, fails before the POSIX script.
+      - When facts are present and C(ansible_facts['os_family']) is Windows, fails before the POSIX script.
       - That Windows failure includes a PatchMon feedback draft.
       - When facts say FreeBSD and C(agent_state) is C(present), C(started), or C(stopped), the installer may run.
       - The role then fails before the service task with a PatchMon feedback draft.

@@ -1,4 +1,4 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # patchmon.core.apply_all_updates has no role variables.
-# Eligibility is inventory group patchmon_manual and ansible_pkg_mgr.
+# Eligibility is inventory group patchmon_manual and ansible_facts['pkg_mgr'].

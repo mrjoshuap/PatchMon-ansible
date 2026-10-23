@@ -40,7 +40,7 @@ Thin plays for the agent and host roles live next to the collection, not in this
 
 ## Demo Script
 
-In this demonstration, we have valid API and enrollment keys with the necessary permissions for PatchMon. We’ve already followed the Automator Guide and have our development container running with PatchMon-related environment variables configured. Our demo host, `patchmon-test` (IP: 192.168.8.20), is prepared with SSH keys and passwordless sudo access. At this stage, the host has not yet been added to the PatchMon inventory.
+In this demonstration, we have valid API and enrollment keys with the necessary permissions for PatchMon. We’ve already followed the Developer Guide and have our development container running with PatchMon-related environment variables configured. Our demo host, `patchmon-test` (IP: 192.168.8.20), is prepared with SSH keys and passwordless sudo access. At this stage, the host has not yet been added to the PatchMon inventory.
 
 Let’s confirm this by inspecting the current inventory:
 
@@ -56,10 +56,10 @@ Since the host does not appear in the inventory and we don’t have DNS set up, 
 ansible-playbook examples/playbooks/enroll.yml -e enroll_host=192.168.8.20
 ```
 
-After enrollment completes, let’s verify that the host is now part of the inventory:
+After enrollment completes, let’s verify that the host is now part of the inventory, I'm going to use jq to filter out the non-patchmon related ones:
 
 ```
-ansible-inventory --host patchmon-test
+ansible-inventory --host patchmon-test | jq 'with_entries(select(.key | startswith("patchmon_")))'
 ```
 
 The host is ready—we can immediately begin automating tasks with Ansible. For example, check connectivity:

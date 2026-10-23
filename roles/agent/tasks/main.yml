@@ -24,8 +24,8 @@
       /usr/local/etc/rc.d/patchmon_agent. Please manage that rc.d service,
       and keep the Linux systemd unit for other hosts.
   when:
-    - ansible_os_family is defined
-    - ansible_os_family == 'FreeBSD'
+    - ansible_facts['os_family'] is defined
+    - ansible_facts['os_family'] == 'FreeBSD'
     - agent_state in ['present', 'started', 'stopped']
 
 - name: Manage PatchMon agent service

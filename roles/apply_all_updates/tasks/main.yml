@@ -14,7 +14,7 @@
     force_apt_get: true
   when:
     - apply_all_updates_eligible | bool
-    - ansible_pkg_mgr == 'apt'
+    - ansible_facts['pkg_mgr'] == 'apt'
 
 - name: Apply dnf upgrades  # noqa: package-latest
   ansible.builtin.dnf:
@@ -23,7 +23,7 @@
     update_cache: true
   when:
     - apply_all_updates_eligible | bool
-    - ansible_pkg_mgr == 'dnf'
+    - ansible_facts['pkg_mgr'] == 'dnf'
 
 - name: Apply dnf5 upgrades  # noqa: package-latest
   ansible.builtin.dnf5:
@@ -32,32 +32,32 @@
     update_cache: true
   when:
     - apply_all_updates_eligible | bool
-    - ansible_pkg_mgr == 'dnf5'
+    - ansible_facts['pkg_mgr'] == 'dnf5'
 
 - name: Fail on unsupported package manager
   ansible.builtin.fail:
     msg: >-
-      Unsupported package manager {{ ansible_pkg_mgr }} on
+      Unsupported package manager {{ ansible_facts['pkg_mgr'] }} on
       {{ inventory_hostname }}
-      ({{ ansible_distribution | default('unknown') }}
-      {{ ansible_distribution_version | default('') }},
-      ansible_os_family={{ ansible_os_family | default('unknown') }}).
+      ({{ ansible_facts['distribution'] | default('unknown') }}
+      {{ ansible_facts['distribution_version'] | default('') }},
+      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
       patchmon.core.apply_all_updates stopped.
 
       Create a PatchMon feedback request: https://feedback.patchmon.net/
 
-      Subject: Support {{ ansible_pkg_mgr }} in patchmon.core package updates
+      Subject: Support {{ ansible_facts['pkg_mgr'] }} in patchmon.core package updates
 
       Description:
-      {{ inventory_hostname }} reports ansible_pkg_mgr={{ ansible_pkg_mgr }}
-      ({{ ansible_distribution | default('unknown') }}
-      {{ ansible_distribution_version | default('') }},
-      ansible_os_family={{ ansible_os_family | default('unknown') }}).
+      {{ inventory_hostname }} reports pkg_mgr={{ ansible_facts['pkg_mgr'] }}
+      ({{ ansible_facts['distribution'] | default('unknown') }}
+      {{ ansible_facts['distribution_version'] | default('') }},
+      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
       patchmon.core.apply_all_updates and patchmon.core.apply_security_updates
       only upgrade apt, dnf, and dnf5. Please add this package manager to those roles.
   when:
     - apply_all_updates_eligible | bool
-    - ansible_pkg_mgr not in ['apt', 'dnf', 'dnf5']
+    - ansible_facts['pkg_mgr'] not in ['apt', 'dnf', 'dnf5']
 
 - name: Report package state to PatchMon after upgrades
   ansible.builtin.include_role:
@@ -66,4 +66,4 @@
     agent_state: report
   when:
     - apply_all_updates_eligible | bool
-    - ansible_pkg_mgr in ['apt', 'dnf', 'dnf5']
+    - ansible_facts['pkg_mgr'] in ['apt', 'dnf', 'dnf5']

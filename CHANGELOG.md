@@ -6,6 +6,10 @@ All notable changes to this collection are documented in this file.
 
 ### Changed
 
+- Roles read gathered facts from `ansible_facts` (`pkg_mgr`, `os_family`,
+  `distribution`, `distribution_version`, `architecture`). Top-level
+  `ansible_*` fact names are deprecated and will stop being injected in
+  ansible-core 2.24.
 - `examples/playbooks/maintain.yml` applies security updates by default.
   `-e apply_all_updates=true` imports `apply_all_updates.yml` instead of
   `apply_security_updates.yml`.

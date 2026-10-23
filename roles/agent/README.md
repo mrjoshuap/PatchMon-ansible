@@ -2,7 +2,7 @@
 
 Install, start, stop, report, or remove the PatchMon agent on managed Linux hosts.
 
-When facts are present and `ansible_os_family` is `Windows`, the role fails before the POSIX enrollment script. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. PatchMon's Windows installer is PowerShell. This role only runs `direct-host` or `proxmox-lxc`.
+When facts are present and `ansible_facts['os_family']` is `Windows`, the role fails before the POSIX enrollment script. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. PatchMon's Windows installer is PowerShell. This role only runs `direct-host` or `proxmox-lxc`.
 
 On FreeBSD, `agent_state` of `present`, `started`, or `stopped` can run the enrollment script, then fails before the service task. FreeBSD registers `/usr/local/etc/rc.d/patchmon_agent`. The role looks for `patchmon-agent`. That failure also includes a feedback draft. `report` and `absent` do not use that check. Plays that do not gather facts skip both OS checks.
 
