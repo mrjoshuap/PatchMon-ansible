@@ -1,0 +1,56 @@
+---
+# Installed by post-create.sh:
+#   pre-commit install -c .devcontainer/pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-json
+      - id: check-ast
+      - id: detect-private-key
+      # check-executables-have-shebangs is omitted. The container's
+      # fakeowner mount reports every file as executable to os.access.
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: yamllint
+        entry: yamllint -c .devcontainer/yamllint.yaml
+        language: system
+        types: [yaml]
+
+      # MD003 heading style, MD013 line length, MD024 repeated changelog
+      # headings, and the other listed rules already fail in the docs.
+      - id: pymarkdown
+        name: pymarkdown
+        entry: pymarkdown --disable-rules MD003,MD013,MD022,MD024,MD026,MD029,MD036,MD040,MD041,MD051 scan
+        language: system
+        types: [markdown]
+
+      - id: ruff
+        name: ruff
+        entry: ruff check --config .devcontainer/ruff.toml
+        language: system
+        types: [python]
+
+      - id: shellcheck
+        name: shellcheck
+        entry: shellcheck -S warning
+        language: system
+        types: [shell]
+
+      - id: ansible-lint
+        name: ansible-lint
+        entry: bash .devcontainer/lint-playbooks.sh
+        language: system
+        pass_filenames: false
+        files: ^(examples/playbooks/|playbooks/|roles/).+\.ya?ml$

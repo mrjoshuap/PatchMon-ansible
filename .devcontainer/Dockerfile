@@ -9,10 +9,17 @@ RUN dnf update -y \
     procps-ng \
     sudo \
     tree \
+    jq \
+    ShellCheck \
   && dnf clean all --enablerepo='*'
 
-# install requests with pip3
-RUN pip3 install requests
+# requests is a collection dependency. The others back the git hook in
+# .devcontainer/pre-commit-config.yaml. yamllint and ansible-lint are in the base image.
+RUN pip3 install \
+    requests \
+    pre-commit==4.7.0 \
+    pymarkdownlnt==0.9.41 \
+    ruff==0.17.2
 
 # create dev user
 RUN useradd -m dev \

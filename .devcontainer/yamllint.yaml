@@ -1,0 +1,16 @@
+---
+# Defaults fail this tree: task lines run to 160 characters, example plays
+# omit a document start, and workflow files use `on` as a mapping key.
+extends: default
+
+ignore: |
+  .ansible/
+  .collections/
+  collections/
+
+rules:
+  line-length:
+    max: 160
+  document-start: disable
+  truthy:
+    check-keys: false

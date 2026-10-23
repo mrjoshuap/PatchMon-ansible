@@ -78,3 +78,6 @@ if [[ -z "${PATCHMON_ENROLLMENT_KEY:-}" || -z "${PATCHMON_ENROLLMENT_SECRET:-}" 
   echo "Optional lab only: export PATCHMON_VERIFY_SSL=false"
 fi
 
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit install -c .devcontainer/pre-commit-config.yaml --install-hooks
+fi

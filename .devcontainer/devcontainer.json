@@ -35,7 +35,7 @@
         "ansible.validation.lint.enabled": true,
         "ansible.lightspeed.enabled": false,
         "ansible.lightspeed.suggestions.enabled": false,
-        "ansible.mcpServer.enabled": true,
+        "ansible.mcpServer.enabled": false,
         "python.defaultInterpreterPath": "/usr/bin/python3",
         "python.analysis.extraPaths": [
           "${workspaceFolder}/.collections"

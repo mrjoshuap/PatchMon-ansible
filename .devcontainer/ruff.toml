@@ -1,0 +1,7 @@
+# plugins/ and tests/ target Python 3.9 and keep the Ansible module header.
+# E402 is that header. E501 is line length, which this tree does not follow.
+target-version = "py39"
+
+[lint]
+select = ["E", "F"]
+ignore = ["E402", "E501"]
