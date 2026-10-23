@@ -11,12 +11,7 @@
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "postStartCommand": "bash .devcontainer/post-start.sh",
   "mounts": [
-    "source=/run/host-services/ssh-auth.sock,target=/run/host-services/ssh-auth.sock,type=bind",
-    "source=${localEnv:HOME}/.gitconfig,target=/tmp/host.gitconfig,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh/config,target=/tmp/host-ssh/config,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh/id_rsa.pub,target=/tmp/host-ssh/id_rsa.pub,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh/known_hosts,target=/tmp/host-ssh/known_hosts,type=bind,readonly",
-    "source=${localEnv:HOME}/.config/git/allowed_signers,target=/tmp/host-ssh/allowed_signers,type=bind,readonly"
+    "source=/run/host-services/ssh-auth.sock,target=/run/host-services/ssh-auth.sock,type=bind"
   ],
   "containerEnv": {
     "ANSIBLE_COLLECTIONS_PATH": "/workspaces/PatchMon-ansible/.collections:/home/dev/.ansible/collections:/usr/share/ansible/collections"

@@ -424,7 +424,7 @@ pytest
 ansible-lint examples/playbooks playbooks
 ```
 
-Open `patchmon-ansible.code-workspace` and **Dev Containers: Reopen in Container** to work on this repository alone. Setup is in [`.devcontainer/README.md`](.devcontainer/README.md).
+Reopen this repository in the dev container. Setup is in [`.devcontainer/README.md`](.devcontainer/README.md).
 
 Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-lint).
 

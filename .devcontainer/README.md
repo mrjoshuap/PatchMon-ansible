@@ -1,18 +1,32 @@
 # patchmon.core dev container
 
-Open this repository on its own. The container is only the collection checkout. It uses `quay.io/mrjoshuap/ee-homelab-workspace:latest` (Ansible, ansible-lint, and pytest). Mounts are Git and SSH only.
+Open this repository and reopen it in the dev container. The image builds from `ghcr.io/ansible/community-ansible-dev-tools:latest`. The Dockerfile adds `sudo`, `tree`, and `requests`, creates the `dev` user, and sets `HOME=/home/dev`. Ansible, ansible-lint, and pytest come from the base image.
 
 ## Open
 
-1. On the host, `docker login quay.io` if that image is private. These files must exist, because the container bind-mounts them: `~/.gitconfig`, `~/.ssh/config`, `~/.ssh/id_rsa.pub`, `~/.ssh/known_hosts`, and `~/.config/git/allowed_signers`.
-2. On the Mac, the 1Password agent has to be the socket Docker Desktop forwards. If the homelab container already works, that setup is done. Otherwise run `home-mrjoshuap/.devcontainer/enable-1password-agent-for-docker.sh` once, then quit Docker Desktop and open it again.
-3. In Cursor, **File → Open Workspace from File** and choose `patchmon-ansible.code-workspace`.
-4. Command Palette → **Dev Containers: Reopen in Container**.
+Command Palette → **Dev Containers: Reopen in Container**.
 
 `post-create.sh` replaces a galaxy-installed directory at `.collections/ansible_collections/patchmon/core` with a symlink to this checkout, so Ansible loads the working tree. `.collections/` stays gitignored.
 
-SSH and commit signing match the homelab container: `IdentityAgent` is `/run/host-services/ssh-auth.sock`, and the container signer is `/usr/bin/ssh-keygen` with that socket set. Private keys stay in 1Password.
+`patchmon-ansible.code-workspace` is a single-folder workspace with the same editor settings as `devcontainer.json`. Opening the repository folder is enough.
 
-**Rebuild Container** pulls the base image with Buildx. If that fails immediately, Cursor's PATH cannot see `docker-credential-desktop`. The fix is the same host setting as the homelab container (`dev.containers.dockerPath` → `~/.local/bin/docker-with-cred-path`). **Reopen in Container** uses the image already on disk.
+## API environment
 
-Export `PATCHMON_API_URL`, `PATCHMON_API_KEY`, and `PATCHMON_API_SECRET` in the shell when a play or inventory call needs the API.
+Copy `.env.template` to `.env` and fill in the values. `post-create.sh` sources `.env` when that file is present, and prints a reminder when any of these are unset:
+
+- `PATCHMON_ENROLLMENT_KEY`
+- `PATCHMON_ENROLLMENT_SECRET`
+- `PATCHMON_API_KEY`
+- `PATCHMON_API_SECRET`
+- `PATCHMON_SERVER_URL`
+- `PATCHMON_API_URL`
+
+## Optional commit signing
+
+`devcontainer.json` bind-mounts `/run/host-services/ssh-auth.sock` when the host provides that socket. To sign commits with a forwarded agent, also mount:
+
+- `~/.gitconfig` at `/tmp/host.gitconfig`
+- `~/.ssh/config`, `~/.ssh/id_rsa.pub`, and `~/.ssh/known_hosts` under `/tmp/host-ssh/`
+- `~/.config/git/allowed_signers` at `/tmp/host-ssh/allowed_signers` when you verify signatures
+
+When those files are present, `post-start.sh` copies the SSH files into the container, sets `IdentityAgent` to `/run/host-services/ssh-auth.sock`, and points Git's SSH signer at `/usr/bin/ssh-keygen` with that socket. Private keys stay in the agent. Without the mounts, startup skips SSH config and signing, and the container still opens.

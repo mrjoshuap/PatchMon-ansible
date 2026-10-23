@@ -135,7 +135,8 @@ jobs:
           ARTIFACT="$(ls patchmon-core-*.tar.gz)"
           DEV_URL="${{ secrets.ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL }}"
           if [[ -z "${DEV_URL}" ]]; then
-            DEV_URL="https://aap.home.mrjoshuap.com/api/galaxy/content/development/"
+            echo "ERROR: Set secret ANSIBLE_GALAXY_SERVER_HOMELAB_HUB_DEVELOPMENT_URL to the development repository URL"
+            exit 1
           fi
           ansible-galaxy collection publish "${ARTIFACT}" \
             --server "${DEV_URL}" \
