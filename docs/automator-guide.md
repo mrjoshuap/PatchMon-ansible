@@ -407,32 +407,49 @@ Start from [`examples/patchmon_inventory_stats.yml`](../examples/patchmon_invent
 ### Enroll, maintain, and retire
 
 ```mermaid
-flowchart TD
-  subgraph enroll [Enroll]
-    enrollAgent["enroll.yml runs patchmon.core.agent present"]
+flowchart LR
+  subgraph lifecycle ["System Lifecycle"]
+    direction TB
+    subgraph enroll [Enroll]
+      direction TB
+      enrollExisting["enroll existing node with --limit"]
+      enrollNew["enroll node not in inventory with --e enroll_host"]
+    end
+    subgraph maintain [Maintain]
+      direction TB
+      subgraph preWork [Pre-Work]
+      direction LR
+        refresh["maintain.yml refreshes inventory"]
+        health["report_health.yml runs patchmon.core.report_health"]
+      end
+      subgraph patching ["Patching Process"]
+        direction TB
+        subgraph ondemand ["On-demand patching"]
+          direction TB
+          allUpdates["-e apply_all_updates=true: apply_all_updates.yml"]
+        end
+        subgraph scheduled ["Scheduled patching"]
+          direction TB
+          securityUpd["default: apply_security_updates.yml"]
+        end
+        subgraph emergency ["Emergency patching"]
+          direction TB
+          emergencyUpd["apply_security_updates.yml with --limit"]
+        end
+      end
+      subgraph postWork [Post-Work]
+        reportSec["patchmon.core.agent report"]
+        rebootHost["reboot_needed.yml runs patchmon.core.reboot_needed"]
+        reportReboot["patchmon.core.agent report"]
+      end
+    end
+    subgraph retire [Retire]
+      direction TB
+      removeAgent["retire.yml runs patchmon.core.agent absent"]
+      deleteHost["patchmon.core.host absent when patchmon_id is set"]
+      removeAgent --> deleteHost
+    end
   end
-  subgraph maintain [Maintain]
-    refresh[maintain.yml refreshes inventory]
-    health["report_health.yml runs patchmon.core.report_health"]
-    securityUpd["default: apply_security_updates.yml"]
-    allUpdates["-e apply_all_updates=true: apply_all_updates.yml"]
-    reportSec["patchmon.core.agent report"]
-    rebootHost["reboot_needed.yml runs patchmon.core.reboot_needed"]
-    reportReboot["patchmon.core.agent report"]
-    refresh --> health
-    health --> securityUpd
-    health --> allUpdates
-    securityUpd --> reportSec
-    allUpdates --> reportSec
-    reportSec --> rebootHost
-    rebootHost --> reportReboot
-  end
-  subgraph retire [Retire]
-    removeAgent["retire.yml runs patchmon.core.agent absent"]
-    deleteHost["patchmon.core.host absent when patchmon_id is set"]
-    removeAgent --> deleteHost
-  end
-  enrollAgent --> refresh
 ```
 
 | Playbook | When it runs |
@@ -443,6 +460,8 @@ flowchart TD
 | [`examples/playbooks/retire.yml`](../examples/playbooks/retire.yml) | A host leaves. Removes the agent, then deletes the host record when `patchmon_id` is set. Requires `--limit` |
 
 `maintain.yml` imports [`report_health.yml`](../examples/playbooks/report_health.yml), then either [`apply_security_updates.yml`](../examples/playbooks/apply_security_updates.yml) or [`apply_all_updates.yml`](../examples/playbooks/apply_all_updates.yml), then [`reboot_needed.yml`](../examples/playbooks/reboot_needed.yml). Security updates are the default. `-e apply_all_updates=true` selects all pending upgrades. Those plays import `patchmon.core.report_health`, the matching update role, and `patchmon.core.reboot_needed`. Run them against a stats inventory (`include_stats: true`). Pass `--limit` when you want a subset.
+
+Scheduled patching is that default recurring run. On-demand patching is the same play with `-e apply_all_updates=true`. Emergency patching runs [`apply_security_updates.yml`](../examples/playbooks/apply_security_updates.yml) immediately with `--limit` instead of waiting for the schedule. Each path reports, then reboots, and [`retire.yml`](../examples/playbooks/retire.yml) stays a separate later play.
 
 ```bash
 export PATCHMON_SERVER_URL='https://patchmon.example.com'
