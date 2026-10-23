@@ -438,7 +438,6 @@ flowchart LR
         end
       end
       subgraph postWork [Post-Work]
-        reportSec["patchmon.core.agent report"]
         rebootHost["reboot_needed.yml runs patchmon.core.reboot_needed"]
         reportReboot["patchmon.core.agent report"]
       end
