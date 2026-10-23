@@ -7,10 +7,13 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
 if [ -z "${ANSIBLE_COLLECTIONS_PATHS:-}${ANSIBLE_COLLECTIONS_PATH:-}" ]; then
-  collection_root="${TMPDIR:-/tmp}/patchmon-docs-collections"
-  rm -rf "$collection_root"
-  mkdir -p "$collection_root/ansible_collections/patchmon"
-  ln -s "$root" "$collection_root/ansible_collections/patchmon/core"
+  collection_root="$root/.collections"
+  link="$collection_root/ansible_collections/patchmon/core"
+  mkdir -p "$(dirname "$link")"
+  if [[ -e "$link" && ! -L "$link" ]]; then
+    rm -rf "$link"
+  fi
+  ln -sfn "$root" "$link"
   export ANSIBLE_COLLECTIONS_PATHS="$collection_root"
 fi
 

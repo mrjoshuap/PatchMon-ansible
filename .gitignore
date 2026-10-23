@@ -1,7 +1,6 @@
 *.tar.gz
 .ansible/
 .collections/
-.pytest_collections/
 .pytest_cache/
 __pycache__/
 *.py[cod]

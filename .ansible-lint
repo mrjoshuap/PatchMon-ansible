@@ -7,7 +7,6 @@ exclude_paths:
   - tests/
   - .pytest_cache/
   - .collections/
-  - .pytest_collections/
   - .ansible/
 skip_list:
   # Examples intentionally demonstrate debug output.

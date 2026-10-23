@@ -429,6 +429,8 @@ pytest
 ansible-lint examples/playbooks playbooks
 ```
 
+Unit tests and local Ansible both import this checkout through `.collections`. `pytest` creates that symlink when it is missing.
+
 Reopen this repository in the dev container. Setup is in [`.devcontainer/README.md`](.devcontainer/README.md).
 
 Pull requests run the [CI](.github/workflows/ci.yml) workflow (pytest + ansible-lint).

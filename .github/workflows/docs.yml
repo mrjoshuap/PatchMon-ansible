@@ -34,12 +34,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install "ansible-core>=2.15" "antsibull-docs"
 
-      - name: Install collection into path
+      - name: Link checkout as patchmon.core
         run: |
-          mkdir -p "$RUNNER_TEMP/collections/ansible_collections/patchmon"
-          ln -sfn "$GITHUB_WORKSPACE" \
-            "$RUNNER_TEMP/collections/ansible_collections/patchmon/core"
-          echo "ANSIBLE_COLLECTIONS_PATHS=$RUNNER_TEMP/collections" >> "$GITHUB_ENV"
+          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
+          mkdir -p "$(dirname "$link")"
+          if [[ -e "$link" && ! -L "$link" ]]; then
+            rm -rf "$link"
+          fi
+          ln -sfn "$GITHUB_WORKSPACE" "$link"
+          echo "ANSIBLE_COLLECTIONS_PATHS=$GITHUB_WORKSPACE/.collections" >> "$GITHUB_ENV"
 
       - name: Lint collection docs
         run: >-

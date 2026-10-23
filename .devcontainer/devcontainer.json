@@ -37,6 +37,12 @@
         "ansible.lightspeed.suggestions.enabled": false,
         "ansible.mcpServer.enabled": true,
         "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.analysis.extraPaths": [
+          "${workspaceFolder}/.collections"
+        ],
+        "python.autoComplete.extraPaths": [
+          "${workspaceFolder}/.collections"
+        ],
         "python.testing.pytestEnabled": true,
         "python.testing.pytestArgs": ["tests/unit"]
       }

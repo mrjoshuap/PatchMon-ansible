@@ -1,0 +1,6 @@
+{
+  "extraPaths": [
+    ".collections"
+  ],
+  "typeCheckingMode": "off"
+}

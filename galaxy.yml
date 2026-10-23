@@ -33,6 +33,5 @@ build_ignore:
   - .ansible
   - .collections
   - .pytest_cache
-  - .pytest_collections
   - "*.code-workspace"
   - "*.tar.gz"

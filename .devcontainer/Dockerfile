@@ -6,6 +6,7 @@ FROM ghcr.io/ansible/community-ansible-dev-tools:latest
 # update packages and clean cache
 RUN dnf update -y \
   && dnf install -y \
+    procps-ng \
     sudo \
     tree \
   && dnf clean all --enablerepo='*'
