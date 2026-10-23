@@ -92,3 +92,8 @@ EOF
 else
   echo "No /tmp/host.gitconfig; leaving git config unchanged."
 fi
+
+# if .env exists, source it
+if [[ -f .env ]]; then
+  source .env
+fi

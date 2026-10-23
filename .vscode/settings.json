@@ -4,5 +4,9 @@
   ],
   "python.autoComplete.extraPaths": [
     "${workspaceFolder}/.collections"
-  ]
+  ],
+  "cursorpyright.analysis.extraPaths": [
+    "${workspaceFolder}/.collections"
+  ],
+  "python.terminal.useEnvFile": true
 }

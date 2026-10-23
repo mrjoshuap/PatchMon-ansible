@@ -18,6 +18,11 @@
       "${workspaceFolder}/.collections"
     ],
     "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": ["tests/unit"]
+    "python.testing.pytestArgs": [
+      "tests/unit"
+    ],
+    "cursorpyright.analysis.extraPaths": [
+      "${workspaceFolder}/.collections"
+    ]
   }
 }
