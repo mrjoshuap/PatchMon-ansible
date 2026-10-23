@@ -1,0 +1,72 @@
+# Shared gate for pull requests, main, and tagged releases.
+# Callers must not build a tarball until this workflow succeeds.
+name: Checks
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to check. Empty checks the caller SHA.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            "ansible-core>=2.15" \
+            "requests>=2.25.1" \
+            pytest \
+            ansible-lint \
+            yamllint \
+            antsibull-docs \
+            pre-commit==4.7.0 \
+            pymarkdownlnt==0.9.41 \
+            ruff==0.17.2
+
+      - name: Link checkout as patchmon.core
+        run: |
+          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
+          mkdir -p "$(dirname "$link")"
+          if [[ -e "$link" && ! -L "$link" ]]; then
+            rm -rf "$link"
+          fi
+          ln -sfn "$GITHUB_WORKSPACE" "$link"
+
+      - name: Run unit tests
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.collections
+        run: pytest -q
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files -c .devcontainer/pre-commit-config.yaml
+
+      - name: Lint collection docs
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.collections
+        run: >-
+          antsibull-docs lint-collection-docs
+          --plugin-docs --skip-rstcheck .

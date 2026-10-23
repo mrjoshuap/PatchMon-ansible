@@ -1,5 +1,6 @@
----
-# Pull-request and main-branch validation for patchmon.core
+# Pull-request and main-branch validation for patchmon.core.
+# A main push that does not bump galaxy.yml and that touches collection
+# content also publishes a GitHub development prerelease.
 name: CI
 
 on:
@@ -12,41 +13,130 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  dev-release:
+    needs: checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Decide whether to publish a development prerelease
+        id: gate
+        run: |
+          set -euo pipefail
+          if git diff HEAD~1 HEAD -- galaxy.yml | grep -qE '^[+-]version:'; then
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "galaxy.yml version changed — stable tag is the release"
+            exit 0
+          fi
+          if git diff --name-only HEAD~1 HEAD | grep -Eq '^(galaxy\.yml|plugins/|roles/|playbooks/|meta/)'; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+            echo "collection content changed — development prerelease"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "no collection content change"
+          fi
 
       - name: Set up Python
+        if: steps.gate.outputs.publish == 'true'
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install ansible-core
+        if: steps.gate.outputs.publish == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install "ansible-core>=2.15" "requests>=2.25.1" pytest ansible-lint
+          pip install "ansible-core>=2.15"
 
-      - name: Link checkout as patchmon.core
+      - name: Set development prerelease version
+        if: steps.gate.outputs.publish == 'true'
+        id: meta
         run: |
-          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
-          mkdir -p "$(dirname "$link")"
-          if [[ -e "$link" && ! -L "$link" ]]; then
-            rm -rf "$link"
+          set -euo pipefail
+          BASE="$(awk '/^version:/{gsub(/["'\'']/, "", $2); print $2; exit}' galaxy.yml)"
+          case "${BASE}" in
+            *-*) BASE="${BASE%%-*}" ;;
+          esac
+          DEV_VERSION="${BASE}-dev.${GITHUB_RUN_ID}"
+          sed -i "s/^version:.*/version: ${DEV_VERSION}/" galaxy.yml
+          {
+            echo "version=${DEV_VERSION}"
+            echo "tag=v${DEV_VERSION}"
+            echo "tarball=patchmon-core-${DEV_VERSION}.tar.gz"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Development version ${DEV_VERSION} (workspace only)"
+
+      - name: Build collection tarball
+        if: steps.gate.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          ansible-galaxy collection build
+          ARTIFACT="$(ls patchmon-core-*.tar.gz)"
+          if tar -tzf "${ARTIFACT}" | grep -q '^\.ansible/'; then
+            echo "ERROR: ${ARTIFACT} contains .ansible/"
+            exit 1
           fi
-          ln -sfn "$GITHUB_WORKSPACE" "$link"
 
-      - name: Run unit tests
-        run: pytest -q
-
-      - name: Lint example playbooks and collection playbooks
+      - name: Write release notes
+        if: steps.gate.outputs.publish == 'true'
+        id: notes
         env:
-          # pytest links this checkout at .collections. ansible-lint also
-          # installs it under .ansible/collections. Keep one path so galaxy
-          # does not warn that patchmon.core is installed twice. Pass files
-          # so directory expansion does not warn about the playbook set.
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.ansible/collections
+          VERSION: ${{ steps.meta.outputs.version }}
+          TARBALL: ${{ steps.meta.outputs.tarball }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
         run: |
-          mkdir -p "$ANSIBLE_COLLECTIONS_PATH"
-          ansible-lint examples/playbooks/*.yml playbooks/*.yml
+          set -euo pipefail
+          NOTES_FILE="${RUNNER_TEMP}/release-notes.md"
+          python3 - "${NOTES_FILE}" <<'PY'
+          import os
+          import pathlib
+          import sys
+
+          notes_path = pathlib.Path(sys.argv[1])
+          version = os.environ["VERSION"]
+          tarball = os.environ["TARBALL"]
+          sha = os.environ["SHA"]
+          repo = os.environ["REPO"]
+          notes_path.write_text(
+              f"""## patchmon.core {version}
+
+          Development build of `{sha}`.
+
+          This is not a stable release. `galaxy.yml` on that commit keeps its
+          committed version. The tarball version is `{version}`.
+
+          ### Install from this prerelease URL
+
+          ```bash
+          ansible-galaxy collection install \\
+            https://github.com/{repo}/releases/download/v{version}/{tarball}
+          ```
+          """.replace("\n          ", "\n").lstrip(),
+              encoding="utf-8",
+          )
+          PY
+          echo "path=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create GitHub prerelease
+        if: steps.gate.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: patchmon.core ${{ steps.meta.outputs.version }}
+          body_path: ${{ steps.notes.outputs.path }}
+          files: ${{ steps.meta.outputs.tarball }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

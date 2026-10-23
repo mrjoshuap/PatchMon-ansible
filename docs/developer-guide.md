@@ -55,16 +55,15 @@ Commit signing through a forwarded SSH agent is optional. The checklist is [`.de
 ## Chapter 3: Tests and lint
 
 ```bash
-pip install -r requirements.txt pytest ansible-lint
+pip install -r requirements.txt pytest ansible-lint pre-commit yamllint pymarkdownlnt ruff antsibull-docs
 pytest
-mkdir -p .ansible/collections
-ANSIBLE_COLLECTIONS_PATH="$PWD/.ansible/collections" \
-  ansible-lint examples/playbooks/*.yml playbooks/*.yml
+pre-commit run --all-files -c .devcontainer/pre-commit-config.yaml
+antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 ```
 
-Unit tests and local Ansible both import this checkout through `.collections`. ansible-lint installs this collection under `.ansible/collections`. `ANSIBLE_COLLECTIONS_PATH` keeps galaxy on that install, which is the copy lint uses. The arguments are the playbook files. A directory argument makes current ansible-lint report how many files that directory expanded to.
+Unit tests and local Ansible both import this checkout through `.collections`. The pre-commit ansible-lint hook installs this collection under `.ansible/collections` and points galaxy at that copy. It lints the playbook files under `examples/playbooks/` and `playbooks/`.
 
-Pull requests run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): pytest, then ansible-lint on the playbooks under `examples/playbooks` and `playbooks`. The release workflow and the Gitea publish workflow create the same `.collections` link before pytest. The publish workflow also sets `ANSIBLE_COLLECTIONS_PATH` to that link so a runner-level path does not hide the checkout.
+Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. A tagged release runs the same suite before it builds a tarball. A `main` push that does not change `galaxy.yml` `version:` and that touches `galaxy.yml`, `plugins/`, `roles/`, `playbooks/`, or `meta/` publishes `vX.Y.Z-dev.<run id>` as a GitHub prerelease after the suite passes. The Gitea publish workflow creates the same `.collections` link before pytest and sets `ANSIBLE_COLLECTIONS_PATH` to that link.
 
 ## Chapter 4: Where documentation lives
 
@@ -82,7 +81,7 @@ When a procedure moves, update the guide and delete the old page. Do not leave a
 
 ## Chapter 5: Docsite build
 
-The published site is GitHub Pages for this fork. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) lints collection docs, builds the site, and deploys on push to `main`. Pull requests build and lint only.
+The published site is GitHub Pages for this fork. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) builds the site and deploys on push to `main`. Pull requests build only. Collection doc lint is in [`.github/workflows/checks.yml`](../.github/workflows/checks.yml), which gates tagged and development releases. The Pages build does not.
 
 Local build:
 
@@ -114,14 +113,16 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 The GitHub Release is the annotated tag. Pushing the version bump to `main` does not create it. Tag that commit in the same release.
 
 1. Bump `galaxy.yml` `version`, update `CHANGELOG.md`, commit, and push `main`.
-2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. The commit's [Release collection](../.github/workflows/release.yml) workflow must link this checkout before pytest.
+2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. [Release collection](../.github/workflows/release.yml) runs [the shared checks](../.github/workflows/checks.yml) on that commit before it builds.
 
 ```bash
 git tag -a v2.0.5 -m "patchmon.core 2.0.5"
 git push origin v2.0.5
 ```
 
-3. That workflow checks out the tag, links the checkout, runs tests, builds the collection tarball, and creates the GitHub Release with the `.tar.gz` attached.
+3. After the checks pass, that workflow builds the collection tarball and creates the GitHub Release with the `.tar.gz` attached.
+
+A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI. The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow.
 
 v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
 

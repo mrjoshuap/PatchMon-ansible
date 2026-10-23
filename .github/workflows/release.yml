@@ -2,6 +2,7 @@
 # Build and attach the Ansible collection tarball to a GitHub Release.
 # Trigger: push a tag matching vX.Y.Z or pre-release (e.g. v2.0.0-alpha).
 # Tag without leading v must equal galaxy.yml version.
+# Tags containing -dev. are development prereleases from CI. Skip them.
 name: Release collection
 
 on:
@@ -19,7 +20,15 @@ permissions:
   contents: write
 
 jobs:
+  checks:
+    if: ${{ !contains(github.ref_name, '-dev.') && (github.event_name != 'workflow_dispatch' || !contains(github.event.inputs.tag, '-dev.')) }}
+    uses: ./.github/workflows/checks.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+
   release:
+    needs: checks
+    if: ${{ !contains(github.ref_name, '-dev.') && (github.event_name != 'workflow_dispatch' || !contains(github.event.inputs.tag, '-dev.')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -87,19 +96,7 @@ jobs:
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install "ansible-core>=2.15" "requests>=2.25.1" pytest
-
-      - name: Link checkout as patchmon.core
-        run: |
-          link="$GITHUB_WORKSPACE/.collections/ansible_collections/patchmon/core"
-          mkdir -p "$(dirname "$link")"
-          if [[ -e "$link" && ! -L "$link" ]]; then
-            rm -rf "$link"
-          fi
-          ln -sfn "$GITHUB_WORKSPACE" "$link"
-
-      - name: Run unit tests
-        run: pytest -q
+          pip install "ansible-core>=2.15"
 
       - name: Build collection tarball
         run: ansible-galaxy collection build --force

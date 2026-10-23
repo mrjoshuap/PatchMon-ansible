@@ -1,6 +1,7 @@
 ---
 # Build the patchmon.core docsite and publish it to GitHub Pages on this fork.
-# Pull requests build and lint only. Push to main and workflow_dispatch deploy.
+# Pull requests build only. Push to main and workflow_dispatch deploy.
+# Collection doc lint is in checks.yml and gates releases.
 name: Documentation
 
 on:
@@ -43,11 +44,6 @@ jobs:
           fi
           ln -sfn "$GITHUB_WORKSPACE" "$link"
           echo "ANSIBLE_COLLECTIONS_PATHS=$GITHUB_WORKSPACE/.collections" >> "$GITHUB_ENV"
-
-      - name: Lint collection docs
-        run: >-
-          antsibull-docs lint-collection-docs
-          --plugin-docs --skip-rstcheck .
 
       - name: Build docsite
         run: bash docs/build-docsite.sh
