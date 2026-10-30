@@ -116,8 +116,8 @@ The GitHub Release is the annotated tag. Pushing the version bump to `main` does
 2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. [Release collection](../.github/workflows/release.yml) runs [the shared checks](../.github/workflows/checks.yml) on that commit before it builds.
 
 ```bash
-git tag -a v2.0.6 -m "patchmon.core 2.0.6"
-git push origin v2.0.6
+git tag -a v2.0.7 -m "patchmon.core 2.0.7"
+git push origin v2.0.7
 ```
 
 3. After the checks pass, that workflow builds the collection tarball and creates the GitHub Release with the `.tar.gz` attached. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
@@ -126,6 +126,6 @@ A `main` push that does not bump `version:` and that changes collection content 
 
 v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.6`.
+You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.7`.
 
 The release notes include a link to [Migrating from 1.0](automator-guide.md#chapter-9-migrating-from-1-0) in the automator guide.

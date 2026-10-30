@@ -50,7 +50,7 @@ pip install 'requests>=2.25.1'
 Tagged releases publish `patchmon-core-<version>.tar.gz` as a release asset. Download it from [Releases](https://github.com/PatchMon/PatchMon-ansible/releases), copy it to the target system, and install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-core-2.0.6.tar.gz
+ansible-galaxy collection install ./patchmon-core-2.0.7.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -58,7 +58,7 @@ When the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.6/patchmon-core-2.0.6.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.7/patchmon-core-2.0.7.tar.gz
 ```
 
 ### From source

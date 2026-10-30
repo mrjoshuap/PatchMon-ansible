@@ -4,6 +4,14 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+## [2.0.7] - 2026-10-30
+
+### Fixed
+
+- `patchmon.core.host_info` copies per-host stats `outdated_packages` into
+  `updates_count` when the stats payload does not already include
+  `updates_count`. An explicit `updates_count`, including zero, is kept.
+
 ## [2.0.6] - 2026-10-23
 
 ### Changed
