@@ -208,7 +208,20 @@ def test_build_patchmon_facts_merges_identity_and_stats():
     assert "patchmon_needs_reboot" not in facts
 
 
-def test_run_module_inject_facts(monkeypatch):
+def test_updates_count_preserves_explicit_values_and_absence():
+    facts = mod._build_patchmon_facts(
+        "host-1", {"stats": {"outdated_packages": 7, "updates_count": 0}}
+    )
+    assert facts["updates_count"] == 0
+    assert facts["outdated_packages"] == 7
+    for stats in ({}, {"outdated_packages": None}):
+        assert "updates_count" not in mod._build_patchmon_facts(
+            "host-1", {"stats": stats}
+        )
+
+
+@pytest.mark.parametrize("counts", [(0, 0, 986), (7, 2, 20)])
+def test_run_module_inject_facts(monkeypatch, counts):
     exits = {}
 
     class FakeModule(object):
@@ -239,7 +252,12 @@ def test_run_module_inject_facts(monkeypatch):
             return {"hostname": "web01", "friendly_name": "web"}
 
         def get_host_stats(self, host_id):
-            return {"updates_count": 4, "last_update": "2026-02-12T10:30:00.000Z"}
+            return {
+                "outdated_packages": counts[0],
+                "security_updates": counts[1],
+                "total_installed_packages": counts[2],
+                "last_update": "2026-02-12T10:30:00.000Z",
+            }
 
         def get_host_system(self, host_id):
             return {"needs_reboot": False}
@@ -265,11 +283,15 @@ def test_run_module_inject_facts(monkeypatch):
 
     mod.run_module()
 
-    assert exits["host"]["stats"]["updates_count"] == 4
+    assert exits["host"]["stats"]["outdated_packages"] == counts[0]
+    assert "updates_count" not in exits["host"]["stats"]
     patchmon = exits["ansible_facts"]["patchmon"]
     assert patchmon["id"] == "host-1"
     assert patchmon["friendly_name"] == "web"
-    assert patchmon["updates_count"] == 4
+    assert patchmon["updates_count"] == counts[0]
+    assert patchmon["outdated_packages"] == counts[0]
+    assert patchmon["security_updates"] == counts[1]
+    assert patchmon["total_installed_packages"] == counts[2]
     assert patchmon["last_update"] == "2026-02-12T10:30:00.000Z"
     assert patchmon["needs_reboot"] is False
     assert "patchmon_updates_count" not in patchmon
