@@ -205,6 +205,11 @@ def _build_patchmon_facts(host_id, gathered):
             if source.get(key) is not None:
                 facts[key] = source[key]
 
+    # The per-host stats endpoint calls updates_count outdated_packages.
+    # Preserve an explicitly supplied updates_count, including zero.
+    if "updates_count" not in facts and stats.get("outdated_packages") is not None:
+        facts["updates_count"] = stats["outdated_packages"]
+
     for key, value in stats.items():
         if key in ("id",) or key in _FACT_IDENTITY_KEYS:
             continue
