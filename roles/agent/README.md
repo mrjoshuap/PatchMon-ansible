@@ -2,7 +2,7 @@
 
 Install, start, stop, report, or remove the PatchMon agent on managed Linux hosts.
 
-Windows support is experimental and limited to `started`, `stopped`, and `report` for an already-installed agent. Gather OS facts for Windows routing; without OS facts, the role retains its existing POSIX behavior. Windows installation (`present`) and removal (`absent`) fail before changing the host. See [Windows setup](../../docs/automator-guide.md#windows-agent-management) for prerequisites and an example.
+Windows support is limited to `started`, `stopped`, and `report` for an already-installed agent. Gather OS facts for Windows routing; without OS facts, the role retains its existing POSIX behavior. Windows installation (`present`) and removal (`absent`) fail before changing the host. See [Windows setup](../../docs/automator-guide.md#windows-agent-management) for prerequisites and an example.
 
 On FreeBSD, `agent_state` of `present`, `started`, or `stopped` can run the enrollment script, then fails before the service task. FreeBSD registers `/usr/local/etc/rc.d/patchmon_agent`. The role looks for `patchmon-agent`. That failure also includes a feedback draft. `report` and `absent` do not use that check. Plays without OS facts skip the FreeBSD check.
 

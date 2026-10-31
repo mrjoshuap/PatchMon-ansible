@@ -699,7 +699,7 @@ Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https
 
 ## Windows agent management
 
-The agent role can start, stop, and request a report from an existing Windows agent. This is experimental collection support.
+The agent role can start, stop, and request a report from an existing Windows agent.
 
 On October 31, 2026, start, stop, and report were validated on Windows Server 2022 Standard Evaluation (build 20348), Windows Server 2025 Standard Evaluation (build 26100), and Windows 11 Pro (build 26200), with PatchMon agent 2.1.6, Ansible Core 2.20.7, and `ansible.windows` 2.8.0 over SSH. Repeated start/stop operations made no changes, stopping preserved automatic startup, and report check mode skipped execution. All three agents were left running with automatic startup. The PSRP example below has passed syntax checks but has not been live-tested.
 

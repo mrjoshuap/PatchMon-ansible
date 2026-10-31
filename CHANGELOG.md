@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add experimental Windows agent start, stop, and report operations using `ansible.windows` 2.x. Windows install and removal remain unsupported. Start, stop, report, and report check mode were live-tested on Windows Server 2022, Windows Server 2025, and Windows 11 Pro over SSH.
+- Add Windows agent start, stop, and report operations using `ansible.windows` 2.x. Windows install and removal remain unsupported. Start, stop, report, and report check mode were live-tested on Windows Server 2022, Windows Server 2025, and Windows 11 Pro over SSH.
 - Use gathered OS facts to select Windows tasks while preserving the existing POSIX behavior when OS facts are absent.
 - Document Windows connection prerequisites, platform boundaries, and an existing-agent example.
 

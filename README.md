@@ -41,7 +41,7 @@ Copy-paste inventories and plays: **[examples/README.md](examples/README.md)**.
 | Operation | Linux | Windows |
 |-----------|-------|---------|
 | Agent install / removal | Implemented | Not implemented |
-| Agent start / stop / report | Implemented | Experimental; existing installation required |
+| Agent start / stop / report | Implemented | Implemented; existing installation required |
 | Package updates / reboot roles | Existing platform restrictions apply | Not supported |
 
 Windows Server 2022, Windows Server 2025, and Windows 11 Pro start, stop, and report operations were live-tested over SSH with PatchMon agent 2.1.6.
