@@ -7,8 +7,8 @@ argument_specs:
       - Installs the PatchMon agent with an Auto-Enrollment script, or manages the local agent service.
       - Install (C(agent_state=present)) needs an Auto-Enrollment key and secret, not an Integration API token.
       - Start, stop, report, and remove run on the managed host and do not call the PatchMon API.
-      - When facts are present and C(ansible_facts['os_family']) is Windows, fails before the POSIX script.
-      - That Windows failure includes a PatchMon feedback draft.
+      - Gather OS facts for Windows routing. Windows supports C(started), C(stopped), and C(report) for an installed agent.
+      - Windows installation and removal are not implemented.
       - When facts say FreeBSD and C(agent_state) is C(present), C(started), or C(stopped), the installer may run.
       - The role then fails before the service task with a PatchMon feedback draft.
       - FreeBSD registers C(patchmon_agent), not C(patchmon-agent).
@@ -99,19 +99,18 @@ argument_specs:
         type: str
       agent_service_name:
         description:
-          - systemd unit name for the agent.
+          - Service name; defaults to C(PatchMonAgent) on Windows and C(patchmon-agent) otherwise.
         type: str
-        default: patchmon-agent
       agent_binary_path:
         description:
           - Path to the agent binary used for report and removal.
+          - Defaults to C(C:\Program Files\PatchMon\patchmon-agent.exe) on Windows, C(/usr/local/bin/patchmon-agent) otherwise.
         type: str
-        default: /usr/local/bin/patchmon-agent
       agent_config_dir:
         description:
-          - Agent configuration directory removed with C(agent_state=absent).
+          - Configuration directory; used for Windows reports and POSIX removal.
+          - Defaults to C(C:\ProgramData\PatchMon) on Windows, C(/etc/patchmon) otherwise.
         type: str
-        default: /etc/patchmon
       agent_report:
         description:
           - Run C(patchmon-agent report) after C(agent_state=present) has installed and started the agent.

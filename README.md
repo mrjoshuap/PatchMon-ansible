@@ -36,6 +36,17 @@ Copy-paste inventories and plays: **[examples/README.md](examples/README.md)**.
 - **Python**: 3.9+
 - **Dependencies**: `requests >= 2.25.1`
 
+## Platform support
+
+| Operation | Linux | Windows |
+|-----------|-------|---------|
+| Agent install / removal | Implemented | Not implemented |
+| Agent start / stop / report | Implemented | Implemented; existing installation required |
+| Package updates / reboot roles | Existing platform restrictions apply | Not supported |
+
+Windows Server 2022, Windows Server 2025, and Windows 11 Pro start, stop, and report operations were live-tested over SSH with PatchMon agent 2.1.6.
+See [Windows agent management](docs/automator-guide.md#windows-agent-management).
+
 ## Installation
 
 ### Ansible Galaxy

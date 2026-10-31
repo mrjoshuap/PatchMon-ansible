@@ -9,27 +9,16 @@
       agent_state must be one of {{ __agent_valid_states | join(', ') }}.
       Got '{{ agent_state | default('undefined') }}'.
 
-- name: Fail when the host is Windows
-  ansible.builtin.fail:
-    msg: >-
-      {{ inventory_hostname }} is {{ ansible_facts['os_family'] }}.
-      patchmon.core.agent stopped before running the enrollment script.
-
-      Create a PatchMon feedback request: https://feedback.patchmon.net/
-
-      Subject: Add a Windows installer path to patchmon.core.agent
-
-      Description:
-      patchmon.core.agent runs the POSIX enrollment script
-      (direct-host or proxmox-lxc).
-      {{ inventory_hostname }} is {{ ansible_facts['os_family'] }}
-      ({{ ansible_facts['distribution'] | default('unknown') }}
-      {{ ansible_facts['distribution_version'] | default('') }}).
-      PatchMon's Windows installer is a PowerShell script.
-      Please add a windows script type to the collection.
-  when:
-    - ansible_facts['os_family'] is defined
-    - ansible_facts['os_family'] == 'Windows'
+- name: Validate Windows agent operation
+  ansible.builtin.assert:
+    that:
+      - agent_state in ['started', 'stopped', 'report']
+    fail_msg: >-
+      Windows currently supports agent_state started, stopped, and report only.
+      Install the Windows agent using PatchMon first. The auto-enrollment script
+      API does not provide a Windows script type. Windows installation and removal
+      through patchmon.core.agent are not implemented.
+  when: ansible_facts['os_family'] | default('') == 'Windows'
 
 - name: Validate enrollment credentials for install states
   ansible.builtin.assert:

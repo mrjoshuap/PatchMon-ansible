@@ -1,0 +1,8 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Manage the installed Windows PatchMon agent service
+  ansible.windows.win_service:
+    name: "{{ agent_service_name }}"
+    state: "{{ agent_state }}"
+    start_mode: "{{ 'auto' if agent_state == 'started' else omit }}"
+  become: false

@@ -1,0 +1,9 @@
+---
+- name: Manage an existing Windows PatchMon agent
+  hosts: windows
+  gather_facts: true
+  become: false
+  roles:
+    - role: patchmon.core.agent
+      vars:
+        agent_state: started

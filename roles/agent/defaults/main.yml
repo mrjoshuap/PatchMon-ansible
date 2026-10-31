@@ -32,9 +32,13 @@ agent_keep_failed_script: false
 agent_failed_script_path: /var/tmp/patchmon-enroll-failed-{{ inventory_hostname }}.sh
 
 # Service / binary names (override per platform in vars/ if needed)
-agent_service_name: patchmon-agent
-agent_binary_path: /usr/local/bin/patchmon-agent
-agent_config_dir: /etc/patchmon
+agent_service_name: "{{ 'PatchMonAgent' if ansible_facts['os_family'] | default('') == 'Windows' else 'patchmon-agent' }}"
+agent_binary_path: >-
+  {{ 'C:\Program Files\PatchMon\patchmon-agent.exe'
+     if ansible_facts['os_family'] | default('') == 'Windows' else '/usr/local/bin/patchmon-agent' }}
+agent_config_dir: >-
+  {{ 'C:\ProgramData\PatchMon'
+     if ansible_facts['os_family'] | default('') == 'Windows' else '/etc/patchmon' }}
 
 # When true, run agent report after ensure-started
 agent_report: false
