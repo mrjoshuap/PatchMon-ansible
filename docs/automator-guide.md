@@ -696,3 +696,23 @@ Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https
 | [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2) | `patchmon.core.inventory` lists hosts, groups, and stats hostvars |
 | [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf) | `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent |
 | [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf) | `patchmon.core.apply_security_updates`, `patchmon.core.apply_all_updates`, and `patchmon.core.reboot_needed`, gated by hostvars such as `patchmon_update_state` and `patchmon_needs_reboot` |
+
+## Windows agent management
+
+The agent role can start, stop, and request a report from an existing Windows agent. This is experimental collection support.
+
+On October 31, 2026, start, stop, and report were validated on Windows Server 2022 Standard Evaluation (build 20348), Windows Server 2025 Standard Evaluation (build 26100), and Windows 11 Pro (build 26200), with PatchMon agent 2.1.6, Ansible Core 2.20.7, and `ansible.windows` 2.8.0 over SSH. Repeated start/stop operations made no changes, stopping preserved automatic startup, and report check mode skipped execution. All three agents were left running with automatic startup. The PSRP example below has passed syntax checks but has not been live-tested.
+
+Install the agent through PatchMon before using this role. The upstream auto-enrollment script endpoint currently accepts only `direct-host` and `proxmox-lxc`; the collection does not offer Windows installation or removal. Package-update and reboot roles do not support Windows.
+
+Install the collection dependencies (`ansible.windows` 2.x) and the Python `pypsrp` transport dependency in the controller environment. Configure a reachable WinRM HTTPS listener and an administrator account on the Windows host. The example uses PSRP with certificate validation; the controller must trust the listener certificate. Store `ansible_password` in Ansible Vault or controller credentials. Gather facts and set `become: false` for the Windows play.
+
+Use [`examples/playbooks/windows_agent.yml`](../examples/playbooks/windows_agent.yml) with [`examples/windows_inventory.yml`](../examples/windows_inventory.yml). Replace the example hostname and supply credentials, then run:
+
+```bash
+ansible-playbook -i examples/windows_inventory.yml examples/playbooks/windows_agent.yml --ask-vault-pass
+```
+
+The play defaults to `agent_state: started`. Pass `-e agent_state=report` or `-e agent_state=stopped` for the other supported operations. Reporting sends data to PatchMon; it is not read-only. Check mode skips the report command. Service operations require an existing `PatchMonAgent` service. Paths and service names can be overridden using the [agent role variables](../roles/agent/README.md).
+
+For an existing Windows SSH setup, use `ansible_connection: ssh` and `ansible_shell_type: powershell` instead of the PSRP connection variables. Official Windows SSH support requires Ansible Core 2.18 or later; see the [Ansible Windows SSH guide](https://docs.ansible.com/projects/ansible/latest/os_guide/windows_ssh.html). Use a trusted host key and an administrator account; configure OpenSSH and key authentication before running the role. The collection does not configure remote access.

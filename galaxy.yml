@@ -24,7 +24,8 @@ repository: https://github.com/PatchMon/PatchMon-ansible
 issues: https://github.com/PatchMon/PatchMon-ansible/issues
 documentation: https://patchmon.net/docs/patchmon-api-integrations-guide
 homepage: https://patchmon.net
-dependencies: {}
+dependencies:
+  ansible.windows: ">=2.0.0,<3.0.0"
 build_ignore:
   - .git
   - .github

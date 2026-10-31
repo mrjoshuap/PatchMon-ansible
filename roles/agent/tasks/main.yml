@@ -29,11 +29,13 @@
     - agent_state in ['present', 'started', 'stopped']
 
 - name: Manage PatchMon agent service
-  ansible.builtin.include_tasks: service.yml
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows/service.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'service.yml' }}"
   when: agent_state in ['present', 'started', 'stopped']
 
 - name: Report from PatchMon agent
-  ansible.builtin.include_tasks: report.yml
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows/report.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'report.yml' }}"
   when: agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
 
 - name: Remove PatchMon agent
