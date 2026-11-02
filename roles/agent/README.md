@@ -8,6 +8,10 @@ On FreeBSD, `agent_state` of `present`, `started`, or `stopped` can run the enro
 
 If the enrollment script fails and its output reports an unsupported operating system, package manager, or architecture, the role fails with a feedback draft. That message does not include the script output, which can contain the enrollment URL. Other script failures still print the return code and stderr.
 
+## Check mode
+
+With `agent_state: present`, `--check` validates required inputs and prints an installation preview. It does not fetch, stage, or execute the installer, manage the service, or send the optional post-install report. This works even when no installer file or agent service exists. It reports no predicted changes because the external script's behavior cannot be determined without executing it; a successful preview does not verify API credentials or guarantee installation success. Other agent states retain their existing check-mode behavior.
+
 ## Required API / credentials
 
 | Operation | Credential | Notes |

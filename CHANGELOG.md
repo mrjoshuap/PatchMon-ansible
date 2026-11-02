@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix clean-install check mode in the agent role: validate inputs and preview the installation without requiring an installer file or an installed service. Skip the optional post-install report and explain the external installer's dry-run limitations.
+
 All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
