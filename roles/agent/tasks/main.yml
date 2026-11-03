@@ -3,6 +3,19 @@
 - name: Validate agent role inputs
   ansible.builtin.include_tasks: validate.yml
 
+- name: Preview PatchMon agent installation
+  ansible.builtin.debug:
+    msg: >-
+      Check mode only: a normal run would download and execute the enrollment
+      installer, then start and enable the agent service{{ ' and request a report' if agent_report | bool else '' }}.
+      The installer and dependent service/report tasks are skipped.
+      Installer changes cannot be predicted; installation success and API
+      credentials have not been verified.
+  when: agent_state == 'present' and ansible_check_mode
+
+- name: Install PatchMon agent via enrollment script
+  ansible.builtin.include_tasks: install.yml
+  when: agent_state == 'present' and not ansible_check_mode
 - name: Install PatchMon agent on Windows
   ansible.builtin.include_tasks: windows/install.yml
   when:
@@ -37,6 +50,16 @@
     - agent_state in ['present', 'started', 'stopped']
 
 - name: Manage PatchMon agent service
+  ansible.builtin.include_tasks: service.yml
+  when:
+    - agent_state in ['present', 'started', 'stopped']
+    - not (agent_state == 'present' and ansible_check_mode)
+
+- name: Report from PatchMon agent
+  ansible.builtin.include_tasks: report.yml
+  when:
+    - agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
+    - not (agent_state == 'present' and ansible_check_mode)
   ansible.builtin.include_tasks:
     file: "{{ 'windows/service.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'service.yml' }}"
   when: agent_state in ['present', 'started', 'stopped']

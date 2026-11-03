@@ -17,6 +17,8 @@ argument_specs:
       - C(report) and C(absent) do not use that FreeBSD service check.
       - A failed enrollment script whose output reports an unsupported platform fails with a PatchMon feedback draft.
       - That message does not repeat the script output.
+      - In check mode, C(present) validates inputs and previews installation without downloading or running the script.
+      - Dependent service and report tasks are skipped; installer changes and installation success cannot be predicted.
     author:
       - PatchMon contributors
     options:
