@@ -13,19 +13,18 @@
       credentials have not been verified.
   when: agent_state == 'present' and ansible_check_mode
 
-- name: Install PatchMon agent via enrollment script
-  ansible.builtin.include_tasks: install.yml
-  when: agent_state == 'present' and not ansible_check_mode
 - name: Install PatchMon agent on Windows
   ansible.builtin.include_tasks: windows/install.yml
   when:
     - agent_state == 'present'
+    - not ansible_check_mode
     - ansible_facts['os_family'] | default('') == 'Windows'
 
 - name: Install PatchMon agent via enrollment script
   ansible.builtin.include_tasks: install.yml
   when:
     - agent_state == 'present'
+    - not ansible_check_mode
     - ansible_facts['os_family'] | default('') != 'Windows'
 
 - name: Fail before managing the FreeBSD agent service
@@ -50,24 +49,18 @@
     - agent_state in ['present', 'started', 'stopped']
 
 - name: Manage PatchMon agent service
-  ansible.builtin.include_tasks: service.yml
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows/service.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'service.yml' }}"
   when:
     - agent_state in ['present', 'started', 'stopped']
     - not (agent_state == 'present' and ansible_check_mode)
 
 - name: Report from PatchMon agent
-  ansible.builtin.include_tasks: report.yml
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows/report.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'report.yml' }}"
   when:
     - agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
     - not (agent_state == 'present' and ansible_check_mode)
-  ansible.builtin.include_tasks:
-    file: "{{ 'windows/service.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'service.yml' }}"
-  when: agent_state in ['present', 'started', 'stopped']
-
-- name: Report from PatchMon agent
-  ansible.builtin.include_tasks:
-    file: "{{ 'windows/report.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'report.yml' }}"
-  when: agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
 
 - name: Remove PatchMon agent on Windows
   ansible.builtin.include_tasks: windows/absent.yml

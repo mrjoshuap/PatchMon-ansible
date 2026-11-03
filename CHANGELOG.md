@@ -1,12 +1,20 @@
 # Changelog
 
-## Unreleased
-
-- Fix clean-install check mode in the agent role: validate inputs and preview the installation without requiring an installer file or an installed service. Skip the optional post-install report and explain the external installer's dry-run limitations.
-
 All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
+
+## [2.0.9] - 2026-11-03
+
+### Fixed
+
+- Clean-install check mode in `patchmon.core.agent`: validate inputs and
+  preview the installation without requiring an installer file or an installed
+  service. Skip the optional post-install report and document the external
+  installer's dry-run limitations.
+- Resolve a broken merge of the Windows agent task tree with the check-mode
+  skip conditions so POSIX and Windows install, service, and report paths stay
+  distinct and check mode does not call the installer.
 
 ## [2.0.8] - 2026-11-03
 
