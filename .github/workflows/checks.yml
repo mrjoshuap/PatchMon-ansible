@@ -60,6 +60,22 @@ jobs:
           fi
           ln -sfn "$GITHUB_WORKSPACE" "$link"
 
+      - name: Install collection dependencies
+        run: |
+          python - <<'PYTHON'
+          import subprocess
+          from pathlib import Path
+          import yaml
+
+          dependencies = yaml.safe_load(Path("galaxy.yml").read_text()).get("dependencies", {})
+          if dependencies:
+              subprocess.run(
+                  ["ansible-galaxy", "collection", "install", "-p", ".collections"]
+                  + [f"{name}:{version}" for name, version in dependencies.items()],
+                  check=True,
+              )
+          PYTHON
+
       - name: Run unit tests
         env:
           ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.collections

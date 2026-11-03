@@ -18,8 +18,16 @@ galaxy_info:
     - name: Debian
       versions:
         - bookworm
+    - name: Windows
+      versions:
+        - "2019"
+        - "2022"
+        - "2025"
+        - "10"
+        - "11"
   galaxy_tags:
     - patchmon
     - agent
     - linux
+    - windows
 dependencies: []

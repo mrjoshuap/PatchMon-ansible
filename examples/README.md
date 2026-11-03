@@ -100,3 +100,5 @@ Eventually, when you need to decommission the host, you can retire it with the f
 ansible-playbook examples/playbooks/retire.yml --limit patchmon-test
 ansible-inventory --host patchmon-test
 ```
+
+Windows agent lifecycle: [`windows_inventory.yml`](windows_inventory.yml) and [`playbooks/windows_agent.yml`](playbooks/windows_agent.yml) (`present` / `started` / `stopped` / `report` / `absent`). Setup notes are in the [Automator guide](../docs/automator-guide.md#windows-agent-management).

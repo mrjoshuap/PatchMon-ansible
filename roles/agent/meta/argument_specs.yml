@@ -4,11 +4,13 @@ argument_specs:
   main:
     short_description: Install, start, stop, report, or remove the PatchMon agent
     description:
-      - Installs the PatchMon agent with an Auto-Enrollment script, or manages the local agent service.
+      - Installs the PatchMon agent with an Auto-Enrollment flow, or manages the local agent service.
       - Install (C(agent_state=present)) needs an Auto-Enrollment key and secret, not an Integration API token.
-      - Start, stop, report, and remove run on the managed host and do not call the PatchMon API.
-      - When facts are present and C(ansible_facts['os_family']) is Windows, fails before the POSIX script.
-      - That Windows failure includes a PatchMon feedback draft.
+      - On Linux, install downloads C(GET /api/v1/auto-enrollment/script) (C(direct-host) or C(proxmox-lxc)).
+      - On Windows, install enrolls then downloads C(GET /api/v1/hosts/install?os=windows), matching the Intune flow.
+      - Start, stop, report, and remove run on the managed host. Windows removal downloads
+        C(GET /api/v1/hosts/remove?os=windows).
+      - Gather OS facts for Windows routing. Without OS facts, the role retains POSIX behavior.
       - When facts say FreeBSD and C(agent_state) is C(present), C(started), or C(stopped), the installer may run.
       - The role then fails before the service task with a PatchMon feedback draft.
       - FreeBSD registers C(patchmon_agent), not C(patchmon-agent).
@@ -23,10 +25,10 @@ argument_specs:
       agent_state:
         description:
           - Desired agent lifecycle.
-          - C(present) downloads the enrollment script and installs the agent, then ensures the service is started.
+          - C(present) installs the agent, then ensures the service is started.
           - C(started) and C(stopped) only change the local service.
-          - C(report) runs C(patchmon-agent report).
-          - C(absent) removes the agent.
+          - C(report) runs the agent report command.
+          - C(absent) removes the agent locally and does not delete the PatchMon host record.
         type: str
         default: present
         choices: [present, started, stopped, absent, report]
@@ -34,7 +36,7 @@ argument_specs:
         description:
           - Auto-enrollment URL, for example C(https://patchmon.example.com/api/v1/auto-enrollment).
           - An instance root is also accepted.
-          - Required when C(agent_state=present).
+          - Required when C(agent_state=present), and for Windows C(absent).
           - When omitted, derived from C(PATCHMON_SERVER_URL).
           - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_ENROLLMENT_URL) overrides the derived URL and is discouraged.
           - C(PATCHMON_API_URL) is used only when both of those are unset.
@@ -53,69 +55,92 @@ argument_specs:
         type: str
       agent_script_type:
         description:
-          - Enrollment script type passed to the script endpoint.
+          - Enrollment script type passed to the Linux auto-enrollment script endpoint.
+          - Ignored on Windows (Windows uses enroll then C(/api/v1/hosts/install)).
         type: str
         default: direct-host
         choices: [direct-host, proxmox-lxc]
       agent_force_install:
         description:
-          - Pass C(force=true) to the enrollment script endpoint.
+          - Pass C(force=true) to the enrollment or host install script endpoint.
+          - On Windows, also skips the already-running short circuit.
         type: bool
         default: false
       agent_force_new_host:
         description:
-          - Set C(FORCE_NEW_HOST) for the installer so it creates a new host entry.
+          - On Linux, set C(FORCE_NEW_HOST) for the installer so it creates a new host entry.
+          - On Windows, skips the already-running short circuit so enroll and install run again.
         type: bool
         default: false
       agent_verify_ssl:
         description:
-          - Verify the PatchMon TLS certificate when downloading the enrollment script.
+          - Verify the PatchMon TLS certificate when downloading enrollment or host scripts.
           - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
         type: bool
       agent_timeout:
         description:
-          - HTTP timeout in seconds for the enrollment script download.
+          - HTTP timeout in seconds for script downloads.
         type: int
         default: 30
       agent_script_path:
         description:
-          - Path on the managed host where the enrollment script is staged.
-          - The script contains enrollment secrets and is removed after a successful install.
+          - Path on the managed host where the install script is staged.
+          - The script can contain secrets and is removed after a successful install.
+          - Defaults to a POSIX temp path; Windows overrides via C(vars/Windows.yml).
         type: str
         default: /tmp/patchmon-enroll.sh
       agent_script_controller_path:
         description:
-          - Controller path written by C(patchmon.core.host_token) before the script is copied to the host.
-          - When omitted, defaults to C(/tmp/patchmon-enroll-<inventory_hostname>.sh).
+          - Controller path written by C(patchmon.core.host_token) or
+            C(patchmon.core.host_agent_script) before the script is copied to the host.
+          - When omitted, defaults to C(/tmp/patchmon-enroll-<inventory_hostname>.sh) on POSIX.
         type: str
       agent_keep_failed_script:
         description:
           - On install failure, keep a copy of the script at C(agent_failed_script_path).
-          - The copy contains enrollment secrets.
+          - The copy contains enrollment or bootstrap secrets.
         type: bool
         default: false
       agent_failed_script_path:
         description:
           - Durable path used when C(agent_keep_failed_script) is true.
-          - When omitted, defaults to C(/var/tmp/patchmon-enroll-failed-<inventory_hostname>.sh).
+          - When omitted, defaults to C(/var/tmp/patchmon-enroll-failed-<inventory_hostname>.sh) on POSIX.
         type: str
       agent_service_name:
         description:
-          - systemd unit name for the agent.
+          - Service name; defaults to C(PatchMonAgent) on Windows and C(patchmon-agent) otherwise.
         type: str
-        default: patchmon-agent
       agent_binary_path:
         description:
           - Path to the agent binary used for report and removal.
+          - Defaults to C(C:\Program Files\PatchMon\patchmon-agent.exe) on Windows,
+            C(/usr/local/bin/patchmon-agent) otherwise.
         type: str
-        default: /usr/local/bin/patchmon-agent
       agent_config_dir:
         description:
-          - Agent configuration directory removed with C(agent_state=absent).
+          - Configuration directory; used for Windows reports and POSIX removal.
+          - Defaults to C(C:\ProgramData\PatchMon) on Windows, C(/etc/patchmon) otherwise.
         type: str
-        default: /etc/patchmon
+      agent_remove_script_path:
+        description:
+          - Managed-host path for the Windows removal script.
+          - Unused on POSIX.
+        type: str
+      agent_remove_script_controller_path:
+        description:
+          - Controller path for the Windows removal script before it is copied to the host.
+        type: str
+      agent_friendly_name:
+        description:
+          - Friendly name sent to Auto-Enrollment on Windows install.
+          - Defaults to the gathered hostname, or C(inventory_hostname).
+        type: str
+      agent_host_id:
+        description:
+          - Optional existing host UUID for Windows re-enrollment recovery.
+        type: str
       agent_report:
         description:
-          - Run C(patchmon-agent report) after C(agent_state=present) has installed and started the agent.
+          - Run an agent report after C(agent_state=present) has installed and started the agent.
         type: bool
         default: false

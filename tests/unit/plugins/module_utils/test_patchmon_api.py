@@ -423,3 +423,71 @@ def test_package_reports_and_agent_queue_limit(monkeypatch):
         "GET",
         "https://patchmon.example.com/api/v1/api/hosts/abc-123/agent_queue?limit=5",
     )
+
+
+def test_host_agent_get_install_script(monkeypatch):
+    class FakeResponse(object):
+        status_code = 200
+        content = b"# install\n"
+        is_redirect = False
+        headers = {"Content-Type": "text/plain"}
+        text = content.decode()
+
+        def json(self):
+            raise ValueError("not json")
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            assert method == "GET"
+            assert url.endswith("/api/v1/hosts/install")
+            assert kwargs["params"]["os"] == "windows"
+            assert kwargs["params"]["force"] == "true"
+            assert kwargs["headers"]["X-API-ID"] == "patchmon_abc"
+            assert kwargs["headers"]["X-API-KEY"] == "secret-key"
+            return FakeResponse()
+
+    client = api.PatchMonHostAgentClient(
+        "https://patchmon.example.com",
+        api_id="patchmon_abc",
+        api_key="secret-key",
+    )
+    monkeypatch.setattr(client, "_session", FakeSession())
+    result = client.get_install_script(os_name="windows", force=True)
+    assert result.startswith("# install")
+
+
+def test_host_agent_get_remove_script(monkeypatch):
+    class FakeResponse(object):
+        status_code = 200
+        content = b"# remove\n"
+        is_redirect = False
+        headers = {"Content-Type": "text/plain"}
+        text = content.decode()
+
+        def json(self):
+            raise ValueError("not json")
+
+    class FakeSession(object):
+        def __init__(self):
+            self.headers = {}
+
+        def request(self, method, url, **kwargs):
+            assert method == "GET"
+            assert url.endswith("/api/v1/hosts/remove")
+            assert kwargs["params"]["os"] == "windows"
+            assert "X-API-ID" not in (kwargs.get("headers") or {})
+            return FakeResponse()
+
+    client = api.PatchMonHostAgentClient("https://patchmon.example.com")
+    monkeypatch.setattr(client, "_session", FakeSession())
+    result = client.get_remove_script(os_name="windows")
+    assert result.startswith("# remove")
+
+
+def test_host_agent_install_requires_credentials():
+    client = api.PatchMonHostAgentClient("https://patchmon.example.com")
+    with pytest.raises(api.PatchMonAPIError, match="api_id and api_key"):
+        client.get_install_script()

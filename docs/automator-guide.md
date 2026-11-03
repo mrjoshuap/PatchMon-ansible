@@ -39,6 +39,7 @@ People changing this repository should read the [developer guide](developer-guid
 | Module | [`patchmon.core.host_packages`](https://mrjoshuap.github.io/PatchMon-ansible/host_packages_module.html) | List packages, optionally updates only |
 | Module | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_module.html) | Enroll or delete a host entry |
 | Module | [`patchmon.core.host_token`](https://mrjoshuap.github.io/PatchMon-ansible/host_token_module.html) | Enrollment script and admin token CRUD |
+| Module | [`patchmon.core.host_agent_script`](https://mrjoshuap.github.io/PatchMon-ansible/host_agent_script_module.html) | Per-host install/remove scripts (Windows enroll + `hosts/install`) |
 | Lookup | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_lookup.html) | Ad-hoc per-host API lookups |
 | Lookup | [`patchmon.core.endpoint`](https://mrjoshuap.github.io/PatchMon-ansible/endpoint_lookup.html) | Derive the hosts and auto-enrollment URLs |
 | Role | [`patchmon.core.agent`](https://mrjoshuap.github.io/PatchMon-ansible/agent_role.html) | Install, start, stop, report, or remove the agent |
@@ -157,8 +158,10 @@ The only Integration write this collection calls is `DELETE /api/v1/api/hosts/{i
 
 | Capability | Auth | Consumers |
 |------------|------|-----------|
-| Enroll host (`POST …/auto-enrollment/enroll`) | Enrollment key/secret | Module `host` (`state=present`), role `host` |
-| Fetch install script (`GET …/auto-enrollment/script`) | Enrollment key/secret | Module `host_token` (`state=script`), role `agent` |
+| Enroll host (`POST …/auto-enrollment/enroll`) | Enrollment key/secret | Module `host` (`state=present`), role `host`, Windows agent install |
+| Fetch Linux install script (`GET …/auto-enrollment/script`) | Enrollment key/secret | Module `host_token` (`state=script`), role `agent` (Linux) |
+| Fetch Windows install script (`GET …/hosts/install?os=windows`) | Host `api_id` / `api_key` from enroll | Module `host_agent_script` (`state=install`), role `agent` (Windows) |
+| Fetch Windows remove script (`GET …/hosts/remove?os=windows`) | None | Module `host_agent_script` (`state=remove`), role `agent` (Windows) |
 | Create or delete enrollment tokens | Admin JWT (Manage Settings) | Module `host_token` (`state=present` / `absent`) |
 
 Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on tasks).
@@ -196,7 +199,9 @@ Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on 
 | `patchmon.core.host` absent | Integration `host:delete` |
 | `patchmon.core.host_token` script | Auto-Enrollment token |
 | `patchmon.core.host_token` present/absent | Admin JWT (Manage Settings) |
-| `patchmon.core.agent` | Auto-Enrollment token (install) |
+| `patchmon.core.host_agent_script` install | Auto-Enrollment token (enrolls, then host install script) |
+| `patchmon.core.host_agent_script` remove | Server URL only |
+| `patchmon.core.agent` | Auto-Enrollment token (install); server URL for Windows `absent` |
 | `patchmon.core.host` role | Auto-Enrollment when `host_state=present`; Integration `host:delete` when `host_state=absent` |
 
 ## Chapter 4: First inventory
@@ -533,7 +538,8 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 | [`patchmon.core.host_info`](https://mrjoshuap.github.io/PatchMon-ansible/host_info_module.html) | Aggregate host detail via `gather_subset`. `inject_facts: true` sets `ansible_facts.patchmon` | Integration `host:get` |
 | [`patchmon.core.host_packages`](https://mrjoshuap.github.io/PatchMon-ansible/host_packages_module.html) | List packages. `updates_only: true` for pending updates | Integration `host:get` |
 | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_module.html) | Enroll (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
-| [`patchmon.core.host_token`](https://mrjoshuap.github.io/PatchMon-ansible/host_token_module.html) | Fetch the install script or manage enrollment tokens | Auto-Enrollment / admin JWT |
+| [`patchmon.core.host_token`](https://mrjoshuap.github.io/PatchMon-ansible/host_token_module.html) | Fetch the Linux enrollment script or manage enrollment tokens | Auto-Enrollment / admin JWT |
+| [`patchmon.core.host_agent_script`](https://mrjoshuap.github.io/PatchMon-ansible/host_agent_script_module.html) | Enroll + fetch per-host install script, or fetch remove script | Auto-Enrollment / none |
 | [`lookup('patchmon.core.host')`](https://mrjoshuap.github.io/PatchMon-ansible/host_lookup.html) | One-shot JSON | Integration `host:get` |
 
 `lookup('patchmon.core.host', patchmon_id, resource='system')` accepts `resource` of `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes`, `package_reports`, or `agent_queue`. For packages with updates only, pass `updates_only=true`. `package_reports` and `agent_queue` take `limit` (default 10).
@@ -696,3 +702,45 @@ Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https
 | [Ansible Dynamic Inventory](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyzbkqs5fzst21twgbqvnze2) | `patchmon.core.inventory` lists hosts, groups, and stats hostvars |
 | [Automatic rollout of agents via API with Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyze5xncfzst242c0107agdf) | `patchmon.core.agent` enrolls a host and installs, starts, stops, reports, or removes the agent |
 | [Patch Management using Ansible](https://feedback.patchmon.net/b/feature-requests/posts/post_01kyz5ctqsenfvfjamcjdyxmqf) | `patchmon.core.apply_security_updates`, `patchmon.core.apply_all_updates`, and `patchmon.core.reboot_needed`, gated by hostvars such as `patchmon_update_state` and `patchmon_needs_reboot` |
+
+## Windows agent management
+
+The agent role supports the full Windows agent lifecycle: `present` (install), `started`, `stopped`, `report`, and `absent` (local removal).
+
+### How Windows install works
+
+Linux install uses `GET /api/v1/auto-enrollment/script` (`direct-host` / `proxmox-lxc`). Windows does **not** use that endpoint. The role mirrors PatchMon's [Intune install script](https://patchmon.net/docs/patchmon-api-integrations-guide/deploying-the-windows-agent-with-microsoft-intune):
+
+1. Read the host `MachineGuid`.
+2. `POST /api/v1/auto-enrollment/enroll` with the Auto-Enrollment key/secret.
+3. `GET /api/v1/hosts/install?os=windows` with the returned host `api_id` / `api_key`.
+4. Stage and run the PowerShell installer, then ensure the `PatchMonAgent` service is started.
+
+Removal downloads `GET /api/v1/hosts/remove?os=windows` and runs it with `-RemoveAll -Force`. The PatchMon host record stays until you delete it with `patchmon.core.host`. Package-update and reboot roles do not support Windows yet (planned for 2.1.0).
+
+### Prerequisites
+
+- Collection dependency `ansible.windows` 2.x on the controller.
+- Auto-Enrollment token for `agent_state=present` (`PATCHMON_ENROLLMENT_KEY` / `PATCHMON_ENROLLMENT_SECRET`).
+- `PATCHMON_SERVER_URL` for install and for Windows `absent`.
+- Administrator connection (SSH with PowerShell, or WinRM/PSRP). Gather facts and set `become: false`.
+- Add a Microsoft Defender exclusion for `C:\Program Files\PatchMon` before install; the agent binary is not code-signed yet and real-time protection can quarantine it.
+
+On October 31, 2026, start, stop, and report were validated on Windows Server 2022 Standard Evaluation (build 20348), Windows Server 2025 Standard Evaluation (build 26100), and Windows 11 Pro (build 26200), with PatchMon agent 2.1.6, Ansible Core 2.20.7, and `ansible.windows` 2.8.0 over SSH. Repeated start/stop operations made no changes, stopping preserved automatic startup, and report check mode skipped execution. Install and removal follow the documented Intune API flow and should be live-tested in your environment before production rollout. The PSRP inventory example has passed syntax checks but has not been live-tested.
+
+### Example
+
+Install the collection dependencies and, for PSRP, the Python `pypsrp` transport dependency. Configure a reachable WinRM HTTPS listener and an administrator account. The example uses PSRP with certificate validation; the controller must trust the listener certificate. Store `ansible_password` in Ansible Vault or controller credentials.
+
+Use [`examples/playbooks/windows_agent.yml`](../examples/playbooks/windows_agent.yml) with [`examples/windows_inventory.yml`](../examples/windows_inventory.yml). Replace the example hostname and supply credentials, then run:
+
+```bash
+export PATCHMON_SERVER_URL=https://patchmon.example.com
+export PATCHMON_ENROLLMENT_KEY=...
+export PATCHMON_ENROLLMENT_SECRET=...
+ansible-playbook -i examples/windows_inventory.yml examples/playbooks/windows_agent.yml --ask-vault-pass
+```
+
+The play defaults to `agent_state: present`. Pass `-e agent_state=started`, `-e agent_state=stopped`, `-e agent_state=report`, or `-e agent_state=absent` for the other operations. Reporting sends data to PatchMon; it is not read-only. Check mode skips the report command. Paths and service names can be overridden using the [agent role variables](../roles/agent/README.md).
+
+For an existing Windows SSH setup, use `ansible_connection: ssh` and `ansible_shell_type: powershell` instead of the PSRP connection variables. Official Windows SSH support requires Ansible Core 2.18 or later; see the [Ansible Windows SSH guide](https://docs.ansible.com/projects/ansible/latest/os_guide/windows_ssh.html). Use a trusted host key and an administrator account; configure OpenSSH and key authentication before running the role. The collection does not configure remote access.

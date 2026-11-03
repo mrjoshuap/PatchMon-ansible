@@ -1,0 +1,121 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Windows install mirrors PatchMon tools/intune/install.ps1:
+# enroll → GET /api/v1/hosts/install?os=windows → run PowerShell installer.
+
+- name: Check whether the Windows PatchMon agent service is already running
+  ansible.windows.win_service_info:
+    name: "{{ agent_service_name }}"
+  become: false
+  register: __agent_win_service_info
+  failed_when: false
+
+- name: Record whether Windows install can be skipped
+  ansible.builtin.set_fact:
+    __agent_win_already_running: >-
+      {{
+        (__agent_win_service_info.exists | default(false) | bool)
+        and ((__agent_win_service_info.services | default([]) | length) > 0)
+        and (
+          (__agent_win_service_info.services | first).state
+          | default('')
+          | lower == 'running'
+        )
+        and not (agent_force_install | bool)
+        and not (agent_force_new_host | bool)
+      }}
+
+- name: Read the Windows MachineGuid for enrollment
+  ansible.windows.win_shell: |
+    $hklm = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+      [Microsoft.Win32.RegistryHive]::LocalMachine,
+      [Microsoft.Win32.RegistryView]::Registry64
+    )
+    $hklm.OpenSubKey('SOFTWARE\Microsoft\Cryptography').GetValue('MachineGuid').ToLower()
+  become: false
+  register: __agent_win_machine_guid
+  changed_when: false
+  when: not (__agent_win_already_running | bool)
+
+- name: Enroll the Windows host and fetch the install script on the controller
+  patchmon.core.host_agent_script:
+    state: install
+    server_url: "{{ agent_server_url }}"
+    enrollment_key: "{{ agent_enrollment_key }}"
+    enrollment_secret: "{{ agent_enrollment_secret }}"
+    friendly_name: "{{ agent_friendly_name }}"
+    machine_id: "{{ __agent_win_machine_guid.stdout | trim }}"
+    host_id: "{{ agent_host_id | default('', true) }}"
+    os: windows
+    force: "{{ agent_force_install | bool }}"
+    verify_ssl: "{{ agent_verify_ssl | bool }}"
+    timeout: "{{ agent_timeout | int }}"
+    dest: "{{ agent_script_controller_path }}"
+  delegate_to: localhost
+  become: false
+  register: __agent_win_script
+  no_log: true
+  when: not (__agent_win_already_running | bool)
+
+- name: Stage the Windows install script on the managed host
+  ansible.windows.win_copy:
+    src: "{{ agent_script_controller_path }}"
+    dest: "{{ agent_script_path }}"
+  become: false
+  no_log: true
+  when: not (__agent_win_already_running | bool)
+
+- name: Run the PatchMon Windows agent install script
+  ansible.windows.win_shell: |
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+      -NoProfile -ExecutionPolicy Bypass -File "{{ agent_script_path }}"
+  become: false
+  register: __agent_install
+  ignore_errors: true
+  when: not (__agent_win_already_running | bool)
+
+- name: Keep the failed Windows install script for debugging
+  ansible.windows.win_copy:
+    src: "{{ agent_script_path }}"
+    dest: "{{ agent_failed_script_path }}"
+    remote_src: true
+  become: false
+  no_log: true
+  when:
+    - not (__agent_win_already_running | bool)
+    - __agent_install is failed
+    - agent_keep_failed_script | bool
+
+- name: Remove the Windows install script from the managed host after success
+  ansible.windows.win_file:
+    path: "{{ agent_script_path }}"
+    state: absent
+  become: false
+  when:
+    - not (__agent_win_already_running | bool)
+    - __agent_install is succeeded
+
+- name: Remove the Windows install script from the controller
+  ansible.builtin.file:
+    path: "{{ agent_script_controller_path }}"
+    state: absent
+  delegate_to: localhost
+  become: false
+  when: not (__agent_win_already_running | bool)
+
+- name: Fail when the Windows agent install script failed
+  ansible.builtin.fail:
+    msg: >-
+      PatchMon Windows enrollment/install failed
+      (rc={{ __agent_install.rc | default('unknown') }}).
+      {% if agent_keep_failed_script | bool -%}
+      Failed script kept at {{ agent_failed_script_path }}
+      (contains secrets; delete after debugging).
+      {% else -%}
+      Staged script left at {{ agent_script_path }}.
+      Set agent_keep_failed_script=true to copy it to {{ agent_failed_script_path }}.
+      {% endif -%}
+      stderr: {{ __agent_install.stderr | default('') }}
+  when:
+    - not (__agent_win_already_running | bool)
+    - __agent_install is failed

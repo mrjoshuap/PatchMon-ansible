@@ -1,0 +1,14 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Manage the PatchMon agent on Windows hosts.
+# Defaults to agent_state=present (enroll + install). Override with -e.
+# Requires PATCHMON_SERVER_URL, PATCHMON_ENROLLMENT_KEY, and
+# PATCHMON_ENROLLMENT_SECRET in the environment (or Vault) for present.
+- name: Manage the Windows PatchMon agent
+  hosts: windows
+  gather_facts: true
+  become: false
+  roles:
+    - role: patchmon.core.agent
+      vars:
+        agent_state: "{{ agent_state | default('present') }}"
