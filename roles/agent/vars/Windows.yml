@@ -1,0 +1,11 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Platform overrides loaded when ansible_facts['os_family'] == Windows.
+agent_service_name: PatchMonAgent
+agent_binary_path: C:\Program Files\PatchMon\patchmon-agent.exe
+agent_config_dir: C:\ProgramData\PatchMon
+agent_script_path: C:\Windows\Temp\patchmon-install.ps1
+agent_script_controller_path: /tmp/patchmon-install-{{ inventory_hostname }}.ps1
+agent_failed_script_path: C:\Windows\Temp\patchmon-install-failed-{{ inventory_hostname }}.ps1
+agent_remove_script_path: C:\Windows\Temp\patchmon-remove.ps1
+agent_remove_script_controller_path: /tmp/patchmon-remove-{{ inventory_hostname }}.ps1

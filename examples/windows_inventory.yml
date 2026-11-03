@@ -1,0 +1,13 @@
+---
+# Replace this hostname; provide ansible_password through Vault or controller credentials.
+all:
+  children:
+    windows:
+      hosts:
+        windows2022.example.com:
+      vars:
+        ansible_connection: psrp
+        ansible_psrp_protocol: https
+        ansible_psrp_cert_validation: validate
+        ansible_user: Administrator
+        ansible_become: false

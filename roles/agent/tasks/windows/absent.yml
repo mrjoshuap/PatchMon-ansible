@@ -1,0 +1,53 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Windows removal mirrors PatchMon tools/intune/uninstall.ps1:
+# GET /api/v1/hosts/remove?os=windows → run with -RemoveAll -Force.
+# Does not delete the PatchMon host record.
+
+- name: Fetch the Windows agent removal script on the controller
+  patchmon.core.host_agent_script:
+    state: remove
+    server_url: "{{ agent_server_url }}"
+    os: windows
+    verify_ssl: "{{ agent_verify_ssl | bool }}"
+    timeout: "{{ agent_timeout | int }}"
+    dest: "{{ agent_remove_script_controller_path }}"
+  delegate_to: localhost
+  become: false
+  register: __agent_win_remove_script
+
+- name: Stage the Windows removal script on the managed host
+  ansible.windows.win_copy:
+    src: "{{ agent_remove_script_controller_path }}"
+    dest: "{{ agent_remove_script_path }}"
+  become: false
+
+- name: Run the PatchMon Windows agent removal script
+  ansible.windows.win_shell: |
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+      -NoProfile -ExecutionPolicy Bypass -File "{{ agent_remove_script_path }}" `
+      -RemoveAll -Force
+  become: false
+  register: __agent_win_remove
+  ignore_errors: true
+
+- name: Remove the Windows removal script from the managed host
+  ansible.windows.win_file:
+    path: "{{ agent_remove_script_path }}"
+    state: absent
+  become: false
+
+- name: Remove the Windows removal script from the controller
+  ansible.builtin.file:
+    path: "{{ agent_remove_script_controller_path }}"
+    state: absent
+  delegate_to: localhost
+  become: false
+
+- name: Fail when the Windows agent removal script failed
+  ansible.builtin.fail:
+    msg: >-
+      PatchMon Windows agent removal failed
+      (rc={{ __agent_win_remove.rc | default('unknown') }}).
+      stderr: {{ __agent_win_remove.stderr | default('') }}
+  when: __agent_win_remove is failed

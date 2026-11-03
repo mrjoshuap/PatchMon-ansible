@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 namespace: patchmon
 name: core
-version: 2.0.7
+version: 2.0.8
 readme: README.md
 authors:
   - Steve Libonati <stevelibonati@yahoo.com>
@@ -19,12 +19,14 @@ tags:
   - dynamic
   - patching
   - linux
+  - windows
   - agent
 repository: https://github.com/PatchMon/PatchMon-ansible
 issues: https://github.com/PatchMon/PatchMon-ansible/issues
 documentation: https://patchmon.net/docs/patchmon-api-integrations-guide
 homepage: https://patchmon.net
-dependencies: {}
+dependencies:
+  ansible.windows: ">=2.0.0,<3.0.0"
 build_ignore:
   - .git
   - .github

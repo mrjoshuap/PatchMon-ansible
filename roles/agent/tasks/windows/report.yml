@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Trigger Windows PatchMon agent report
+  ansible.windows.win_command:
+    argv:
+      - "{{ agent_binary_path }}"
+      - --config
+      - '{{ agent_config_dir }}\config.yml'
+      - report
+  become: false
+  register: __agent_report
+  changed_when: __agent_report.rc == 0
