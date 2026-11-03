@@ -3,9 +3,17 @@
 - name: Validate agent role inputs
   ansible.builtin.include_tasks: validate.yml
 
+- name: Install PatchMon agent on Windows
+  ansible.builtin.include_tasks: windows/install.yml
+  when:
+    - agent_state == 'present'
+    - ansible_facts['os_family'] | default('') == 'Windows'
+
 - name: Install PatchMon agent via enrollment script
   ansible.builtin.include_tasks: install.yml
-  when: agent_state == 'present'
+  when:
+    - agent_state == 'present'
+    - ansible_facts['os_family'] | default('') != 'Windows'
 
 - name: Fail before managing the FreeBSD agent service
   ansible.builtin.fail:
@@ -38,6 +46,14 @@
     file: "{{ 'windows/report.yml' if ansible_facts['os_family'] | default('') == 'Windows' else 'report.yml' }}"
   when: agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
 
+- name: Remove PatchMon agent on Windows
+  ansible.builtin.include_tasks: windows/absent.yml
+  when:
+    - agent_state == 'absent'
+    - ansible_facts['os_family'] | default('') == 'Windows'
+
 - name: Remove PatchMon agent
   ansible.builtin.include_tasks: absent.yml
-  when: agent_state == 'absent'
+  when:
+    - agent_state == 'absent'
+    - ansible_facts['os_family'] | default('') != 'Windows'

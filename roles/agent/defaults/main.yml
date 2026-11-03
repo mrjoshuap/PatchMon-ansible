@@ -21,24 +21,29 @@ agent_force_new_host: false
 agent_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
 agent_timeout: 30
 
-# Where to stage the enrollment script on the managed host
+# Where to stage the enrollment script on the managed host (POSIX defaults;
+# Windows overrides live in vars/Windows.yml)
 agent_script_path: /tmp/patchmon-enroll.sh
 
-# Controller-side path for host_token dest= (avoids no_log script-body censoring)
+# Controller-side path for host_token / host_agent_script dest=
 agent_script_controller_path: /tmp/patchmon-enroll-{{ inventory_hostname }}.sh
 
 # On install failure, keep a copy for debugging (contains enrollment secrets)
 agent_keep_failed_script: false
 agent_failed_script_path: /var/tmp/patchmon-enroll-failed-{{ inventory_hostname }}.sh
 
-# Service / binary names (override per platform in vars/ if needed)
-agent_service_name: "{{ 'PatchMonAgent' if ansible_facts['os_family'] | default('') == 'Windows' else 'patchmon-agent' }}"
-agent_binary_path: >-
-  {{ 'C:\Program Files\PatchMon\patchmon-agent.exe'
-     if ansible_facts['os_family'] | default('') == 'Windows' else '/usr/local/bin/patchmon-agent' }}
-agent_config_dir: >-
-  {{ 'C:\ProgramData\PatchMon'
-     if ansible_facts['os_family'] | default('') == 'Windows' else '/etc/patchmon' }}
+# Service / binary names (override per platform in vars/)
+agent_service_name: patchmon-agent
+agent_binary_path: /usr/local/bin/patchmon-agent
+agent_config_dir: /etc/patchmon
+
+# Windows remove-script staging (unused on POSIX)
+agent_remove_script_path: C:\Windows\Temp\patchmon-remove.ps1
+agent_remove_script_controller_path: /tmp/patchmon-remove-{{ inventory_hostname }}.ps1
+
+# Optional friendly_name / host_id overrides for Windows enroll
+agent_friendly_name: "{{ ansible_facts['hostname'] | default(inventory_hostname) }}"
+agent_host_id: ""
 
 # When true, run agent report after ensure-started
 agent_report: false

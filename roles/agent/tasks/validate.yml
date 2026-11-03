@@ -9,16 +9,12 @@
       agent_state must be one of {{ __agent_valid_states | join(', ') }}.
       Got '{{ agent_state | default('undefined') }}'.
 
-- name: Validate Windows agent operation
-  ansible.builtin.assert:
-    that:
-      - agent_state in ['started', 'stopped', 'report']
-    fail_msg: >-
-      Windows currently supports agent_state started, stopped, and report only.
-      Install the Windows agent using PatchMon first. The auto-enrollment script
-      API does not provide a Windows script type. Windows installation and removal
-      through patchmon.core.agent are not implemented.
-  when: ansible_facts['os_family'] | default('') == 'Windows'
+- name: Load Windows platform defaults
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/vars/Windows.yml"
+  when:
+    - ansible_facts['os_family'] | default('') == 'Windows'
+    - role_path is defined
 
 - name: Validate enrollment credentials for install states
   ansible.builtin.assert:
@@ -31,10 +27,22 @@
       - agent_enrollment_secret | length > 0
     fail_msg: >-
       agent_server_url, agent_enrollment_key, and agent_enrollment_secret are
-      required when agent_state is present (auto-enrollment script install).
+      required when agent_state is present (auto-enrollment install).
       Create an Auto-Enrollment token under Settings → Integrations in PatchMon.
       See docs/automator-guide.md (Credentials).
   when: agent_state == 'present'
+
+- name: Validate server URL for Windows removal
+  ansible.builtin.assert:
+    that:
+      - agent_server_url is defined
+      - agent_server_url | length > 0
+    fail_msg: >-
+      agent_server_url is required when removing the Windows agent so the role
+      can download GET /api/v1/hosts/remove?os=windows. Prefer PATCHMON_SERVER_URL.
+  when:
+    - agent_state == 'absent'
+    - ansible_facts['os_family'] | default('') == 'Windows'
 
 - name: Warn when TLS verification is disabled
   ansible.builtin.debug:

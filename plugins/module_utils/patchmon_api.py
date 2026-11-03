@@ -23,6 +23,7 @@ except ImportError as exc:  # pragma: no cover - exercised when requests missing
 
 
 HOSTS_PATH = "/api/v1/api/hosts"
+HOST_AGENT_PATH = "/api/v1/hosts"
 AUTO_ENROLLMENT_PATH = "/api/v1/auto-enrollment"
 # Longer paths first. Enrollment paths are matched separately so a token id
 # under /tokens still strips back to the instance root.
@@ -533,6 +534,62 @@ class PatchMonEnrollmentClient(_BaseClient):
             params["force"] = "true"
         url = self._url(AUTO_ENROLLMENT_PATH + "/script")
         return self._request("GET", url, params=params, expect_json=False)
+
+
+class PatchMonHostAgentClient(_BaseClient):
+    """Client for per-host agent install/remove scripts under /api/v1/hosts."""
+
+    def __init__(
+        self,
+        server_url,
+        api_id=None,
+        api_key=None,
+        verify_ssl=True,
+        timeout=30,
+    ):
+        super(PatchMonHostAgentClient, self).__init__(
+            verify_ssl=verify_ssl, timeout=timeout
+        )
+        if not server_url:
+            raise PatchMonAPIError("server_url is required")
+        self.server_url = normalize_instance_url(server_url)
+        self._headers = {"Accept": "text/plain, */*"}
+        if api_id and api_key:
+            self._headers["X-API-ID"] = api_id
+            self._headers["X-API-KEY"] = api_key
+
+    def _url(self, path):
+        return self.server_url.rstrip("/") + path
+
+    def get_install_script(self, os_name="windows", force=False):
+        """GET /api/v1/hosts/install?os=… — PowerShell/shell installer."""
+        if "X-API-ID" not in self._headers or "X-API-KEY" not in self._headers:
+            raise PatchMonAPIError(
+                "api_id and api_key are required to fetch the host install script"
+            )
+        params = {"os": os_name}
+        if force:
+            params["force"] = "true"
+        url = self._url(HOST_AGENT_PATH + "/install")
+        return self._request(
+            "GET",
+            url,
+            params=params,
+            headers=self._headers,
+            expect_json=False,
+        )
+
+    def get_remove_script(self, os_name="windows"):
+        """GET /api/v1/hosts/remove?os=… — agent removal script (no auth)."""
+        params = {"os": os_name}
+        url = self._url(HOST_AGENT_PATH + "/remove")
+        return self._request(
+            "GET",
+            url,
+            params=params,
+            headers={"Accept": "text/plain, */*"},
+            expect_json=False,
+        )
 
 
 class PatchMonAdminClient(_BaseClient):

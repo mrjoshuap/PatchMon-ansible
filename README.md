@@ -15,6 +15,7 @@ The `inventory` plugin turns PatchMon hosts and host groups into a live Ansible 
 | Module | `patchmon.core.host_packages` | List packages, optionally updates only |
 | Module | `patchmon.core.host` | Enroll or delete a host entry |
 | Module | `patchmon.core.host_token` | Enrollment script and admin token CRUD |
+| Module | `patchmon.core.host_agent_script` | Per-host Windows/Linux install or remove scripts |
 | Lookup | `patchmon.core.host` | Ad-hoc per-host API lookups |
 | Lookup | `patchmon.core.endpoint` | Derive the hosts and auto-enrollment URLs |
 | Role | `patchmon.core.agent` | Install, start, stop, report, or remove the agent |
@@ -34,18 +35,18 @@ Copy-paste inventories and plays: **[examples/README.md](examples/README.md)**.
 
 - **Ansible**: >= 2.15.0
 - **Python**: 3.9+
-- **Dependencies**: `requests >= 2.25.1`
+- **Dependencies**: `requests >= 2.25.1`, collection `ansible.windows` 2.x (declared in `galaxy.yml`)
 
 ## Platform support
 
 | Operation | Linux | Windows |
 |-----------|-------|---------|
-| Agent install / removal | Implemented | Not implemented |
-| Agent start / stop / report | Implemented | Implemented; existing installation required |
-| Package updates / reboot roles | Existing platform restrictions apply | Not supported |
+| Agent install / removal | Implemented | Implemented (enroll + `hosts/install` / `hosts/remove`) |
+| Agent start / stop / report | Implemented | Implemented |
+| Package updates / reboot roles | Existing platform restrictions apply | Not supported (planned for 2.1.0) |
 
-Windows Server 2022, Windows Server 2025, and Windows 11 Pro start, stop, and report operations were live-tested over SSH with PatchMon agent 2.1.6.
-See [Windows agent management](docs/automator-guide.md#windows-agent-management).
+Windows Server 2022, Windows Server 2025, and Windows 11 Pro start, stop, and report operations were live-tested over SSH with PatchMon agent 2.1.6. Install and removal follow PatchMon's official Intune flow.
+See [Windows agent management](docs/automator-guide.md#windows-agent-management). Collection dependency: `ansible.windows` 2.x.
 
 ## Installation
 

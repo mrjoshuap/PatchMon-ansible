@@ -3,6 +3,6 @@
 - name: Manage the installed Windows PatchMon agent service
   ansible.windows.win_service:
     name: "{{ agent_service_name }}"
-    state: "{{ agent_state }}"
-    start_mode: "{{ 'auto' if agent_state == 'started' else omit }}"
+    state: "{{ 'started' if agent_state in ['present', 'started'] else 'stopped' }}"
+    start_mode: "{{ 'auto' if agent_state in ['present', 'started'] else omit }}"
   become: false

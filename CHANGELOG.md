@@ -1,14 +1,29 @@
 # Changelog
 
-## Unreleased
-
-- Add Windows agent start, stop, and report operations using `ansible.windows` 2.x. Windows install and removal remain unsupported. Start, stop, report, and report check mode were live-tested on Windows Server 2022, Windows Server 2025, and Windows 11 Pro over SSH.
-- Use gathered OS facts to select Windows tasks while preserving the existing POSIX behavior when OS facts are absent.
-- Document Windows connection prerequisites, platform boundaries, and an existing-agent example.
-
 All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
+
+## [2.0.8] - 2026-11-03
+
+### Added
+
+- Windows agent lifecycle parity for `patchmon.core.agent`: `present`
+  (auto-enrollment + `GET /api/v1/hosts/install?os=windows`), `started`,
+  `stopped`, `report`, and `absent` (`GET /api/v1/hosts/remove?os=windows`).
+  Start, stop, and report were live-tested on Windows Server 2022, Windows
+  Server 2025, and Windows 11 Pro over SSH. Install and removal follow the
+  official Intune enroll → install-script flow.
+- `patchmon.core.host_agent_script` and host-agent API helpers for the Windows
+  install and remove scripts (`dest=` avoids `no_log` censoring).
+- `roles/agent/vars/Windows.yml` for Windows service and path defaults.
+- Collection dependency on `ansible.windows` 2.x; Windows connection and
+  Defender exclusion documentation.
+
+### Changed
+
+- Gathered OS facts select Windows versus POSIX agent tasks while preserving
+  existing POSIX behavior when OS facts are absent.
 
 ## [2.0.7] - 2026-10-30
 
