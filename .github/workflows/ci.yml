@@ -127,6 +127,9 @@ jobs:
           PY
           echo "path=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"
 
+      # Immutable releases lock assets at publish time. softprops creates a
+      # non-draft prerelease as already published, so asset upload fails.
+      # Draft first, attach the tarball, then publish.
       - name: Create GitHub prerelease
         if: steps.gate.outputs.publish == 'true'
         uses: softprops/action-gh-release@v3
@@ -137,6 +140,14 @@ jobs:
           files: ${{ steps.meta.outputs.tarball }}
           fail_on_unmatched_files: true
           generate_release_notes: false
+          draft: true
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish GitHub prerelease
+        if: steps.gate.outputs.publish == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: gh release edit "${TAG}" --draft=false

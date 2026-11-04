@@ -122,9 +122,9 @@ git tag -a v2.0.7 -m "patchmon.core 2.0.7"
 git push origin v2.0.7
 ```
 
-3. After the checks pass, that workflow builds the collection tarball and creates the GitHub Release with the `.tar.gz` attached. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
+3. After the checks pass, that workflow builds the collection tarball, creates the GitHub Release as a **draft** with the `.tar.gz` attached, then publishes it. Draft-then-publish is required because this repository uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases): assets cannot be added after a release is published. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
 
-A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI. The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
+A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI the same way (draft, attach tarball, publish). The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
 
 v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
 
