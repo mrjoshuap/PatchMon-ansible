@@ -13,3 +13,4 @@ htmlcov/
 built-docs/
 .env
 .cache/
+ansible-navigator.log
