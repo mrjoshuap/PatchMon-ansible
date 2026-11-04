@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.kernel_cleanup.
+# Defaults keep cleanup off unless inventory or role vars enable it.
+
+kernel_cleanup_enabled: "{{ patchmon_kernel_cleanup | default(false) | bool }}"
+kernel_cleanup_keep: "{{ patchmon_kernel_keep | default(2) }}"
+kernel_cleanup_boot_min_free_mb: "{{ patchmon_boot_min_free_mb | default(256) }}"
+kernel_cleanup_report: true

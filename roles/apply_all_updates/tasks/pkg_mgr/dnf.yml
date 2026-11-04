@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Apply dnf upgrades  # noqa: package-latest
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+    exclude: "{{ apply_all_updates_ignore_packages }}"
+    lock_timeout: "{{ apply_all_updates_lock_timeout | int }}"

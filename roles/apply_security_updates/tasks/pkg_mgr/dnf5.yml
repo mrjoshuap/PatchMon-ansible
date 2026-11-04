@@ -1,0 +1,16 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Apply dnf5 security updates  # noqa: package-latest
+  ansible.builtin.dnf5:
+    name: "*"
+    state: latest
+    security: "{{ 'security' in apply_security_updates_severity_normalized }}"
+    bugfix: "{{ 'bugfix' in apply_security_updates_severity_normalized }}"
+    enhancement: "{{ 'enhancement' in apply_security_updates_severity_normalized }}"
+    update_cache: true
+    exclude: "{{ apply_security_updates_ignore_packages }}"
+    lock_timeout: "{{ apply_security_updates_lock_timeout | int }}"
+  when: >-
+    apply_security_updates_severity_normalized
+    | intersect(['security', 'bugfix', 'enhancement'])
+    | length > 0

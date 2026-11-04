@@ -1,0 +1,7 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Report package state to PatchMon after security updates
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: report

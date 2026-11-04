@@ -1,0 +1,38 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require gathered facts for kernel cleanup
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['pkg_mgr'] is defined
+      - ansible_facts['pkg_mgr'] | length > 0
+      - ansible_facts['kernel'] is defined
+      - ansible_facts['kernel'] | length > 0
+    fail_msg: >-
+      patchmon.core.kernel_cleanup needs gather_facts: true and become: true
+      so ansible_facts['pkg_mgr'] and ansible_facts['kernel'] are set.
+
+- name: Require a boolean kernel cleanup enable flag
+  ansible.builtin.assert:
+    that:
+      - kernel_cleanup_enabled | bool in [true, false]
+    fail_msg: >-
+      kernel_cleanup_enabled must be a boolean.
+      When unset, the role reads patchmon_kernel_cleanup (default false).
+
+- name: Require a positive keep count
+  ansible.builtin.assert:
+    that:
+      - kernel_cleanup_keep | int >= 1
+    fail_msg: >-
+      kernel_cleanup_keep must be an integer greater than or equal to 1.
+      When unset, the role reads patchmon_kernel_keep (default 2).
+      Got '{{ kernel_cleanup_keep }}'.
+
+- name: Require a non-negative boot free-space floor
+  ansible.builtin.assert:
+    that:
+      - kernel_cleanup_boot_min_free_mb | int >= 0
+    fail_msg: >-
+      kernel_cleanup_boot_min_free_mb must be a non-negative integer.
+      When unset, the role reads patchmon_boot_min_free_mb (default 256).
+      Got '{{ kernel_cleanup_boot_min_free_mb }}'.

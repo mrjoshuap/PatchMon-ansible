@@ -1,0 +1,4 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.package_held.
+# No role knobs; detection is local only.

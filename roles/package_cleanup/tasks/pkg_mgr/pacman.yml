@@ -1,0 +1,16 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: List pacman orphan packages
+  ansible.builtin.command:
+    argv: [pacman, -Qdtq]
+  register: package_cleanup_pacman_orphans
+  changed_when: false
+  failed_when: >-
+    package_cleanup_pacman_orphans.rc not in [0, 1]
+
+- name: Remove pacman orphan packages
+  community.general.pacman:
+    name: "{{ package_cleanup_pacman_orphans.stdout_lines }}"
+    state: absent
+  when: package_cleanup_pacman_orphans.stdout_lines | length > 0
+  register: package_cleanup_pacman

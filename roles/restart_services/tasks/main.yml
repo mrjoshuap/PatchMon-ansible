@@ -1,0 +1,61 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate restart_services inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Collect services mapped from upgraded packages
+  ansible.builtin.set_fact:
+    restart_services_from_map: >-
+      {{
+        restart_services_from_map | default([])
+        + (restart_services_map[item] | default([]))
+      }}
+  loop: "{{ restart_services_upgraded_packages }}"
+  when: restart_services_upgraded_packages | length > 0
+
+- name: Build service list from explicit list and package map
+  ansible.builtin.set_fact:
+    restart_services_targets: >-
+      {{
+        (restart_services_list + (restart_services_from_map | default([])))
+        | unique
+        | list
+      }}
+
+- name: Gather service facts for mapped restarts
+  ansible.builtin.service_facts:
+  when: restart_services_targets | length > 0
+
+- name: Restart mapped services that are currently running
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+  loop: "{{ restart_services_targets }}"
+  when:
+    - restart_services_targets | length > 0
+    - >-
+      (ansible_facts.services[item] is defined
+       and ansible_facts.services[item].state == 'running')
+      or (ansible_facts.services[item + '.service'] is defined
+          and ansible_facts.services[item + '.service'].state == 'running')
+  loop_control:
+    label: "{{ item }}"
+
+- name: Check whether needrestart is installed
+  ansible.builtin.command:
+    argv: [needrestart, -b]
+  register: restart_services_needrestart_probe
+  changed_when: false
+  failed_when: false
+  when: restart_services_needrestart | bool
+
+- name: Restart services flagged by needrestart
+  ansible.builtin.command:
+    argv: [needrestart, -r, a]
+  when:
+    - restart_services_needrestart | bool
+    - restart_services_needrestart_probe.rc | default(1) | int == 0
+  register: restart_services_needrestart_run
+  changed_when: >-
+    'NEEDRESTART-SVC:' in (restart_services_needrestart_run.stdout | default(''))
+    or restart_services_needrestart_run.rc | int == 0

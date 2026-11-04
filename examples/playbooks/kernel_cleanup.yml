@@ -1,0 +1,17 @@
+---
+# Remove old kernels after checking /boot free space. Defaults stay off
+# unless you set patchmon_kernel_cleanup / kernel_cleanup_enabled.
+#
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/kernel_cleanup.yml \
+#     -e patchmon_kernel_cleanup=true
+
+- name: Clean old kernels for PatchMon hosts
+  hosts: patchmon_automated:patchmon_no_reboot
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Remove old kernels
+      ansible.builtin.import_role:
+        name: patchmon.core.kernel_cleanup

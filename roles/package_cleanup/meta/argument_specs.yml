@@ -1,0 +1,37 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Autoremove unused packages and optionally clean caches
+    description:
+      - Removes unused packages (apt autoremove, dnf autoremove, pacman orphans).
+      - Optionally cleans the package manager cache before and/or after.
+      - Defaults to off. Enable with C(package_cleanup_enabled) or C(patchmon_cleanup_packages).
+      - Skips hosts in C(patchmon_manual).
+      - After a change, optionally runs C(patchmon.core.agent) with C(agent_state=report).
+      - The play must set C(gather_facts=true) and C(become=true).
+    author:
+      - PatchMon contributors
+    options:
+      package_cleanup_enabled:
+        description:
+          - When true, run autoremove for the host package manager.
+          - When omitted, defaults to C(patchmon_cleanup_packages), or C(false) when that variable is unset.
+        type: bool
+        default: false
+      package_cleanup_cache:
+        description:
+          - When to clean the package manager cache. C(never), C(pre), C(post), or C(both).
+          - When omitted, defaults to C(patchmon_cleanup_cache), or C(never) when that variable is unset.
+        type: str
+        default: never
+        choices:
+          - never
+          - pre
+          - post
+          - both
+      package_cleanup_report:
+        description:
+          - When true, run a local agent report after a changed cleanup.
+        type: bool
+        default: true

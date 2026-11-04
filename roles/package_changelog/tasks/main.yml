@@ -1,0 +1,55 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate package_changelog inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Fetch apt package changelog
+  ansible.builtin.command:
+    argv: [apt-get, changelog, "{{ package_changelog_name }}"]
+  register: package_changelog_apt
+  changed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: Fetch dnf package changelog
+  ansible.builtin.command:
+    argv: [dnf, changelog, "{{ package_changelog_name }}"]
+  register: package_changelog_dnf
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+
+- name: Fetch pacman package changelog from local log
+  ansible.builtin.command:
+    argv: [pacman, -Qi, "{{ package_changelog_name }}"]
+  register: package_changelog_pacman
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] == 'pacman'
+
+- name: Fail when the package manager cannot provide a changelog
+  ansible.builtin.fail:
+    msg: >-
+      patchmon.core.package_changelog has no changelog path for
+      pkg_mgr={{ ansible_facts['pkg_mgr'] }} on {{ inventory_hostname }}.
+  when: ansible_facts['pkg_mgr'] not in ['apt', 'dnf', 'dnf5', 'pacman']
+
+- name: Record package changelog output
+  ansible.builtin.set_fact:
+    package_changelog_text: >-
+      {{
+        package_changelog_apt.stdout | default('')
+        if (ansible_facts['pkg_mgr'] == 'apt')
+        else (
+          package_changelog_dnf.stdout | default('')
+          if (ansible_facts['pkg_mgr'] in ['dnf', 'dnf5'])
+          else (package_changelog_pacman.stdout | default(''))
+        )
+      }}
+
+- name: Publish changelog under the shared inventory fact name  # noqa: var-naming[no-role-prefix]
+  ansible.builtin.set_fact:
+    patchmon_package_changelog_text: "{{ package_changelog_text }}"
+
+- name: Show package changelog
+  ansible.builtin.debug:
+    var: package_changelog_text

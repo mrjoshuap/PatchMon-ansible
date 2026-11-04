@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Detect APT holds and DNF versionlocks on a host
+    description:
+      - Reads local package holds (C(apt-mark showhold) or C(dnf versionlock list)).
+      - Sets facts C(package_held_packages) and C(patchmon_held_packages) and prints them.
+      - Does not call the PatchMon API. Persisting held status in PatchMon needs a server change.
+      - The play must set C(gather_facts=true) and C(become=true).
+    author:
+      - PatchMon contributors

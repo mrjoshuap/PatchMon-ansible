@@ -1,6 +1,7 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Variables for patchmon.core.apply_security_updates.
+# Inventory knobs use host_vars > group_vars > play/extra vars > these defaults.
 
 # Follows the extra var used by the example play and the AAP survey when this
 # role variable is left unset.
@@ -13,3 +14,18 @@ apply_security_updates_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') | default(
 apply_security_updates_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') | default('', true) }}"
 apply_security_updates_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
 apply_security_updates_timeout: 30
+
+# Package names to skip during upgrades (host, then group, then all).
+apply_security_updates_ignore_packages: "{{ patchmon_ignore_packages | default([]) }}"
+
+# Severity / advisory-class filters. Default security-only.
+# dnf/dnf5: security, bugfix, enhancement. Listed paths: security via
+# is_security_update; optional package.severity / package.urgency when the API
+# adds those fields.
+apply_security_updates_severity: "{{ patchmon_update_severity | default(['security']) }}"
+
+# Seconds to wait for package-manager locks. 0 disables waiting.
+apply_security_updates_lock_timeout: "{{ patchmon_pkg_lock_timeout | default(0) }}"
+
+# When true and lock_timeout > 0, wait/retry for dpkg and dnf locks before upgrade.
+apply_security_updates_force: "{{ patchmon_pkg_force | default(false) | bool }}"

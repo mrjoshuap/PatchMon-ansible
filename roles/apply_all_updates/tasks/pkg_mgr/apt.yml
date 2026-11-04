@@ -1,0 +1,29 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# apt has no exclude on upgrade; hold ignored packages for the run.
+- name: Hold ignored packages, upgrade apt, then unhold
+  block:
+    - name: Hold ignored apt packages during upgrade
+      ansible.builtin.command:
+        argv: "{{ ['apt-mark', 'hold'] + apply_all_updates_ignore_packages }}"
+      when:
+        - apply_all_updates_ignore_packages | length > 0
+      register: apply_all_updates_apt_hold
+      changed_when: >-
+        'were already set on hold' not in (apply_all_updates_apt_hold.stdout | default(''))
+
+    - name: Apply apt upgrades
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: "{{ apply_all_updates_apt_upgrade }}"
+        force_apt_get: true
+        lock_timeout: "{{ apply_all_updates_lock_timeout | int }}"
+  always:
+    - name: Unhold ignored apt packages after upgrade
+      ansible.builtin.command:
+        argv: "{{ ['apt-mark', 'unhold'] + apply_all_updates_ignore_packages }}"
+      when:
+        - apply_all_updates_ignore_packages | length > 0
+      register: apply_all_updates_apt_unhold
+      changed_when: >-
+        'were already not on hold' not in (apply_all_updates_apt_unhold.stdout | default(''))

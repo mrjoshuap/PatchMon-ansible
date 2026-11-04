@@ -4,13 +4,46 @@ argument_specs:
   main:
     short_description: Apply all pending package upgrades and report to PatchMon
     description:
-      - Upgrades every pending package. Apt uses a safe upgrade. C(dnf) and C(dnf5) use C(state=latest).
+      - Upgrades every pending package.
+      - Apt uses C(upgrade) from C(apply_all_updates_apt_upgrade) (C(safe) or C(full)).
+      - C(dnf), C(dnf5), and C(pacman) upgrade all pending packages.
       - Skips a host that is also in C(patchmon_manual).
-      - Fails the host when it is eligible and C(ansible_facts['pkg_mgr']) is not apt, dnf, or dnf5.
+      - Skips package names in C(apply_all_updates_ignore_packages) / C(patchmon_ignore_packages).
+      - Optional lock wait when C(apply_all_updates_force) is true and C(apply_all_updates_lock_timeout) is greater than zero.
+      - Fails the host when it is eligible and C(ansible_facts['pkg_mgr']) is not apt, dnf, dnf5, or pacman.
       - That failure includes a subject and description for a PatchMon feedback request.
       - After a supported upgrade, runs C(patchmon.core.agent) with C(agent_state=report). The report is local and does not call the Integration API.
       - Does not reboot. Run C(patchmon.core.reboot_needed) for that.
-      - Separate from C(patchmon.core.apply_security_updates). This role has no role variables.
       - The play must set C(gather_facts=true) and C(become=true).
+      - Inventory knobs use host_vars, then group_vars, then play or extra vars, then role defaults.
     author:
       - PatchMon contributors
+    options:
+      apply_all_updates_ignore_packages:
+        description:
+          - Package names to skip during upgrades.
+          - When omitted, defaults to C(patchmon_ignore_packages), or an empty list when that variable is unset.
+        type: list
+        elements: str
+        default: []
+      apply_all_updates_apt_upgrade:
+        description:
+          - Apt upgrade mode. C(safe) is aptitude safe-upgrade. C(full) is full-upgrade / dist-upgrade style.
+          - When omitted, defaults to C(patchmon_apt_upgrade), or C(safe) when that variable is unset.
+        type: str
+        default: safe
+        choices:
+          - safe
+          - full
+      apply_all_updates_lock_timeout:
+        description:
+          - Seconds to wait for package-manager locks. Also passed to apt/dnf C(lock_timeout) when supported.
+          - When omitted, defaults to C(patchmon_pkg_lock_timeout), or C(0) when that variable is unset.
+        type: int
+        default: 0
+      apply_all_updates_force:
+        description:
+          - When true and C(apply_all_updates_lock_timeout) is greater than zero, wait for dpkg or dnf locks before upgrading.
+          - When omitted, defaults to C(patchmon_pkg_force), or C(false) when that variable is unset.
+        type: bool
+        default: false

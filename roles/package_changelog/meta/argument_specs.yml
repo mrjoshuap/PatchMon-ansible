@@ -1,0 +1,18 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Fetch a package changelog from the local package manager
+    description:
+      - Runs C(apt-get changelog), C(dnf changelog), or C(pacman -Qi) for a package name.
+      - Sets facts C(package_changelog_text) and C(patchmon_package_changelog_text) and prints them.
+      - Does not call the PatchMon API. Serving changelogs in the UI needs a server change.
+      - The play must set C(gather_facts=true) and C(become=true).
+    author:
+      - PatchMon contributors
+    options:
+      package_changelog_name:
+        description:
+          - Package name to request a changelog for.
+          - When omitted, defaults to C(patchmon_package_changelog).
+        type: str

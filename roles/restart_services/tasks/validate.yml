@@ -1,0 +1,36 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require a list of services to restart
+  ansible.builtin.assert:
+    that:
+      - restart_services_list is iterable
+      - restart_services_list is not string
+      - restart_services_list is not mapping
+    fail_msg: >-
+      restart_services_list must be a list of service names.
+      When unset, the role reads patchmon_restart_services (default []).
+
+- name: Require a package-to-services map
+  ansible.builtin.assert:
+    that:
+      - restart_services_map is mapping
+    fail_msg: >-
+      restart_services_map must be a mapping of package name to service name list.
+      When unset, the role reads patchmon_restart_services_map (default {}).
+
+- name: Require a boolean needrestart flag
+  ansible.builtin.assert:
+    that:
+      - restart_services_needrestart | bool in [true, false]
+    fail_msg: >-
+      restart_services_needrestart must be a boolean.
+      When unset, the role reads patchmon_restart_needrestart (default false).
+
+- name: Require a list of upgraded package names
+  ansible.builtin.assert:
+    that:
+      - restart_services_upgraded_packages is iterable
+      - restart_services_upgraded_packages is not string
+      - restart_services_upgraded_packages is not mapping
+    fail_msg: >-
+      restart_services_upgraded_packages must be a list of package names.

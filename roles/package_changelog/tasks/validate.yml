@@ -1,0 +1,18 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require gathered package-manager facts
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['pkg_mgr'] is defined
+      - ansible_facts['pkg_mgr'] | length > 0
+    fail_msg: >-
+      patchmon.core.package_changelog needs gather_facts: true and
+      become: true on the play so ansible_facts['pkg_mgr'] is set.
+
+- name: Require a package name for the changelog
+  ansible.builtin.assert:
+    that:
+      - package_changelog_name | length > 0
+    fail_msg: >-
+      package_changelog_name (or patchmon_package_changelog) must be a
+      non-empty package name.

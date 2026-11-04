@@ -1,0 +1,46 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Wait for package-manager locks when force mode and lock_timeout are set.
+- name: Wait for apt/dpkg locks
+  ansible.builtin.shell:
+    cmd: >-
+      set -e;
+      end=$(( $(date +%s) + {{ apply_all_updates_lock_timeout | int }} ));
+      while
+        fuser /var/lib/dpkg/lock >/dev/null 2>&1
+        || fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1
+        || fuser /var/lib/apt/lists/lock >/dev/null 2>&1;
+      do
+        if [ "$(date +%s)" -ge "$end" ]; then
+          echo "Timed out waiting for apt/dpkg locks" >&2;
+          exit 1;
+        fi;
+        sleep 2;
+      done
+  args:
+    executable: /bin/bash
+  when:
+    - ansible_facts['pkg_mgr'] == 'apt'
+  changed_when: false
+
+- name: Wait for dnf/yum locks
+  ansible.builtin.shell:
+    cmd: >-
+      set -e;
+      end=$(( $(date +%s) + {{ apply_all_updates_lock_timeout | int }} ));
+      while
+        fuser /var/run/dnf.pid >/dev/null 2>&1
+        || fuser /var/run/yum.pid >/dev/null 2>&1
+        || fuser /var/cache/dnf/metadata_lock.pid >/dev/null 2>&1;
+      do
+        if [ "$(date +%s)" -ge "$end" ]; then
+          echo "Timed out waiting for dnf/yum locks" >&2;
+          exit 1;
+        fi;
+        sleep 2;
+      done
+  args:
+    executable: /bin/bash
+  when:
+    - ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+  changed_when: false

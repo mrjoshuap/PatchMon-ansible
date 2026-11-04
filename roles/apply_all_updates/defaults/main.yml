@@ -1,4 +1,16 @@
 ---
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# patchmon.core.apply_all_updates has no role variables.
-# Eligibility is inventory group patchmon_manual and ansible_facts['pkg_mgr'].
+# Variables for patchmon.core.apply_all_updates.
+# Inventory knobs use host_vars > group_vars > play/extra vars > these defaults.
+
+# Package names to skip during upgrades (host, then group, then all).
+apply_all_updates_ignore_packages: "{{ patchmon_ignore_packages | default([]) }}"
+
+# apt upgrade mode: safe (default) or full (full-upgrade / dist-upgrade).
+apply_all_updates_apt_upgrade: "{{ patchmon_apt_upgrade | default('safe') }}"
+
+# Seconds to wait for package-manager locks. 0 disables waiting.
+apply_all_updates_lock_timeout: "{{ patchmon_pkg_lock_timeout | default(0) }}"
+
+# When true and lock_timeout > 0, wait/retry for dpkg and dnf locks before upgrade.
+apply_all_updates_force: "{{ patchmon_pkg_force | default(false) | bool }}"

@@ -1,0 +1,18 @@
+---
+# Autoremove unused packages. Defaults stay off unless you set
+# patchmon_cleanup_packages / package_cleanup_enabled.
+# Run against a stats inventory. Skips patchmon_manual.
+#
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/package_cleanup.yml \
+#     -e patchmon_cleanup_packages=true
+
+- name: Clean unused packages for PatchMon hosts
+  hosts: patchmon_automated:patchmon_no_reboot
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Autoremove unused packages
+      ansible.builtin.import_role:
+        name: patchmon.core.package_cleanup

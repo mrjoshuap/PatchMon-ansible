@@ -10,6 +10,8 @@
         (patchmon_update_state | default('')) == 'security_required'
         or (patchmon_security_updates_count | default(0) | int > 0)
       }}
+    apply_security_updates_supported_pkg_mgrs: "{{ ['apt', 'dnf', 'dnf5', 'pacman'] }}"
+    apply_security_updates_severity_normalized: "{{ apply_security_updates_severity | map('lower') | list }}"
 
 - name: Record whether this host is eligible for security updates
   ansible.builtin.set_fact:
@@ -19,122 +21,40 @@
         and 'patchmon_manual' not in group_names
       }}
 
-- name: Apply dnf security updates  # noqa: package-latest
-  ansible.builtin.dnf:
-    name: "*"
-    state: latest
-    security: true
-    update_cache: true
+- name: Wait for package-manager locks before security updates
+  ansible.builtin.include_tasks: wait_locks.yml
   when:
     - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'dnf'
+    - apply_security_updates_force | bool
+    - apply_security_updates_lock_timeout | int > 0
+    - ansible_facts['pkg_mgr'] in apply_security_updates_supported_pkg_mgrs
 
-- name: Apply dnf5 security updates  # noqa: package-latest
-  ansible.builtin.dnf5:
-    name: "*"
-    state: latest
-    security: true
-    update_cache: true
+- name: Fetch listed packages for apt or pacman opt-in path
+  ansible.builtin.include_tasks: listed_packages.yml
   when:
     - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'dnf5'
-
-- name: Require PatchMon API access for listed security packages
-  ansible.builtin.assert:
-    that:
-      - apply_security_updates_host_id | length > 0
-      - apply_security_updates_api_url | length > 0
-      - apply_security_updates_api_key | length > 0
-      - apply_security_updates_api_secret | length > 0
-    fail_msg: >-
-      Listed apt security updates on {{ inventory_hostname }} need
-      apply_security_updates_host_id (inventory hostvar patchmon_id),
-      PATCHMON_SERVER_URL (preferred; PATCHMON_API_URL overrides it and is
-      discouraged), PATCHMON_API_KEY, and PATCHMON_API_SECRET
-      (Integration host:get).
-  when:
     - apply_security_updates_try_listed | bool
-    - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'apt'
+    - ansible_facts['pkg_mgr'] in ['apt', 'pacman']
 
-- name: Fetch PatchMon packages with pending updates
-  patchmon.core.host_packages:
-    api_url: "{{ apply_security_updates_api_url }}"
-    api_key: "{{ apply_security_updates_api_key }}"
-    api_secret: "{{ apply_security_updates_api_secret }}"
-    verify_ssl: "{{ apply_security_updates_verify_ssl | bool }}"
-    timeout: "{{ apply_security_updates_timeout | int }}"
-    host_id: "{{ apply_security_updates_host_id }}"
-    updates_only: true
-  delegate_to: localhost
-  become: false
-  register: apply_security_updates_packages
+- name: Apply security updates for the host package manager
+  ansible.builtin.include_tasks: "pkg_mgr/{{ ansible_facts['pkg_mgr'] }}.yml"
   when:
-    - apply_security_updates_try_listed | bool
     - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'apt'
-
-- name: Record PatchMon security package names
-  ansible.builtin.set_fact:
-    apply_security_updates_package_names: >-
-      {{
-        apply_security_updates_packages.packages
-        | selectattr('is_security_update')
-        | map(attribute='name')
-        | list
-      }}
-  when:
-    - apply_security_updates_try_listed | bool
-    - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'apt'
-
-- name: Upgrade apt packages PatchMon marks as security updates  # noqa: package-latest
-  ansible.builtin.apt:
-    name: "{{ apply_security_updates_package_names }}"
-    state: latest
-    only_upgrade: true
-    update_cache: true
-  when:
-    - apply_security_updates_try_listed | bool
-    - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'apt'
-    - apply_security_updates_package_names | default([]) | length > 0
+    - ansible_facts['pkg_mgr'] in apply_security_updates_supported_pkg_mgrs
 
 - name: Fail on unsupported package manager
-  ansible.builtin.fail:
-    msg: >-
-      Unsupported package manager {{ ansible_facts['pkg_mgr'] }} on
-      {{ inventory_hostname }}
-      ({{ ansible_facts['distribution'] | default('unknown') }}
-      {{ ansible_facts['distribution_version'] | default('') }},
-      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
-      patchmon.core.apply_security_updates stopped.
-
-      Create a PatchMon feedback request: https://feedback.patchmon.net/
-
-      Subject: Support {{ ansible_facts['pkg_mgr'] }} in patchmon.core package updates
-
-      Description:
-      {{ inventory_hostname }} reports pkg_mgr={{ ansible_facts['pkg_mgr'] }}
-      ({{ ansible_facts['distribution'] | default('unknown') }}
-      {{ ansible_facts['distribution_version'] | default('') }},
-      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
-      patchmon.core.apply_all_updates and patchmon.core.apply_security_updates
-      only upgrade apt, dnf, and dnf5. Please add this package manager to those roles.
+  ansible.builtin.include_tasks: unsupported.yml
   when:
     - apply_security_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] not in ['apt', 'dnf', 'dnf5']
+    - ansible_facts['pkg_mgr'] not in apply_security_updates_supported_pkg_mgrs
 
 - name: Report package state to PatchMon after security updates
-  ansible.builtin.include_role:
-    name: patchmon.core.agent
-  vars:
-    agent_state: report
+  ansible.builtin.include_tasks: report.yml
   when:
     - apply_security_updates_eligible | bool
     - >-
       ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
       or (
         apply_security_updates_try_listed | bool
-        and ansible_facts['pkg_mgr'] == 'apt'
+        and ansible_facts['pkg_mgr'] in ['apt', 'pacman']
       )

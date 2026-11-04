@@ -1,0 +1,8 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Fail on unsupported package manager for cleanup
+  ansible.builtin.fail:
+    msg: >-
+      Unsupported package manager {{ ansible_facts['pkg_mgr'] }} on
+      {{ inventory_hostname }} for patchmon.core.package_cleanup.
+      Supported managers are apt, dnf, dnf5, and pacman.

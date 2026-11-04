@@ -23,6 +23,11 @@ The `inventory` plugin turns PatchMon hosts and host groups into a live Ansible 
 | Role | `patchmon.core.report_health` | Fail unless the newest package report succeeded |
 | Role | `patchmon.core.apply_security_updates` | Security-only package updates, then a local agent report |
 | Role | `patchmon.core.apply_all_updates` | All pending package upgrades, then a local agent report |
+| Role | `patchmon.core.package_cleanup` | Autoremove unused packages and optionally clean caches (default off) |
+| Role | `patchmon.core.restart_services` | Restart configured services after patching when running |
+| Role | `patchmon.core.kernel_cleanup` | Remove old kernels after `/boot` free-space checks (default off) |
+| Role | `patchmon.core.package_held` | Detect APT holds and DNF versionlocks locally |
+| Role | `patchmon.core.package_changelog` | Fetch a package changelog from the local package manager |
 | Role | `patchmon.core.reboot_needed` | Reboot when `patchmon_needs_reboot` is true, then a local agent report |
 
 Read plugins need Integration `host:get`. Creating hosts and installing agents need Auto-Enrollment credentials. See [Credentials](docs/automator-guide.md#chapter-3-credentials).
@@ -43,7 +48,7 @@ Copy-paste inventories and plays: **[examples/README.md](examples/README.md)**.
 |-----------|-------|---------|
 | Agent install / removal | Implemented | Implemented (enroll + `hosts/install` / `hosts/remove`) |
 | Agent start / stop / report | Implemented | Implemented |
-| Package updates / reboot roles | Existing platform restrictions apply | Not supported (planned for 2.1.0) |
+| Package updates / reboot roles | apt, dnf, dnf5, pacman | Not supported (planned for 2.1.0) |
 
 Windows Server 2022, Windows Server 2025, and Windows 11 Pro start, stop, and report operations were live-tested over SSH with PatchMon agent 2.1.6. Install and removal follow PatchMon's official Intune flow.
 See [Windows agent management](docs/automator-guide.md#windows-agent-management). Collection dependency: `ansible.windows` 2.x.

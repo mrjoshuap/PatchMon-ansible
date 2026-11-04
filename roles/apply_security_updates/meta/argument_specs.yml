@@ -7,60 +7,93 @@ argument_specs:
       - Applies security-only upgrades when inventory hostvar C(patchmon_update_state) is C(security_required).
       - Also applies them when C(patchmon_security_updates_count) is greater than zero.
       - Skips a host that is also in C(patchmon_manual).
-      - C(dnf) and C(dnf5) use C(security=true).
-      - Apt has no matching flag, so apt hosts are unchanged unless C(apply_security_updates_try_listed) is true.
-      - That apt path is an opt-in, not an unsupported package manager.
-      - The apt opt-in lists packages with C(patchmon.core.host_packages) and C(updates_only=true).
-      - That read needs Integration scope C(host:get). It upgrades names where C(is_security_update) is true.
-      - An eligible host whose package manager is not apt, dnf, or dnf5 fails.
+      - C(dnf) and C(dnf5) use advisory filters from C(apply_security_updates_severity) (C(security), C(bugfix), C(enhancement)).
+      - Apt and pacman have no matching flag, so those hosts are unchanged unless C(apply_security_updates_try_listed) is true.
+      - That listed path calls C(patchmon.core.host_packages) with C(updates_only=true) and needs Integration scope C(host:get).
+      - It upgrades names where C(is_security_update) is true when C(security) is in the severity list.
+      - When the API adds C(severity) or C(urgency) fields, non-security filters select those values.
+      - Skips package names in C(apply_security_updates_ignore_packages) / C(patchmon_ignore_packages).
+      - Optional lock wait when C(apply_security_updates_force) is true and C(apply_security_updates_lock_timeout) is greater than zero.
+      - An eligible host whose package manager is not apt, dnf, dnf5, or pacman fails.
       - That failure includes a subject and description for a PatchMon feedback request.
-      - After a dnf, dnf5, or opted-in apt path, runs C(patchmon.core.agent) with C(agent_state=report).
+      - After a dnf, dnf5, or opted-in apt/pacman path, runs C(patchmon.core.agent) with C(agent_state=report).
       - The report is local and does not call the Integration API.
       - Does not reboot. Run C(patchmon.core.reboot_needed) for that.
       - The play must set C(gather_facts=true) and C(become=true).
       - Keep C(patchmon_security_required) out of C(hosts). That group exists only while a host matches.
+      - Inventory knobs use host_vars, then group_vars, then play or extra vars, then role defaults.
     author:
       - PatchMon contributors
     options:
       apply_security_updates_try_listed:
         description:
-          - When true, upgrade apt packages PatchMon marks as security updates.
+          - When true, upgrade apt or pacman packages from the PatchMon package list.
           - When omitted, defaults to extra var C(patchmon_try_listed_security), or C(false) when that variable is unset.
           - C(dnf) and C(dnf5) ignore this option.
         type: bool
         default: false
       apply_security_updates_host_id:
         description:
-          - PatchMon host UUID for the apt package list.
-          - Required only when C(apply_security_updates_try_listed) is true and the package manager is apt.
+          - PatchMon host UUID for the listed package path.
+          - Required only when C(apply_security_updates_try_listed) is true and the package manager is apt or pacman.
           - When omitted, defaults to C(patchmon_id) when that inventory variable is set.
         type: str
       apply_security_updates_api_url:
         description:
-          - Integration hosts URL for the apt package list.
-          - Required only on the apt opt-in path. Needs scope C(host:get).
+          - Integration hosts URL for the listed package path.
+          - Required only on the listed opt-in path. Needs scope C(host:get).
           - When omitted, derived from C(PATCHMON_SERVER_URL) as C(/api/v1/api/hosts).
           - Prefer C(PATCHMON_SERVER_URL). C(PATCHMON_API_URL) overrides the derived URL and is discouraged.
         type: str
       apply_security_updates_api_key:
         description:
-          - Integration API token key for the apt package list.
-          - Required only on the apt opt-in path.
+          - Integration API token key for the listed package path.
+          - Required only on the listed opt-in path.
           - When omitted, defaults to C(PATCHMON_API_KEY).
         type: str
       apply_security_updates_api_secret:
         description:
-          - Integration API token secret for the apt package list.
-          - Required only on the apt opt-in path.
+          - Integration API token secret for the listed package path.
+          - Required only on the listed opt-in path.
           - When omitted, defaults to C(PATCHMON_API_SECRET).
         type: str
       apply_security_updates_verify_ssl:
         description:
-          - Verify the PatchMon TLS certificate on the apt package list.
+          - Verify the PatchMon TLS certificate on the listed package path.
           - When omitted, defaults to C(PATCHMON_VERIFY_SSL), or C(true) when that variable is unset.
         type: bool
       apply_security_updates_timeout:
         description:
-          - HTTP timeout in seconds for the apt package list.
+          - HTTP timeout in seconds for the listed package path.
         type: int
         default: 30
+      apply_security_updates_ignore_packages:
+        description:
+          - Package names to skip during upgrades.
+          - When omitted, defaults to C(patchmon_ignore_packages), or an empty list when that variable is unset.
+        type: list
+        elements: str
+        default: []
+      apply_security_updates_severity:
+        description:
+          - Advisory-class or severity filters. Default is security-only.
+          - For dnf/dnf5, recognized values are C(security), C(bugfix), and C(enhancement).
+          - For the listed apt/pacman path, C(security) selects C(is_security_update).
+          - Other values match package C(severity) or C(urgency) when the Integration API provides them.
+          - When omitted, defaults to C(patchmon_update_severity), or C([security]) when that variable is unset.
+        type: list
+        elements: str
+        default:
+          - security
+      apply_security_updates_lock_timeout:
+        description:
+          - Seconds to wait for package-manager locks. Also passed to apt/dnf C(lock_timeout) when supported.
+          - When omitted, defaults to C(patchmon_pkg_lock_timeout), or C(0) when that variable is unset.
+        type: int
+        default: 0
+      apply_security_updates_force:
+        description:
+          - When true and C(apply_security_updates_lock_timeout) is greater than zero, wait for dpkg or dnf locks before upgrading.
+          - When omitted, defaults to C(patchmon_pkg_force), or C(false) when that variable is unset.
+        type: bool
+        default: false

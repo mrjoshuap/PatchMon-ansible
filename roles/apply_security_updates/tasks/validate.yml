@@ -24,3 +24,41 @@
     fail_msg: >-
       apply_security_updates_timeout must be a positive integer. Got
       '{{ apply_security_updates_timeout }}'.
+
+- name: Require a list of ignored package names
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_ignore_packages is iterable
+      - apply_security_updates_ignore_packages is not string
+      - apply_security_updates_ignore_packages is not mapping
+    fail_msg: >-
+      apply_security_updates_ignore_packages must be a list of package names.
+      When unset, the role reads patchmon_ignore_packages (default []).
+
+- name: Require a list of severity filters
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_severity is iterable
+      - apply_security_updates_severity is not string
+      - apply_security_updates_severity is not mapping
+      - apply_security_updates_severity | length > 0
+    fail_msg: >-
+      apply_security_updates_severity must be a non-empty list.
+      When unset, the role reads patchmon_update_severity (default ['security']).
+
+- name: Require a non-negative lock timeout
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_lock_timeout | int >= 0
+    fail_msg: >-
+      apply_security_updates_lock_timeout must be a non-negative integer.
+      When unset, the role reads patchmon_pkg_lock_timeout (default 0).
+      Got '{{ apply_security_updates_lock_timeout }}'.
+
+- name: Require a boolean force flag
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_force | bool in [true, false]
+    fail_msg: >-
+      apply_security_updates_force must be a boolean.
+      When unset, the role reads patchmon_pkg_force (default false).

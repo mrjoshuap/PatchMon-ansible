@@ -1,0 +1,27 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Require gathered package-manager facts
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['pkg_mgr'] is defined
+      - ansible_facts['pkg_mgr'] | length > 0
+    fail_msg: >-
+      patchmon.core.package_cleanup needs gather_facts: true and
+      become: true on the play so ansible_facts['pkg_mgr'] is set.
+
+- name: Require a boolean cleanup enable flag
+  ansible.builtin.assert:
+    that:
+      - package_cleanup_enabled | bool in [true, false]
+    fail_msg: >-
+      package_cleanup_enabled must be a boolean.
+      When unset, the role reads patchmon_cleanup_packages (default false).
+
+- name: Require a supported cache cleanup mode
+  ansible.builtin.assert:
+    that:
+      - package_cleanup_cache | string in ['never', 'pre', 'post', 'both']
+    fail_msg: >-
+      package_cleanup_cache must be never, pre, post, or both.
+      When unset, the role reads patchmon_cleanup_cache (default never).
+      Got '{{ package_cleanup_cache }}'.

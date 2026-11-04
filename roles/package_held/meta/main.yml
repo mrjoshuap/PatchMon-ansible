@@ -1,0 +1,25 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+galaxy_info:
+  role_name: package_held
+  author: PatchMon contributors
+  description: Detect APT holds and DNF versionlocks on a host
+  license: AGPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags:
+    - patchmon
+    - patching
+    - linux
+dependencies: []

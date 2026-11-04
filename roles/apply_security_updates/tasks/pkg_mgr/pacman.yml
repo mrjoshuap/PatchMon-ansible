@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Pacman has no native security flag; listed packages require the opt-in.
+# apply_security_updates_package_names is set by listed_packages.yml from main.
+- name: Upgrade pacman packages matching severity filters
+  community.general.pacman:
+    name: "{{ apply_security_updates_package_names }}"
+    state: latest
+    update_cache: true
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_package_names | default([]) | length > 0

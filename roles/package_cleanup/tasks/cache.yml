@@ -1,0 +1,28 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Clean apt package cache
+  ansible.builtin.apt:
+    autoclean: true
+  when: ansible_facts['pkg_mgr'] == 'apt'
+  register: package_cleanup_cache_apt
+
+- name: Clean dnf package cache
+  ansible.builtin.command:
+    argv: [dnf, clean, all]
+  when: ansible_facts['pkg_mgr'] == 'dnf'
+  register: package_cleanup_cache_dnf
+  changed_when: true
+
+- name: Clean dnf5 package cache
+  ansible.builtin.command:
+    argv: [dnf5, clean, all]
+  when: ansible_facts['pkg_mgr'] == 'dnf5'
+  register: package_cleanup_cache_dnf5
+  changed_when: true
+
+- name: Clean pacman package cache
+  ansible.builtin.command:
+    argv: [pacman, -Sc, --noconfirm]
+  when: ansible_facts['pkg_mgr'] == 'pacman'
+  register: package_cleanup_cache_pacman
+  changed_when: true

@@ -4,6 +4,36 @@ All notable changes to this collection are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `patchmon.core.package_cleanup` — autoremove unused packages (apt, dnf,
+  dnf5, pacman orphans) and optional cache clean (`patchmon_cleanup_cache`:
+  never / pre / post / both). Defaults off via `patchmon_cleanup_packages`.
+- `patchmon.core.restart_services` — restart listed services and optional
+  package→service map when services are running; optional needrestart.
+- `patchmon.core.kernel_cleanup` — remove old kernels after `/boot` free-space
+  checks; keep newest `patchmon_kernel_keep` (default 2); never remove the
+  running kernel. Defaults off via `patchmon_kernel_cleanup`.
+- `patchmon.core.package_held` — detect APT holds and DNF versionlocks; set
+  fact `patchmon_held_packages` (local only).
+- `patchmon.core.package_changelog` — fetch a package changelog via apt-get /
+  dnf / pacman; set fact `patchmon_package_changelog_text` (local only).
+- Shared inventory knobs for apply roles: `patchmon_ignore_packages`,
+  `patchmon_apt_upgrade` (safe|full), `patchmon_pkg_lock_timeout`,
+  `patchmon_pkg_force`, `patchmon_update_severity`.
+- pacman support in `apply_security_updates`, `apply_all_updates`, and
+  `package_cleanup` via collection dependency `community.general`.
+- Example plays for the new roles; `maintain.yml` optional wiring for cleanup,
+  restart, and kernel cleanup (all default off).
+
+### Changed
+
+- `apply_security_updates` and `apply_all_updates` task trees split into
+  per-package-manager files under `tasks/pkg_mgr/`.
+- Listed security path on apt also applies to pacman when
+  `apply_security_updates_try_listed` / `patchmon_try_listed_security` is true.
+- `pending_updates.yml` shows packages skipped by `patchmon_ignore_packages`.
+
 ## [2.0.9] - 2026-11-03
 
 ### Fixed

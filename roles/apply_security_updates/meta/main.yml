@@ -18,6 +18,9 @@ galaxy_info:
     - name: Debian
       versions:
         - bookworm
+    - name: ArchLinux
+      versions:
+        - all
   galaxy_tags:
     - patchmon
     - patching

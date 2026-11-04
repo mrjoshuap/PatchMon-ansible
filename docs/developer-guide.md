@@ -27,8 +27,10 @@ This book is for people changing this repository. Playbook authors should read t
 | [`plugins/lookup/`](../plugins/lookup/) | `host` and `endpoint` lookups |
 | [`plugins/module_utils/`](../plugins/module_utils/) | Shared API client and group-name helpers |
 | [`plugins/doc_fragments/`](../plugins/doc_fragments/) | Shared `DOCUMENTATION` for Integration API options |
-| [`roles/`](../roles/) | `agent`, `host`, `report_health`, `apply_security_updates`, `apply_all_updates`, `reboot_needed` |
+| [`roles/`](../roles/) | `agent`, `host`, `report_health`, `apply_security_updates`, `apply_all_updates`, `reboot_needed`, `package_cleanup`, `kernel_cleanup`, `restart_services`, `package_held`, `package_changelog` |
 | [`playbooks/`](../playbooks/) | Thin plays for the `agent` and `host` roles |
+
+The `apply_security_updates` and `apply_all_updates` roles keep `tasks/main.yml` as orchestration (validate, eligibility, optional lock wait, package-manager include, unsupported fail, agent report). Per-manager work lives under `tasks/pkg_mgr/` (`apt.yml`, `dnf.yml`, `dnf5.yml`, `pacman.yml`). Shared inventory knobs (`patchmon_ignore_packages`, `patchmon_apt_upgrade`, `patchmon_pkg_lock_timeout`, `patchmon_pkg_force`, `patchmon_update_severity`, and the cleanup / restart / kernel knobs) prefer host_vars, then group_vars, then play or extra vars, then role defaults. Do not invent a custom merge.
 | [`examples/`](../examples/) | Commented inventory files and copy-paste plays. [`examples/README.md`](../examples/README.md) is the file index |
 | [`docs/automator-guide.md`](automator-guide.md) | Source of truth for inventories, credentials, and plays |
 | [`docs/docsite/`](docsite/) | Sphinx theme, extra-docs nav, and the Markdown include hook |

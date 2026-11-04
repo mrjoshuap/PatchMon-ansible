@@ -1,0 +1,14 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Apt has no native security flag; listed packages require the opt-in.
+# apply_security_updates_package_names is set by listed_packages.yml from main.
+- name: Upgrade apt packages matching severity filters  # noqa: package-latest
+  ansible.builtin.apt:
+    name: "{{ apply_security_updates_package_names }}"
+    state: latest
+    only_upgrade: true
+    update_cache: true
+    lock_timeout: "{{ apply_security_updates_lock_timeout | int }}"
+  when:
+    - apply_security_updates_try_listed | bool
+    - apply_security_updates_package_names | default([]) | length > 0

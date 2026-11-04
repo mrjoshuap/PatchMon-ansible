@@ -1,0 +1,170 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate kernel cleanup inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Record kernel cleanup eligibility
+  ansible.builtin.set_fact:
+    kernel_cleanup_eligible: >-
+      {{
+        kernel_cleanup_enabled | bool
+        and 'patchmon_manual' not in group_names
+        and ansible_facts['pkg_mgr'] in ['apt', 'dnf', 'dnf5']
+      }}
+    kernel_cleanup_changed: false
+
+- name: Skip when kernel cleanup is disabled or unsupported
+  ansible.builtin.debug:
+    msg: >-
+      Skipping kernel cleanup on {{ inventory_hostname }}
+      (enabled={{ kernel_cleanup_enabled | bool }},
+      pkg_mgr={{ ansible_facts['pkg_mgr'] }},
+      manual={{ 'patchmon_manual' in group_names }}).
+  when: not kernel_cleanup_eligible | bool
+
+- name: Check /boot free space in megabytes
+  ansible.builtin.shell:
+    cmd: >-
+      set -e;
+      target=/boot;
+      if ! findmnt -n /boot >/dev/null 2>&1; then
+        target=/;
+      fi;
+      df -Pm "$target" | awk 'NR==2 {print $4}'
+  args:
+    executable: /bin/bash
+  register: kernel_cleanup_boot_free
+  changed_when: false
+  when: kernel_cleanup_eligible | bool
+
+- name: Record whether /boot free space is below the floor
+  ansible.builtin.set_fact:
+    kernel_cleanup_boot_low: >-
+      {{
+        (kernel_cleanup_boot_free.stdout | default('0') | int)
+        < (kernel_cleanup_boot_min_free_mb | int)
+      }}
+    kernel_cleanup_boot_free_mb: "{{ kernel_cleanup_boot_free.stdout | default('0') | int }}"
+  when: kernel_cleanup_eligible | bool
+
+- name: Warn when /boot free space is already below the floor
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }} /boot free space is
+      {{ kernel_cleanup_boot_free_mb }} MiB
+      (floor {{ kernel_cleanup_boot_min_free_mb }} MiB). Proceeding with
+      kernel cleanup.
+  when:
+    - kernel_cleanup_eligible | bool
+    - kernel_cleanup_boot_low | bool
+
+- name: List installed Debian/Ubuntu kernel image packages
+  ansible.builtin.shell:
+    cmd: >-
+      dpkg-query -W -f='${Package}\n' 'linux-image-[0-9]*' 2>/dev/null
+      | sort -V
+  args:
+    executable: /bin/bash
+  register: kernel_cleanup_apt_images
+  changed_when: false
+  when:
+    - kernel_cleanup_eligible | bool
+    - ansible_facts['pkg_mgr'] == 'apt'
+
+- name: List installed RPM kernel packages  # noqa: command-instead-of-module
+  ansible.builtin.shell:
+    cmd: >-
+      rpm -q kernel kernel-core --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' 2>/dev/null
+      | sort -V
+      | uniq
+  args:
+    executable: /bin/bash
+  register: kernel_cleanup_rpm_kernels
+  changed_when: false
+  failed_when: false
+  when:
+    - kernel_cleanup_eligible | bool
+    - ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+
+- name: Record installed kernel packages
+  ansible.builtin.set_fact:
+    kernel_cleanup_installed: >-
+      {{
+        kernel_cleanup_apt_images.stdout_lines | default([])
+        if (ansible_facts['pkg_mgr'] == 'apt')
+        else (kernel_cleanup_rpm_kernels.stdout_lines | default([]))
+      }}
+  when: kernel_cleanup_eligible | bool
+
+- name: Record newest kernels to keep
+  ansible.builtin.set_fact:
+    kernel_cleanup_keep_names: >-
+      {{
+        kernel_cleanup_installed[-(kernel_cleanup_keep | int):]
+        if (kernel_cleanup_installed | length > 0)
+        else []
+      }}
+  when: kernel_cleanup_eligible | bool
+
+- name: Select kernel packages to remove
+  ansible.builtin.set_fact:
+    kernel_cleanup_remove: >-
+      {{
+        kernel_cleanup_installed
+        | difference(kernel_cleanup_keep_names)
+        | reject('search', ansible_facts['kernel'] | regex_escape)
+        | list
+      }}
+  when: kernel_cleanup_eligible | bool
+
+- name: Remove old apt kernel packages
+  ansible.builtin.apt:
+    name: "{{ kernel_cleanup_remove }}"
+    state: absent
+    autoremove: true
+    purge: true
+  when:
+    - kernel_cleanup_eligible | bool
+    - ansible_facts['pkg_mgr'] == 'apt'
+    - kernel_cleanup_remove | default([]) | length > 0
+  register: kernel_cleanup_apt_result
+
+- name: Remove old dnf kernel packages
+  ansible.builtin.dnf:
+    name: "{{ kernel_cleanup_remove }}"
+    state: absent
+  when:
+    - kernel_cleanup_eligible | bool
+    - ansible_facts['pkg_mgr'] == 'dnf'
+    - kernel_cleanup_remove | default([]) | length > 0
+  register: kernel_cleanup_dnf_result
+
+- name: Remove old dnf5 kernel packages
+  ansible.builtin.dnf5:
+    name: "{{ kernel_cleanup_remove }}"
+    state: absent
+  when:
+    - kernel_cleanup_eligible | bool
+    - ansible_facts['pkg_mgr'] == 'dnf5'
+    - kernel_cleanup_remove | default([]) | length > 0
+  register: kernel_cleanup_dnf5_result
+
+- name: Record whether kernel cleanup changed the host
+  ansible.builtin.set_fact:
+    kernel_cleanup_changed: >-
+      {{
+        (kernel_cleanup_apt_result is defined and kernel_cleanup_apt_result is changed)
+        or (kernel_cleanup_dnf_result is defined and kernel_cleanup_dnf_result is changed)
+        or (kernel_cleanup_dnf5_result is defined and kernel_cleanup_dnf5_result is changed)
+      }}
+  when: kernel_cleanup_eligible | bool
+
+- name: Report package state to PatchMon after kernel cleanup
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: report
+  when:
+    - kernel_cleanup_eligible | bool
+    - kernel_cleanup_report | bool
+    - kernel_cleanup_changed | bool

@@ -6,7 +6,7 @@
 # matches. A host also in patchmon_manual is skipped by the role.
 #
 # patchmon.core.apply_security_updates applies dnf and dnf5 with security: true.
-# apt is unchanged unless patchmon_try_listed_security or
+# apt and pacman are unchanged unless patchmon_try_listed_security or
 # apply_security_updates_try_listed is true. That option upgrades only names
 # host_packages marks is_security_update. Any other package manager fails
 # the eligible host with a PatchMon feedback draft.

@@ -52,12 +52,29 @@
           {{ inventory_hostname }}: {{ pm_pkgs.total }} package(s) with updates
           ({{ pm_pkgs.security_updates_count }} security)
 
+    - name: List packages ignored by inventory knobs
+      ansible.builtin.debug:
+        msg: >-
+          [IGNORED] {{ item.name }}:
+          {{ item.current_version }} -> {{ item.available_version }}
+      loop: >-
+        {{ pm_pkgs.packages
+           | selectattr('name', 'in', (patchmon_ignore_packages | default([])))
+           | list }}
+      loop_control:
+        label: "{{ item.name }}"
+      when: (patchmon_ignore_packages | default([])) | length > 0
+
     - name: List security updates
       ansible.builtin.debug:
         msg: >-
           [SECURITY] {{ item.name }}:
           {{ item.current_version }} -> {{ item.available_version }}
-      loop: "{{ pm_pkgs.packages | selectattr('is_security_update') | list }}"
+      loop: >-
+        {{ pm_pkgs.packages
+           | selectattr('is_security_update')
+           | rejectattr('name', 'in', (patchmon_ignore_packages | default([])))
+           | list }}
       loop_control:
         label: "{{ item.name }}"
       when: pm_pkgs.security_updates_count | int > 0
@@ -70,6 +87,7 @@
       loop: >-
         {{ pm_pkgs.packages
            | rejectattr('is_security_update')
+           | rejectattr('name', 'in', (patchmon_ignore_packages | default([])))
            | list }}
       loop_control:
         label: "{{ item.name }}"

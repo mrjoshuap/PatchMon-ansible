@@ -29,11 +29,16 @@ These match [Fleet lifecycle](../docs/automator-guide.md#chapter-6-fleet-lifecyc
 | File | What it does |
 |------|----------------|
 | [`playbooks/enroll.yml`](playbooks/enroll.yml) | On the control node, add the host when it is missing from the inventory, then install the agent (`agent_state: present`). The host stays in the enrollment token's default group |
-| [`playbooks/maintain.yml`](playbooks/maintain.yml) | Refresh inventory, report health, security updates by default (`-e apply_all_updates=true` for all pending), reboot Automated one host at a time |
+| [`playbooks/maintain.yml`](playbooks/maintain.yml) | Refresh inventory, report health, security updates by default (`-e apply_all_updates=true` for all pending), optional cleanup/restart/kernel steps, reboot Automated one host at a time |
 | [`playbooks/report_health.yml`](playbooks/report_health.yml) | Import `patchmon.core.report_health` |
 | [`playbooks/apply_security_updates.yml`](playbooks/apply_security_updates.yml) | Import `patchmon.core.apply_security_updates` |
 | [`playbooks/reboot_needed.yml`](playbooks/reboot_needed.yml) | Import `patchmon.core.reboot_needed` |
 | [`playbooks/apply_all_updates.yml`](playbooks/apply_all_updates.yml) | Import `patchmon.core.apply_all_updates`. `maintain.yml` imports this play when `-e apply_all_updates=true` |
+| [`playbooks/package_cleanup.yml`](playbooks/package_cleanup.yml) | Import `patchmon.core.package_cleanup` (`-e patchmon_cleanup_packages=true`) |
+| [`playbooks/restart_services.yml`](playbooks/restart_services.yml) | Import `patchmon.core.restart_services` |
+| [`playbooks/kernel_cleanup.yml`](playbooks/kernel_cleanup.yml) | Import `patchmon.core.kernel_cleanup` (`-e patchmon_kernel_cleanup=true`) |
+| [`playbooks/package_held.yml`](playbooks/package_held.yml) | Import `patchmon.core.package_held` (local holds / versionlocks) |
+| [`playbooks/package_changelog.yml`](playbooks/package_changelog.yml) | Import `patchmon.core.package_changelog` (`-e patchmon_package_changelog=<name>`) |
 | [`playbooks/retire.yml`](playbooks/retire.yml) | Remove the agent, then delete the host when `patchmon_id` is set. Requires `--limit` |
 
 Thin plays for the agent and host roles live next to the collection, not in this directory: [`playbooks/agent.yml`](../playbooks/agent.yml) and [`playbooks/host.yml`](../playbooks/host.yml).

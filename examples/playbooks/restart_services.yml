@@ -1,0 +1,18 @@
+---
+# Restart configured services after patching when they are running.
+# Set patchmon_restart_services and/or patchmon_restart_services_map
+# in inventory or extra vars.
+#
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/restart_services.yml \
+#     -e '{"patchmon_restart_services":["nginx"]}'
+
+- name: Restart services for PatchMon hosts
+  hosts: patchmon_automated:patchmon_no_reboot
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Restart configured services
+      ansible.builtin.import_role:
+        name: patchmon.core.restart_services

@@ -10,7 +10,8 @@ authors:
 description: >
   Dynamic inventory, modules, lookups, and roles for the PatchMon Integration
   and Auto-Enrollment APIs — including optional stats hostvars, constructed
-  groups, host enrollment, agent lifecycle, security updates, and reboot.
+  groups, host enrollment, agent lifecycle, security updates, package cleanup,
+  service restart, kernel cleanup, and reboot.
 license:
   - AGPL-3.0-or-later
 tags:
@@ -27,6 +28,7 @@ documentation: https://patchmon.net/docs/patchmon-api-integrations-guide
 homepage: https://patchmon.net
 dependencies:
   ansible.windows: ">=2.0.0,<3.0.0"
+  community.general: ">=8.0.0"
 build_ignore:
   - .git
   - .github

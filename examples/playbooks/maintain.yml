@@ -1,5 +1,7 @@
+---
 # Recurring maintenance. Refreshes inventory, then checks report health,
-# applies updates, and reboots Automated hosts one at a time.
+# applies updates, optionally restarts services / cleans packages and kernels,
+# and reboots Automated hosts one at a time.
 # report_health.yml, the update play, and reboot_needed.yml import
 # patchmon.core.report_health, the matching update role, and
 # patchmon.core.reboot_needed. A host that fails report health drops out of
@@ -8,9 +10,13 @@
 # Updates default to security-only (apply_security_updates.yml).
 # -e apply_all_updates=true imports apply_all_updates.yml instead.
 #
-# Keep this file beside report_health.yml, apply_security_updates.yml,
-# apply_all_updates.yml, and reboot_needed.yml. Run it against a stats
-# inventory.
+# Optional steps (all default off):
+#   -e patchmon_cleanup_cache=pre|post|both
+#   -e patchmon_cleanup_packages=true
+#   -e '{"patchmon_restart_services":["nginx"]}'
+#   -e patchmon_kernel_cleanup=true
+#
+# Keep this file beside the imported plays. Run it against a stats inventory.
 #
 # Examples:
 #   ansible-playbook -i inventories/patchmon.yml \
@@ -31,6 +37,10 @@
 - name: Check PatchMon package report health
   ansible.builtin.import_playbook: report_health.yml
 
+- name: Clean package caches before updates when requested
+  ansible.builtin.import_playbook: package_cleanup.yml
+  when: patchmon_cleanup_cache | default('never') | string in ['pre', 'both']
+
 - name: Apply security updates for PatchMon hosts
   ansible.builtin.import_playbook: apply_security_updates.yml
   when: not apply_all_updates | default(false) | bool
@@ -38,6 +48,23 @@
 - name: Apply all pending upgrades for PatchMon hosts
   ansible.builtin.import_playbook: apply_all_updates.yml
   when: apply_all_updates | default(false) | bool
+
+- name: Restart configured services after updates
+  ansible.builtin.import_playbook: restart_services.yml
+  when: >-
+    (patchmon_restart_services | default([]) | length > 0)
+    or (patchmon_restart_services_map | default({}) | length > 0)
+    or (patchmon_restart_needrestart | default(false) | bool)
+
+- name: Clean unused packages and post caches when requested
+  ansible.builtin.import_playbook: package_cleanup.yml
+  when: >-
+    (patchmon_cleanup_packages | default(false) | bool)
+    or (patchmon_cleanup_cache | default('never') | string in ['post', 'both'])
+
+- name: Clean old kernels when requested
+  ansible.builtin.import_playbook: kernel_cleanup.yml
+  when: patchmon_kernel_cleanup | default(false) | bool
 
 - name: Reboot PatchMon hosts that need a reboot
   ansible.builtin.import_playbook: reboot_needed.yml

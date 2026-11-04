@@ -1,0 +1,9 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.restart_services.
+
+restart_services_list: "{{ patchmon_restart_services | default([]) }}"
+restart_services_map: "{{ patchmon_restart_services_map | default({}) }}"
+restart_services_needrestart: "{{ patchmon_restart_needrestart | default(false) | bool }}"
+# Package names upgraded in this run (optional; used with restart_services_map).
+restart_services_upgraded_packages: []

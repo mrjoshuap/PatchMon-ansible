@@ -1,0 +1,50 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate package_held inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: List apt-held packages
+  ansible.builtin.command:
+    argv: [apt-mark, showhold]
+  register: package_held_apt
+  changed_when: false
+  when: ansible_facts['pkg_mgr'] == 'apt'
+
+- name: List dnf versionlock packages
+  ansible.builtin.command:
+    argv: [dnf, versionlock, list]
+  register: package_held_dnf
+  changed_when: false
+  failed_when: false
+  when: ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+
+- name: Record held packages on this host
+  ansible.builtin.set_fact:
+    package_held_packages: >-
+      {{
+        (package_held_apt.stdout_lines | default([]))
+        if (ansible_facts['pkg_mgr'] == 'apt')
+        else (
+          (package_held_dnf.stdout_lines | default([]))
+          | reject('match', '^$')
+          | reject('search', 'Last metadata')
+          | list
+          if (
+            ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+            and package_held_dnf.rc | default(1) | int == 0
+          )
+          else []
+        )
+      }}
+
+- name: Publish held packages under the shared inventory fact name  # noqa: var-naming[no-role-prefix]
+  ansible.builtin.set_fact:
+    patchmon_held_packages: "{{ package_held_packages }}"
+
+- name: Show held packages
+  ansible.builtin.debug:
+    msg: >-
+      {{ inventory_hostname }} held packages:
+      {{ package_held_packages | default([]) | join(', ')
+         if (package_held_packages | default([]) | length > 0)
+         else '(none)' }}

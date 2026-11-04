@@ -6,64 +6,30 @@
 - name: Record whether this host is eligible for all pending upgrades
   ansible.builtin.set_fact:
     apply_all_updates_eligible: "{{ 'patchmon_manual' not in group_names }}"
+    apply_all_updates_supported_pkg_mgrs: "{{ ['apt', 'dnf', 'dnf5', 'pacman'] }}"
 
-- name: Apply apt upgrades
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: safe
-    force_apt_get: true
+- name: Wait for package-manager locks before upgrades
+  ansible.builtin.include_tasks: wait_locks.yml
   when:
     - apply_all_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'apt'
+    - apply_all_updates_force | bool
+    - apply_all_updates_lock_timeout | int > 0
+    - ansible_facts['pkg_mgr'] in apply_all_updates_supported_pkg_mgrs
 
-- name: Apply dnf upgrades  # noqa: package-latest
-  ansible.builtin.dnf:
-    name: "*"
-    state: latest
-    update_cache: true
+- name: Apply upgrades for the host package manager
+  ansible.builtin.include_tasks: "pkg_mgr/{{ ansible_facts['pkg_mgr'] }}.yml"
   when:
     - apply_all_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'dnf'
-
-- name: Apply dnf5 upgrades  # noqa: package-latest
-  ansible.builtin.dnf5:
-    name: "*"
-    state: latest
-    update_cache: true
-  when:
-    - apply_all_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] == 'dnf5'
+    - ansible_facts['pkg_mgr'] in apply_all_updates_supported_pkg_mgrs
 
 - name: Fail on unsupported package manager
-  ansible.builtin.fail:
-    msg: >-
-      Unsupported package manager {{ ansible_facts['pkg_mgr'] }} on
-      {{ inventory_hostname }}
-      ({{ ansible_facts['distribution'] | default('unknown') }}
-      {{ ansible_facts['distribution_version'] | default('') }},
-      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
-      patchmon.core.apply_all_updates stopped.
-
-      Create a PatchMon feedback request: https://feedback.patchmon.net/
-
-      Subject: Support {{ ansible_facts['pkg_mgr'] }} in patchmon.core package updates
-
-      Description:
-      {{ inventory_hostname }} reports pkg_mgr={{ ansible_facts['pkg_mgr'] }}
-      ({{ ansible_facts['distribution'] | default('unknown') }}
-      {{ ansible_facts['distribution_version'] | default('') }},
-      os_family={{ ansible_facts['os_family'] | default('unknown') }}).
-      patchmon.core.apply_all_updates and patchmon.core.apply_security_updates
-      only upgrade apt, dnf, and dnf5. Please add this package manager to those roles.
+  ansible.builtin.include_tasks: unsupported.yml
   when:
     - apply_all_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] not in ['apt', 'dnf', 'dnf5']
+    - ansible_facts['pkg_mgr'] not in apply_all_updates_supported_pkg_mgrs
 
 - name: Report package state to PatchMon after upgrades
-  ansible.builtin.include_role:
-    name: patchmon.core.agent
-  vars:
-    agent_state: report
+  ansible.builtin.include_tasks: report.yml
   when:
     - apply_all_updates_eligible | bool
-    - ansible_facts['pkg_mgr'] in ['apt', 'dnf', 'dnf5']
+    - ansible_facts['pkg_mgr'] in apply_all_updates_supported_pkg_mgrs

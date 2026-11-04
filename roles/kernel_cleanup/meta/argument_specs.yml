@@ -1,0 +1,38 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Remove old kernels after checking /boot free space
+    description:
+      - Defaults to off. Enable with C(kernel_cleanup_enabled) or C(patchmon_kernel_cleanup).
+      - Checks free space on C(/boot) (or C(/) when C(/boot) is not a separate mount).
+      - Keeps the newest C(kernel_cleanup_keep) installed kernels and never removes the running kernel.
+      - Supports apt, dnf, and dnf5. Skips C(patchmon_manual).
+      - After a change, optionally runs C(patchmon.core.agent) with C(agent_state=report).
+      - The play must set C(gather_facts=true) and C(become=true).
+    author:
+      - PatchMon contributors
+    options:
+      kernel_cleanup_enabled:
+        description:
+          - When true, remove old kernel packages beyond the keep count.
+          - When omitted, defaults to C(patchmon_kernel_cleanup), or C(false) when that variable is unset.
+        type: bool
+        default: false
+      kernel_cleanup_keep:
+        description:
+          - Number of newest installed kernels to keep.
+          - When omitted, defaults to C(patchmon_kernel_keep), or C(2) when that variable is unset.
+        type: int
+        default: 2
+      kernel_cleanup_boot_min_free_mb:
+        description:
+          - Free-space floor in MiB used for a warning before cleanup.
+          - When omitted, defaults to C(patchmon_boot_min_free_mb), or C(256) when that variable is unset.
+        type: int
+        default: 256
+      kernel_cleanup_report:
+        description:
+          - When true, run a local agent report after a changed cleanup.
+        type: bool
+        default: true

@@ -1,0 +1,12 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Apply pacman upgrades
+  community.general.pacman:
+    update_cache: true
+    upgrade: true
+    upgrade_extra_args: >-
+      {{
+        ('--ignore ' + (apply_all_updates_ignore_packages | join(',')))
+        if (apply_all_updates_ignore_packages | length > 0)
+        else omit
+      }}

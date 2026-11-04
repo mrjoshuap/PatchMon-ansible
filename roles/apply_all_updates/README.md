@@ -2,9 +2,18 @@
 
 All pending package upgrades, then a local agent report.
 
-Apt uses a safe upgrade. `dnf` and `dnf5` use `state: latest`. A host also in `patchmon_manual` is skipped. An eligible host whose package manager is not apt, dnf, or dnf5 fails. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. This role does not reboot and does not call the PatchMon API. The agent report is local.
+Apt uses `apply_all_updates_apt_upgrade` (`safe` or `full`). `dnf`, `dnf5`, and `pacman` upgrade pending packages. A host also in `patchmon_manual` is skipped. Names in `patchmon_ignore_packages` are skipped. Optional lock wait uses `patchmon_pkg_force` with `patchmon_pkg_lock_timeout`. An eligible host whose package manager is not apt, dnf, dnf5, or pacman fails. The failure includes a subject and description to paste into a [PatchMon feedback](https://feedback.patchmon.net/) request. This role does not reboot and does not call the PatchMon API. The agent report is local.
 
-The play must set `gather_facts: true` and `become: true`. This role has no role variables.
+The play must set `gather_facts: true` and `become: true`. Inventory knobs use host_vars, then group_vars, then play or extra vars, then role defaults.
+
+## Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `apply_all_updates_ignore_packages` | `patchmon_ignore_packages`, else `[]` | Package names to skip |
+| `apply_all_updates_apt_upgrade` | `patchmon_apt_upgrade`, else `safe` | Apt upgrade mode (`safe` or `full`) |
+| `apply_all_updates_lock_timeout` | `patchmon_pkg_lock_timeout`, else `0` | Seconds for lock wait / module `lock_timeout` |
+| `apply_all_updates_force` | `patchmon_pkg_force`, else `false` | Wait for dpkg/dnf locks when timeout > 0 |
 
 ## Example
 

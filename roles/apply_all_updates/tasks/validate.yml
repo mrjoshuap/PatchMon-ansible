@@ -8,3 +8,39 @@
     fail_msg: >-
       patchmon.core.apply_all_updates needs gather_facts: true and
       become: true on the play so ansible_facts['pkg_mgr'] is set.
+
+- name: Require a list of ignored package names
+  ansible.builtin.assert:
+    that:
+      - apply_all_updates_ignore_packages is iterable
+      - apply_all_updates_ignore_packages is not string
+      - apply_all_updates_ignore_packages is not mapping
+    fail_msg: >-
+      apply_all_updates_ignore_packages must be a list of package names.
+      When unset, the role reads patchmon_ignore_packages (default []).
+
+- name: Require a supported apt upgrade mode
+  ansible.builtin.assert:
+    that:
+      - apply_all_updates_apt_upgrade | string in ['safe', 'full']
+    fail_msg: >-
+      apply_all_updates_apt_upgrade must be 'safe' or 'full'.
+      When unset, the role reads patchmon_apt_upgrade (default safe).
+      Got '{{ apply_all_updates_apt_upgrade }}'.
+
+- name: Require a non-negative lock timeout
+  ansible.builtin.assert:
+    that:
+      - apply_all_updates_lock_timeout | int >= 0
+    fail_msg: >-
+      apply_all_updates_lock_timeout must be a non-negative integer.
+      When unset, the role reads patchmon_pkg_lock_timeout (default 0).
+      Got '{{ apply_all_updates_lock_timeout }}'.
+
+- name: Require a boolean force flag
+  ansible.builtin.assert:
+    that:
+      - apply_all_updates_force | bool in [true, false]
+    fail_msg: >-
+      apply_all_updates_force must be a boolean.
+      When unset, the role reads patchmon_pkg_force (default false).

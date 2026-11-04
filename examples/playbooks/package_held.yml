@@ -1,0 +1,15 @@
+---
+# Detect APT holds and DNF versionlocks. Local only; does not update PatchMon.
+#
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/package_held.yml
+
+- name: Show held packages for PatchMon hosts
+  hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Detect held packages
+      ansible.builtin.import_role:
+        name: patchmon.core.package_held

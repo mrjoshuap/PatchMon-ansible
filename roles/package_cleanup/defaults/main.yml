@@ -1,0 +1,8 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Variables for patchmon.core.package_cleanup.
+# Defaults keep cleanup off unless inventory or role vars enable it.
+
+package_cleanup_enabled: "{{ patchmon_cleanup_packages | default(false) | bool }}"
+package_cleanup_cache: "{{ patchmon_cleanup_cache | default('never') }}"
+package_cleanup_report: true

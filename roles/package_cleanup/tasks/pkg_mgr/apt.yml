@@ -1,0 +1,6 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Autoremove unused apt packages
+  ansible.builtin.apt:
+    autoremove: true
+  register: package_cleanup_apt

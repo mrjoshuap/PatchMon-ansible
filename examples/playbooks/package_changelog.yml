@@ -1,0 +1,17 @@
+---
+# Fetch a package changelog from the local package manager.
+# Pass -e patchmon_package_changelog=<name> (or package_changelog_name).
+#
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/package_changelog.yml \
+#     -e patchmon_package_changelog=openssl
+
+- name: Show package changelog for PatchMon hosts
+  hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Fetch package changelog
+      ansible.builtin.import_role:
+        name: patchmon.core.package_changelog

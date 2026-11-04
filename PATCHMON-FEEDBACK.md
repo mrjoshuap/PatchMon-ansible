@@ -15,7 +15,7 @@ Please add the same PATCH routes under /api/v1/api/hosts/{id}/... with scope hos
 ## Replace host group membership on the Integration API
 
 ```text
-Replacing a host's groups is a session route today (PUT /api/v1/hosts/{id}/groups, can_manage_hosts). GET /api/v1/host-groups is also session-only. This extends https://github.com/PatchMon/PatchMon/issues/595.
+Replacing a host's groups is a session route today (PUT /api/v1/hosts/{id}/groups, can_manage_hosts). GET /api/v1/host-groups is also session-only. [This extends PatchMon Issue 595](https://github.com/PatchMon/PatchMon/issues/595).
 
 Please add GET /api/v1/api/host-groups with scope host:get, and PUT /api/v1/api/hosts/{id}/groups with scope host:put that replaces the full set.
 ```
@@ -47,3 +47,45 @@ Please document those session routes, and mark which ones are not on the Integra
 ## Compliance summary on the Integration API
 
 Already posted: [Expose compliance summary on the Integration API](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5aw69zbe04r3hm0efeedbxj).
+
+## Package severity on the Integration API
+
+```text
+GET /api/v1/api/hosts/{id}/packages returns is_security_update only. Automators cannot filter by critical / important / moderate / low (or distro urgency) without guessing.
+
+Please add a severity (or urgency) field on each package object, document it in OpenAPI, and keep is_security_update for backward compatibility.
+```
+
+## Ignore and unignore packages on the Integration API
+
+[Related UI request](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5zdxt71en98bvc8ytjsbbzr)
+
+```text
+Operators need to ignore (and later unignore) specific packages or pending updates in PatchMon so they leave the dashboard pending counts. patchmon.core can skip names via inventory vars during Ansible upgrades, but that does not clear PatchMon UI noise.
+
+Please add Integration API routes to mark packages ignored (optional expiry) and to clear ignore, with host:get reads that include ignored status on package objects.
+```
+
+## Held packages on the Integration API
+
+```text
+APT holds and DNF versionlocks affect what an upgrade can install. patchmon.core.package_held can detect them locally, but PatchMon does not surface held status on host or package records.
+
+Please report held / versionlocked packages from the agent and expose them on GET /api/v1/api/hosts/{id}/packages (and optionally stats).
+```
+
+## Package changelogs on the Integration API
+
+```text
+Operators want to read a package changelog before approving an update. patchmon.core.package_changelog can fetch apt-get changelog / dnf changelog on the host, but PatchMon has no Integration read for changelogs.
+
+Please add an Integration route (or package field) that returns changelog text for a host package when the agent can collect it.
+```
+
+## Agent-native cleanup and post-patch hooks
+
+```text
+patchmon.core adds optional Ansible roles for autoremove, cache clean, service restart, and old-kernel cleanup. Native PatchMon patching policies still need the same capabilities so UI-driven runs match Ansible fleets.
+
+Please add policy options for package cleanup, cache clean timing, post-patch service restart, and old-kernel cleanup, or document agent hooks that cover them.
+```

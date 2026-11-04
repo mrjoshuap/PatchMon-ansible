@@ -1,0 +1,76 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+- name: Validate package cleanup inputs
+  ansible.builtin.include_tasks: validate.yml
+
+- name: Record package cleanup eligibility
+  ansible.builtin.set_fact:
+    package_cleanup_supported_pkg_mgrs: "{{ ['apt', 'dnf', 'dnf5', 'pacman'] }}"
+    package_cleanup_not_manual: "{{ 'patchmon_manual' not in group_names }}"
+    package_cleanup_changed: false
+
+- name: Record whether autoremove and cache steps should run
+  ansible.builtin.set_fact:
+    package_cleanup_do_autoremove: >-
+      {{
+        package_cleanup_enabled | bool
+        and package_cleanup_not_manual | bool
+        and ansible_facts['pkg_mgr'] in package_cleanup_supported_pkg_mgrs
+      }}
+    package_cleanup_do_cache: >-
+      {{
+        package_cleanup_cache | string != 'never'
+        and package_cleanup_not_manual | bool
+        and ansible_facts['pkg_mgr'] in package_cleanup_supported_pkg_mgrs
+      }}
+
+- name: Fail on unsupported package manager when cleanup was requested
+  ansible.builtin.include_tasks: unsupported.yml
+  when:
+    - package_cleanup_not_manual | bool
+    - >-
+      (package_cleanup_enabled | bool)
+      or (package_cleanup_cache | string != 'never')
+    - ansible_facts['pkg_mgr'] not in package_cleanup_supported_pkg_mgrs
+
+- name: Clean package manager cache before autoremove
+  ansible.builtin.include_tasks: cache.yml
+  when:
+    - package_cleanup_do_cache | bool
+    - package_cleanup_cache | string in ['pre', 'both']
+
+- name: Autoremove unused packages for the host package manager
+  ansible.builtin.include_tasks: "pkg_mgr/{{ ansible_facts['pkg_mgr'] }}.yml"
+  when: package_cleanup_do_autoremove | bool
+
+- name: Clean package manager cache after autoremove
+  ansible.builtin.include_tasks: cache.yml
+  when:
+    - package_cleanup_do_cache | bool
+    - package_cleanup_cache | string in ['post', 'both']
+
+- name: Record whether cleanup changed the host
+  ansible.builtin.set_fact:
+    package_cleanup_changed: >-
+      {{
+        (package_cleanup_apt is defined and package_cleanup_apt is changed)
+        or (package_cleanup_dnf is defined and package_cleanup_dnf is changed)
+        or (package_cleanup_dnf5 is defined and package_cleanup_dnf5 is changed)
+        or (package_cleanup_pacman is defined and package_cleanup_pacman is changed)
+        or (package_cleanup_cache_apt is defined and package_cleanup_cache_apt is changed)
+        or (package_cleanup_cache_dnf is defined and package_cleanup_cache_dnf is changed)
+        or (package_cleanup_cache_dnf5 is defined and package_cleanup_cache_dnf5 is changed)
+        or (package_cleanup_cache_pacman is defined and package_cleanup_cache_pacman is changed)
+      }}
+  when: >-
+    (package_cleanup_do_autoremove | bool)
+    or (package_cleanup_do_cache | bool)
+
+- name: Report package state to PatchMon after cleanup
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: report
+  when:
+    - package_cleanup_report | bool
+    - package_cleanup_changed | bool

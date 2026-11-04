@@ -1,0 +1,96 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Fetch PatchMon pending packages and filter by severity + ignore list.
+- name: Require PatchMon API access for listed security packages
+  ansible.builtin.assert:
+    that:
+      - apply_security_updates_host_id | length > 0
+      - apply_security_updates_api_url | length > 0
+      - apply_security_updates_api_key | length > 0
+      - apply_security_updates_api_secret | length > 0
+    fail_msg: >-
+      Listed security updates on {{ inventory_hostname }} need
+      apply_security_updates_host_id (inventory hostvar patchmon_id),
+      PATCHMON_SERVER_URL (preferred; PATCHMON_API_URL overrides it and is
+      discouraged), PATCHMON_API_KEY, and PATCHMON_API_SECRET
+      (Integration host:get).
+
+- name: Fetch PatchMon packages with pending updates
+  patchmon.core.host_packages:
+    api_url: "{{ apply_security_updates_api_url }}"
+    api_key: "{{ apply_security_updates_api_key }}"
+    api_secret: "{{ apply_security_updates_api_secret }}"
+    verify_ssl: "{{ apply_security_updates_verify_ssl | bool }}"
+    timeout: "{{ apply_security_updates_timeout | int }}"
+    host_id: "{{ apply_security_updates_host_id }}"
+    updates_only: true
+  delegate_to: localhost
+  become: false
+  register: apply_security_updates_packages
+
+- name: Normalize severity filter values
+  ansible.builtin.set_fact:
+    apply_security_updates_severity_normalized: "{{ apply_security_updates_severity | map('lower') | list }}"
+
+- name: Drop ignored package names from the PatchMon list
+  ansible.builtin.set_fact:
+    apply_security_updates_candidates: >-
+      {{
+        apply_security_updates_packages.packages
+        | selectattr('name', 'defined')
+        | rejectattr('name', 'in', apply_security_updates_ignore_packages)
+        | list
+      }}
+
+- name: Select security packages when severity includes security
+  ansible.builtin.set_fact:
+    apply_security_updates_package_names: >-
+      {{
+        apply_security_updates_candidates
+        | selectattr('is_security_update')
+        | map(attribute='name')
+        | list
+      }}
+  when: "'security' in apply_security_updates_severity_normalized"
+
+- name: Select packages by API severity when security is not requested
+  ansible.builtin.set_fact:
+    apply_security_updates_package_names: >-
+      {{
+        apply_security_updates_candidates
+        | selectattr('severity', 'defined')
+        | selectattr('severity', 'in', apply_security_updates_severity_normalized)
+        | map(attribute='name')
+        | list
+      }}
+  when:
+    - "'security' not in apply_security_updates_severity_normalized"
+    - >-
+      apply_security_updates_candidates
+      | selectattr('severity', 'defined')
+      | list
+      | length > 0
+
+- name: Select packages by API urgency when severity is absent
+  ansible.builtin.set_fact:
+    apply_security_updates_package_names: >-
+      {{
+        apply_security_updates_candidates
+        | selectattr('urgency', 'defined')
+        | selectattr('urgency', 'in', apply_security_updates_severity_normalized)
+        | map(attribute='name')
+        | list
+      }}
+  when:
+    - "'security' not in apply_security_updates_severity_normalized"
+    - apply_security_updates_package_names is not defined
+    - >-
+      apply_security_updates_candidates
+      | selectattr('urgency', 'defined')
+      | list
+      | length > 0
+
+- name: Default listed package names to empty when no filter matched
+  ansible.builtin.set_fact:
+    apply_security_updates_package_names: []
+  when: apply_security_updates_package_names is not defined

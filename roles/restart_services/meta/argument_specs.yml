@@ -1,0 +1,39 @@
+---
+# SPDX-License-Identifier: AGPL-3.0-or-later
+argument_specs:
+  main:
+    short_description: Restart configured services after patching when running
+    description:
+      - Restarts services listed in C(restart_services_list) when they are active.
+      - Also restarts services mapped from upgraded package names via C(restart_services_map).
+      - Optionally runs C(needrestart -r a) when C(restart_services_needrestart) is true and needrestart is installed.
+      - Inventory knobs use host_vars, then group_vars, then play or extra vars, then role defaults.
+      - The play must set C(become=true). C(gather_facts) is not required; the role gathers service facts.
+    author:
+      - PatchMon contributors
+    options:
+      restart_services_list:
+        description:
+          - Service names to restart when running.
+          - When omitted, defaults to C(patchmon_restart_services), or an empty list when that variable is unset.
+        type: list
+        elements: str
+        default: []
+      restart_services_map:
+        description:
+          - Mapping of package name to a list of service names.
+          - When omitted, defaults to C(patchmon_restart_services_map), or an empty mapping when that variable is unset.
+        type: dict
+        default: {}
+      restart_services_needrestart:
+        description:
+          - When true, run needrestart automatically if the binary is present.
+          - When omitted, defaults to C(patchmon_restart_needrestart), or C(false) when that variable is unset.
+        type: bool
+        default: false
+      restart_services_upgraded_packages:
+        description:
+          - Package names upgraded in this run. Used with C(restart_services_map).
+        type: list
+        elements: str
+        default: []
