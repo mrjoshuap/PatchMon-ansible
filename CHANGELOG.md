@@ -33,6 +33,13 @@ All notable changes to this collection are documented in this file.
 - Listed security path on apt also applies to pacman when
   `apply_security_updates_try_listed` / `patchmon_try_listed_security` is true.
 - `pending_updates.yml` shows packages skipped by `patchmon_ignore_packages`.
+- Example playbooks document role / inventory configuration knobs in header
+  comments and commented `vars:` blocks.
+- GitHub publish consolidated in `.github/workflows/publish.yml`: stable
+  `vX.Y.Z` tags and path-filtered `main` pushes publish to Ansible Galaxy and
+  GitHub Releases (`X.Y.Z-dev.<UTC timestamp>` for development). Requires
+  repository secret `GALAXY_API_KEY`. CI no longer creates development
+  prereleases; `release.yml` is removed.
 
 ## [2.0.9] - 2026-11-03
 

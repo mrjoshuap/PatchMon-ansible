@@ -4,9 +4,9 @@
 # runners cannot reach aap.home.mrjoshuap.com.
 # Does not build. Downloads the tarball already attached on
 # github.com/mrjoshuap/PatchMon-ansible:
-#   vX.Y.Z               → staging (approve into published)
-#   vX.Y.Z-dev.<run id>  → development repository (no approval)
-# A tag can reach this mirror before release.yml finishes attaching the
+#   vX.Y.Z                    → staging (approve into published)
+#   vX.Y.Z-dev.<UTC timestamp> → development repository (no approval)
+# A tag can reach this mirror before publish.yml finishes attaching the
 # asset, so the download waits for that file.
 name: publish-collection
 

@@ -1,0 +1,144 @@
+---
+# Publish patchmon.core to Ansible Galaxy and GitHub Releases.
+#
+# galaxy.yml version: is the next release (X.Y.Z, no v, no prerelease).
+# A tag vX.Y.Z on that commit publishes Galaxy version X.Y.Z and a GitHub Release.
+# A push to main publishes X.Y.Z-dev.<UTC timestamp> and a GitHub prerelease.
+# The stable tag filter uses +, meaning one or more digits. The dev tag
+# vX.Y.Z-dev.<timestamp> does not match it. A dev tag that does arrive is skipped.
+#
+# This repository uses immutable releases: create the GitHub Release as a draft,
+# attach the tarball, then publish. The Gitea mirror downloads that asset for
+# private Automation Hub (staging or development).
+#
+# Repository secret GALAXY_API_KEY is the token from Galaxy → Preferences.
+name: publish
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+    paths:
+      - "galaxy.yml"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+      - "plugins/**"
+      - "roles/**"
+      - "playbooks/**"
+      - "meta/**"
+      - "examples/**"
+      - "scripts/release_version.py"
+      - ".github/workflows/publish.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "galaxy.yml"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+      - "plugins/**"
+      - "roles/**"
+      - "playbooks/**"
+      - "meta/**"
+      - "examples/**"
+      - "scripts/release_version.py"
+      - ".github/workflows/publish.yml"
+  workflow_dispatch:
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish Galaxy release
+    needs: checks
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check release version rules
+        run: python3 scripts/release_version.py --self-test
+
+      - name: Check galaxy.yml version is the next release
+        run: python3 scripts/release_version.py --ref refs/heads/main --timestamp 20261103142922 >/dev/null
+
+      - name: Install ansible-core
+        run: |
+          python3 -m venv "${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv"
+          "${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv/bin/pip" install --upgrade pip
+          "${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv/bin/pip" install "ansible-core>=2.16.0"
+          echo "${RUNNER_TEMP:-/tmp}/ansible-galaxy-venv/bin" >> "${GITHUB_PATH}"
+
+      - name: Decide release version
+        id: version
+        run: |
+          python3 scripts/release_version.py \
+            --ref "${GITHUB_REF}" \
+            --timestamp "$(date -u +%Y%m%d%H%M%S)" \
+            --write \
+            --notes "${RUNNER_TEMP}/release-notes.md" \
+            --require-stable-floor \
+            >> "${GITHUB_OUTPUT}"
+
+      - name: Build collection tarball
+        if: steps.version.outputs.channel != 'skip'
+        run: |
+          set -euo pipefail
+          ansible-galaxy collection build
+          expected="patchmon-core-${{ steps.version.outputs.version }}.tar.gz"
+          if [[ ! -f "${expected}" ]]; then
+            echo "ERROR: expected ${expected}"
+            ls -la
+            exit 1
+          fi
+          if tar -tzf "${expected}" | grep -Eq '^\.ansible/|^tests/|^molecule/'; then
+            echo "ERROR: ${expected} contains files that build_ignore should drop"
+            exit 1
+          fi
+
+      - name: Publish to Ansible Galaxy
+        if: steps.version.outputs.channel != 'skip'
+        env:
+          GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GALAXY_API_KEY}" ]]; then
+            echo "ERROR: Set repository secret GALAXY_API_KEY from Galaxy → Preferences → API token"
+            exit 1
+          fi
+          artifact="patchmon-core-${{ steps.version.outputs.version }}.tar.gz"
+          ansible-galaxy collection publish "${artifact}" --token "${GALAXY_API_KEY}"
+          echo "Published ${artifact} to galaxy.ansible.com"
+
+      # Immutable releases lock assets at publish time. Create as a draft so
+      # the tarball attaches, then publish. The Gitea mirror downloads that asset.
+      - name: Create GitHub release draft
+        if: steps.version.outputs.channel != 'skip'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          flags=(--draft)
+          if [[ "${{ steps.version.outputs.channel }}" == "dev" ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "${{ steps.version.outputs.tag }}" \
+            "patchmon-core-${{ steps.version.outputs.version }}.tar.gz" \
+            --title "patchmon.core ${{ steps.version.outputs.version }}" \
+            --notes-file "${RUNNER_TEMP}/release-notes.md" \
+            "${flags[@]}"
+
+      - name: Publish GitHub release
+        if: steps.version.outputs.channel != 'skip'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release edit "${{ steps.version.outputs.tag }}" --draft=false

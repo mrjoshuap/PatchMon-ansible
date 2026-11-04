@@ -35,9 +35,10 @@ The `apply_security_updates` and `apply_all_updates` roles keep `tasks/main.yml`
 | [`docs/automator-guide.md`](automator-guide.md) | Source of truth for inventories, credentials, and plays |
 | [`docs/docsite/`](docsite/) | Sphinx theme, extra-docs nav, and the Markdown include hook |
 | [`tests/unit/`](../tests/unit/) | pytest for the API client, inventory, modules, and lookups |
-| [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | pytest and ansible-lint |
+| [`scripts/release_version.py`](../scripts/release_version.py) | Stable tag versus main-branch development version for publish |
+| [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | Shared checks on pull requests and `main` |
+| [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) | Galaxy + GitHub Release (stable tag or development build) |
 | [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) | Docsite build and GitHub Pages |
-| [`.github/workflows/release.yml`](../.github/workflows/release.yml) | Tag build, collection tarball, GitHub Release |
 | [`.devcontainer/`](../.devcontainer/) | Dev container image and startup scripts |
 
 ## Chapter 2: Dev container
@@ -65,7 +66,7 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 
 Unit tests and local Ansible both import this checkout through `.collections`. The pre-commit ansible-lint hook installs this collection under `.ansible/collections` and points galaxy at that copy. It lints the playbook files under `examples/playbooks/` and `playbooks/`.
 
-Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. A tagged release runs the same suite before it builds a tarball. A `main` push that does not change `galaxy.yml` `version:` and that touches `galaxy.yml`, `plugins/`, `roles/`, `playbooks/`, or `meta/` publishes `vX.Y.Z-dev.<run id>` as a GitHub prerelease after the suite passes. The Gitea publish workflow does not build or test. It downloads that GitHub Release tarball. A full `vX.Y.Z` tag goes to Automation Hub staging. A `vX.Y.Z-dev.<run id>` tag goes to the development repository.
+Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) runs the same suite, then publishes. A tag `vX.Y.Z` that matches `galaxy.yml` publishes that version to Ansible Galaxy and a GitHub Release. A path-filtered push to `main` publishes `{version}-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease. The committed `galaxy.yml` stays on the next release (`X.Y.Z`). Set repository secret `GALAXY_API_KEY` (Galaxy → Preferences → API token). This repository uses immutable releases: the workflow creates a draft, attaches the tarball, then publishes. The Gitea publish workflow does not build or test. It downloads that GitHub Release tarball. A full `vX.Y.Z` tag goes to Automation Hub staging. A `vX.Y.Z-dev.<timestamp>` tag goes to the development repository.
 
 ## Chapter 4: Where documentation lives
 
@@ -112,22 +113,26 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 
 ## Chapter 6: Cutting a release
 
-The GitHub Release is the annotated tag. Pushing the version bump to `main` does not create it. Tag that commit in the same release.
+`galaxy.yml` `version:` on `main` is the **next** release (`X.Y.Z`, no `v`, no prerelease). Pushing the version bump to `main` does not create the stable GitHub Release or Galaxy version. Tag that commit in the same release.
 
 1. Bump `galaxy.yml` `version`, update `CHANGELOG.md`, commit, and push `main`.
-2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. [Release collection](../.github/workflows/release.yml) runs [the shared checks](../.github/workflows/checks.yml) on that commit before it builds.
+2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. [publish](../.github/workflows/publish.yml) runs [the shared checks](../.github/workflows/checks.yml) on that commit before it builds.
 
 ```bash
 git tag -a v2.0.7 -m "patchmon.core 2.0.7"
 git push origin v2.0.7
 ```
 
-3. After the checks pass, that workflow builds the collection tarball, creates the GitHub Release as a **draft** with the `.tar.gz` attached, then publishes it. Draft-then-publish is required because this repository uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases): assets cannot be added after a release is published. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
+3. After the checks pass, that workflow rewrites the workspace `version` only if needed, builds the collection tarball, publishes it to Ansible Galaxy, creates the GitHub Release as a **draft** with the `.tar.gz` attached, then publishes the draft. Draft-then-publish is required because this repository uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases): assets cannot be added after a release is published. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
 
-A `main` push that does not bump `version:` and that changes collection content publishes a development prerelease `vX.Y.Z-dev.<run id>` from CI the same way (draft, attach tarball, publish). The tarball uses that version. The committed `galaxy.yml` does not. That prerelease is not the stable release. Tags containing `-dev.` do not start the stable release workflow. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
+A path-filtered push to `main` publishes a development build `X.Y.Z-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease `vX.Y.Z-dev.<timestamp>` the same way (draft, attach tarball, publish). The committed `galaxy.yml` stays on `X.Y.Z`. That prerelease sorts before the stable release and is not the stable release. Tags containing `-dev.` are skipped by the version script and do not start a second publish. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
 
-v2.0.4 was first tagged on the version-bump commit. That copy of the workflow ran unit tests without the checkout link, and the job failed. The tag was moved to the later commit that creates the link.
+Install the newest development build of the current line:
 
-You can also run the workflow manually (**Actions → Release collection → Run workflow**) and supply an existing tag such as `v2.0.7`.
+```bash
+ansible-galaxy collection install patchmon.core --pre '>=2.0.10-dev,<2.0.10'
+```
 
-The release notes include a link to [Migrating from 1.0](automator-guide.md#chapter-9-migrating-from-1-0) in the automator guide.
+You can also run the workflow manually (**Actions → publish → Run workflow**).
+
+[`scripts/release_version.py`](../scripts/release_version.py) chooses the channel and rewrites the workspace version for the tarball.
