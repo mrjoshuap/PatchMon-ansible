@@ -10,17 +10,20 @@ If the Linux enrollment script fails and its output reports an unsupported opera
 
 ## Check mode
 
-With `agent_state: present`, `--check` validates required inputs and prints an installation preview. It does not fetch, stage, or execute the installer, manage the service, or send the optional post-install report. This works even when no installer file or agent service exists. It reports no predicted changes because the external script's behavior cannot be determined without executing it; a successful preview does not verify API credentials or guarantee installation success. Other agent states retain their existing check-mode behavior.
+With `agent_state: present`, `--check` validates required inputs and prints an installation preview. It does not fetch, stage, or execute the installer, manage the service, or send the optional post-install report. This works even when no installer file or agent service exists. It reports no predicted changes because the external script's behavior cannot be determined without executing it; a successful preview does not verify API credentials or guarantee installation success.
+
+On Windows, `agent_state: absent` with `--check` validates the server URL and prints a removal preview. It does not download, stage, execute, or clean up removal scripts. It reports no predicted changes because the external removal script is not simulated; a successful preview does not verify server connectivity or guarantee removal success. POSIX removal and other agent states retain their existing check-mode behavior.
 
 ## Required API / credentials
 
 | Operation | Credential | Notes |
 |-----------|------------|-------|
 | Install (`agent_state=present`) | Auto-Enrollment key + secret | Not an Integration API token. Create under **Settings → Integrations → Auto-Enrollment**. |
+| Windows reinstall (`present`) | Existing host `agent_api_id` + `agent_api_key` | Optional alternative to Auto-Enrollment; supply both. |
 | Windows remove (`absent`) | Server URL only | Downloads `GET /api/v1/hosts/remove?os=windows` (no auth). Prefer `PATCHMON_SERVER_URL`. |
 | Start / stop / report / Linux absent | None (local host) | Uses the service manager / agent binary on the target. |
 
-Linux install uses `GET /api/v1/auto-enrollment/script`. Windows install enrolls then uses `GET /api/v1/hosts/install?os=windows` (same flow as PatchMon's Intune scripts). Neither path deletes the PatchMon host record on `absent`.
+Linux install uses `GET /api/v1/auto-enrollment/script`. Windows install enrolls (unless existing host credentials are supplied), then uses `GET /api/v1/hosts/install?os=windows` (same flow as PatchMon's Intune scripts). Neither path deletes the PatchMon host record on `absent`.
 
 See [Credentials](../../docs/automator-guide.md#chapter-3-credentials).
 
@@ -39,6 +42,7 @@ See [Credentials](../../docs/automator-guide.md#chapter-3-credentials).
 | `agent_keep_failed_script` | `false` | On failure, copy script to `agent_failed_script_path` (contains secrets) |
 | `agent_failed_script_path` | `/var/tmp/patchmon-enroll-failed-<host>.sh` | Durable path when `agent_keep_failed_script` is true |
 | `agent_friendly_name` | gathered hostname | Windows enroll friendly name |
+| `agent_api_id` / `agent_api_key` | `""` | Optional Windows host credentials; supply both to bypass enrollment |
 | `agent_host_id` | `""` | Optional Windows re-enrollment host UUID |
 | `agent_report` | `false` | Run agent report after present |
 
@@ -60,3 +64,31 @@ Windows defaults (`vars/Windows.yml`): `agent_service_name=PatchMonAgent`, `agen
 ```
 
 Windows example: [examples/playbooks/windows_agent.yml](../../examples/playbooks/windows_agent.yml). Thin playbook: [playbooks/agent.yml](../../playbooks/agent.yml).
+
+### Reinstalling an existing Windows host
+
+Auto-Enrollment can reject an existing host that PatchMon still considers reporting,
+including immediately after removal. `agent_host_id` identifies the host but does
+not bypass this restriction. `agent_force_install` forces the installation path;
+it does not override enrollment policy.
+
+For an existing host, supply its host API credentials from Ansible Vault:
+
+```yaml
+- name: Reinstall the Windows agent using existing host credentials
+  ansible.builtin.include_role:
+    name: patchmon.core.agent
+  vars:
+    agent_state: present
+    agent_server_url: https://patchmon.example.com
+    agent_api_id: "{{ vault_patchmon_host_api_id }}"
+    agent_api_key: "{{ vault_patchmon_host_api_key }}"
+    agent_force_install: true
+```
+
+These credentials belong to the target host, not an Integration API token.
+The role downloads the host-specific installer without Auto-Enrollment. Omit
+`agent_force_install` for normal installation that skips an already-running agent.
+Removal deletes local credentials; retain them securely before removing an agent
+if you intend to reinstall with this method. The role does not retrieve or rotate
+credentials through the administrator API.

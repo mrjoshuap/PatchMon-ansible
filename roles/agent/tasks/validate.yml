@@ -16,21 +16,40 @@
     - ansible_facts['os_family'] | default('') == 'Windows'
     - role_path is defined
 
-- name: Validate enrollment credentials for install states
+- name: Validate server URL for install
   ansible.builtin.assert:
     that:
       - agent_server_url is defined
       - agent_server_url | length > 0
+    fail_msg: agent_server_url is required when agent_state is present.
+  when: agent_state == 'present'
+
+- name: Validate Windows host credential pair
+  ansible.builtin.assert:
+    that:
+      - (agent_api_id | length > 0) == (agent_api_key | length > 0)
+    fail_msg: Supply both agent_api_id and agent_api_key, or neither.
+  when:
+    - agent_state == 'present'
+    - ansible_facts['os_family'] | default('') == 'Windows'
+
+- name: Validate enrollment credentials for install states
+  ansible.builtin.assert:
+    that:
       - agent_enrollment_key is defined
       - agent_enrollment_key | length > 0
       - agent_enrollment_secret is defined
       - agent_enrollment_secret | length > 0
     fail_msg: >-
-      agent_server_url, agent_enrollment_key, and agent_enrollment_secret are
-      required when agent_state is present (auto-enrollment install).
+      agent_enrollment_key and agent_enrollment_secret are required when agent_state is present
+      for Auto-Enrollment.
+      Windows installation can instead use agent_api_id and agent_api_key for an existing host.
       Create an Auto-Enrollment token under Settings → Integrations in PatchMon.
-      See docs/automator-guide.md (Credentials).
-  when: agent_state == 'present'
+  when:
+    - agent_state == 'present'
+    - >-
+      ansible_facts['os_family'] | default('') != 'Windows'
+      or not (agent_api_id | length > 0 and agent_api_key | length > 0)
 
 - name: Validate server URL for Windows removal
   ansible.builtin.assert:

@@ -5,9 +5,9 @@ argument_specs:
     short_description: Install, start, stop, report, or remove the PatchMon agent
     description:
       - Installs the PatchMon agent with an Auto-Enrollment flow, or manages the local agent service.
-      - Install (C(agent_state=present)) needs an Auto-Enrollment key and secret, not an Integration API token.
+      - Install needs an Auto-Enrollment key and secret, or existing host credentials on Windows.
       - On Linux, install downloads C(GET /api/v1/auto-enrollment/script) (C(direct-host) or C(proxmox-lxc)).
-      - On Windows, install enrolls then downloads C(GET /api/v1/hosts/install?os=windows), matching the Intune flow.
+      - On Windows, install optionally enrolls then downloads C(GET /api/v1/hosts/install?os=windows), matching the Intune flow.
       - Start, stop, report, and remove run on the managed host. Windows removal downloads
         C(GET /api/v1/hosts/remove?os=windows).
       - Gather OS facts for Windows routing. Without OS facts, the role retains POSIX behavior.
@@ -19,6 +19,8 @@ argument_specs:
       - That message does not repeat the script output.
       - In check mode, C(present) validates inputs and previews installation without downloading or running the script.
       - Dependent service and report tasks are skipped; installer changes and installation success cannot be predicted.
+      - In check mode, Windows C(absent) validates the server URL and previews removal without fetching or running scripts.
+      - Removal script changes and success cannot be predicted, and server connectivity is not verified.
     author:
       - PatchMon contributors
     options:
@@ -44,15 +46,27 @@ argument_specs:
       agent_enrollment_key:
         description:
           - Auto-Enrollment token key.
-          - Required when C(agent_state=present).
+          - Required when C(agent_state=present), unless Windows host credentials are supplied.
           - When omitted, defaults to C(PATCHMON_ENROLLMENT_KEY).
         type: str
       agent_enrollment_secret:
         description:
           - Auto-Enrollment token secret.
-          - Required when C(agent_state=present).
+          - Required when C(agent_state=present), unless Windows host credentials are supplied.
           - When omitted, defaults to C(PATCHMON_ENROLLMENT_SECRET).
         type: str
+      agent_api_id:
+        description:
+          - Existing Windows host API id; supply with C(agent_api_key) to bypass Auto-Enrollment.
+          - Ignored on POSIX. Store host credentials in Ansible Vault.
+        type: str
+        default: ""
+      agent_api_key:
+        description:
+          - Existing Windows host API key; supply with C(agent_api_id).
+          - This is a host credential, not an Integration API token.
+        type: str
+        default: ""
       agent_script_type:
         description:
           - Enrollment script type passed to the Linux auto-enrollment script endpoint.

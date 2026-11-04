@@ -45,5 +45,9 @@ agent_remove_script_controller_path: /tmp/patchmon-remove-{{ inventory_hostname 
 agent_friendly_name: "{{ ansible_facts['hostname'] | default(inventory_hostname) }}"
 agent_host_id: ""
 
+# Optional existing Windows host credentials; supply both to bypass enrollment.
+agent_api_id: ""
+agent_api_key: ""
+
 # When true, run agent report after ensure-started
 agent_report: false
