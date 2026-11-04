@@ -15,6 +15,22 @@
 #     PATCHMON_ENROLLMENT_URL overrides the derived enrollment URL and is
 #     discouraged. PATCHMON_API_URL is a last resort.
 #
+# Configuration (defaults). Pass -e, or uncomment vars: on the install play.
+# Full list: roles/agent/README.md. This playbook forces agent_state: present.
+#
+# Playbook extras (required when the host is not already in inventory):
+#   enroll_host: <hostname>              # inventory name / friendly target
+#   enroll_ansible_host: <address>       # optional SSH/WinRM address
+#
+# Agent knobs:
+#   agent_force_install: false           # re-run install / force=true
+#   agent_force_new_host: false          # FORCE_NEW_HOST / skip short-circuit
+#   agent_script_type: direct-host       # direct-host | proxmox-lxc (Linux)
+#   agent_report: false                  # agent report after install
+#   agent_keep_failed_script: false      # keep failed enroll script (secrets)
+#   agent_verify_ssl: true               # or PATCHMON_VERIFY_SSL
+#   agent_timeout: 30
+#
 # Examples:
 #   ansible-playbook -i inventories/linux.yml \
 #     examples/playbooks/enroll.yml \
@@ -59,6 +75,14 @@
   hosts: "{{ enroll_host | default('all', true) }}"
   gather_facts: true
   become: true
+  # vars:
+  #   agent_force_install: false
+  #   agent_force_new_host: false
+  #   agent_script_type: direct-host
+  #   agent_report: false
+  #   agent_keep_failed_script: false
+  #   agent_verify_ssl: true
+  #   agent_timeout: 30
 
   tasks:
     - name: Install PatchMon agent

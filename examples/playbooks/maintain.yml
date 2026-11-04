@@ -10,13 +10,35 @@
 # Updates default to security-only (apply_security_updates.yml).
 # -e apply_all_updates=true imports apply_all_updates.yml instead.
 #
-# Optional steps (all default off):
-#   -e patchmon_cleanup_cache=pre|post|both
-#   -e patchmon_cleanup_packages=true
-#   -e '{"patchmon_restart_services":["nginx"]}'
-#   -e patchmon_kernel_cleanup=true
-#
 # Keep this file beside the imported plays. Run it against a stats inventory.
+#
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e on this playbook; imported plays read the same vars.
+# Role-prefixed names also work on the child roles; see each role README.
+#
+# Gate which update play runs:
+#   apply_all_updates: false             # true → all pending; false → security
+#
+# Shared update knobs (read by apply_* plays):
+#   patchmon_try_listed_security: false  # apt/pacman listed security path
+#   patchmon_ignore_packages: []         # package names to skip
+#   patchmon_apt_upgrade: safe           # safe | full (all-updates apt only)
+#   patchmon_update_severity: [security] # dnf/dnf5 advisory filters
+#   patchmon_pkg_lock_timeout: 0         # seconds; 0 = no wait
+#   patchmon_pkg_force: false            # wait for locks when timeout > 0
+#
+# Optional steps (all default off; when: on the import_playbook lines):
+#   patchmon_cleanup_cache: never        # never | pre | post | both
+#   patchmon_cleanup_packages: false     # autoremove unused packages
+#   patchmon_restart_services: []        # e.g. ["nginx"]
+#   patchmon_restart_services_map: {}    # package name → service list
+#   patchmon_restart_needrestart: false  # run needrestart when installed
+#   patchmon_kernel_cleanup: false       # remove old kernels
+#   patchmon_kernel_keep: 2              # newest kernels to keep
+#   patchmon_boot_min_free_mb: 256       # /boot free-space warning (MiB)
+#
+# Reboot (reboot_needed.yml):
+#   reboot_needed_timeout: 600           # seconds waiting for the host back
 #
 # Examples:
 #   ansible-playbook -i inventories/patchmon.yml \
@@ -24,6 +46,12 @@
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/maintain.yml \
 #     -e apply_all_updates=true
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/maintain.yml \
+#     -e patchmon_cleanup_packages=true \
+#     -e patchmon_cleanup_cache=post \
+#     -e '{"patchmon_restart_services":["nginx"]}' \
+#     -e patchmon_kernel_cleanup=true
 
 - name: Refresh PatchMon inventory
   hosts: all

@@ -6,6 +6,13 @@
 #   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
 #     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
+# Configuration (defaults). Credentials come from the env via vars: below.
+# Prefer inventory host_vars / group_vars for fleet ignore lists.
+#
+#   patchmon_verify_ssl: true            # or PATCHMON_VERIFY_SSL
+#   patchmon_ignore_packages: []         # names listed under [IGNORED]
+#   updates_only: true                   # host_packages filter (task below)
+#
 # Example — all hosts with security updates pending:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/pending_updates.yml \
@@ -15,6 +22,11 @@
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/pending_updates.yml \
 #     --limit web01.example.com
+#
+# Example — hide packages you already skip during upgrades:
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/pending_updates.yml \
+#     -e '{"patchmon_ignore_packages":["linux-image-generic"]}'
 
 - name: List pending package updates from PatchMon
   hosts: all
@@ -24,6 +36,8 @@
     patchmon_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     patchmon_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     patchmon_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+    # patchmon_verify_ssl: false
+    # patchmon_ignore_packages: []
 
   tasks:
     - name: Require PatchMon host UUID from inventory

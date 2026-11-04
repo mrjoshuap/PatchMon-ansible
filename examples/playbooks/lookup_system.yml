@@ -9,13 +9,20 @@
 #     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #   - Extra var: -e patchmon_id=<uuid>
 #
-# Example:
-#   ansible-playbook examples/playbooks/lookup_system.yml \
-#     -e patchmon_id=550e8400-e29b-41d4-a716-446655440000
+# Configuration. Credentials come from the env (lookup reads them).
+# Edit the lookup() calls below for resource / updates_only / limit, or pass -e.
+#
+#   patchmon_id: <uuid>                  # required (-e)
+#   updates_only: true                   # packages lookup (task below)
+#   limit: 10                            # package_reports / agent_queue
 #
 # Other resource= values: info, network, integrations, notes.
 # packages accepts updates_only=true. package_reports and agent_queue
 # accept limit (PatchMon default 10).
+#
+# Example:
+#   ansible-playbook examples/playbooks/lookup_system.yml \
+#     -e patchmon_id=550e8400-e29b-41d4-a716-446655440000
 
 - name: Lookup PatchMon host details for operations
   hosts: localhost

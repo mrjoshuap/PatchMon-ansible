@@ -8,6 +8,18 @@
 #   PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
 #   PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
+# Configuration (defaults). Pass -e, or uncomment vars: under the retire play.
+# This playbook forces agent_state: absent and host_state: absent.
+# See roles/agent/README.md and roles/host/README.md.
+#
+# Agent remove:
+#   agent_verify_ssl: true               # Windows remove download TLS
+#   agent_timeout: 30
+#
+# Host delete (when patchmon_id is set):
+#   host_timeout: 30
+#   host_verify_ssl: true                # or PATCHMON_VERIFY_SSL
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/retire.yml --limit web01.example.com
@@ -33,6 +45,11 @@
   hosts: all
   gather_facts: false
   become: true
+  # vars:
+  #   agent_verify_ssl: true
+  #   agent_timeout: 30
+  #   host_verify_ssl: true
+  #   host_timeout: 30
 
   tasks:
     - name: Remove PatchMon agent

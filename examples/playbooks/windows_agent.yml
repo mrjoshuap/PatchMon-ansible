@@ -4,6 +4,26 @@
 # Defaults to agent_state=present (enroll + install). Override with -e.
 # Requires PATCHMON_SERVER_URL, PATCHMON_ENROLLMENT_KEY, and
 # PATCHMON_ENROLLMENT_SECRET in the environment (or Vault) for present.
+#
+# Configuration (defaults). Pass -e, or uncomment vars: under the role.
+# Full list: roles/agent/README.md. Windows paths live in vars/Windows.yml.
+#
+#   agent_state: present                 # present | started | stopped | report | absent
+#   agent_force_install: false           # re-run install when already running
+#   agent_force_new_host: false          # skip already-running short-circuit
+#   agent_report: false                  # report after present
+#   agent_friendly_name: <hostname>      # Windows enroll display name
+#   agent_host_id: ""                    # optional Windows re-enrollment UUID
+#   agent_verify_ssl: true               # or PATCHMON_VERIFY_SSL
+#   agent_timeout: 30
+#
+# Example:
+#   ansible-playbook -i examples/windows_inventory.yml \
+#     examples/playbooks/windows_agent.yml
+#   ansible-playbook -i examples/windows_inventory.yml \
+#     examples/playbooks/windows_agent.yml \
+#     -e agent_state=report
+
 - name: Manage the Windows PatchMon agent
   hosts: windows
   gather_facts: true
@@ -12,3 +32,10 @@
     - role: patchmon.core.agent
       vars:
         agent_state: "{{ agent_state | default('present') }}"
+        # agent_force_install: false
+        # agent_force_new_host: false
+        # agent_report: false
+        # agent_friendly_name: "{{ ansible_facts['hostname'] | default(inventory_hostname) }}"
+        # agent_host_id: ""
+        # agent_verify_ssl: true
+        # agent_timeout: 30

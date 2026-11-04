@@ -21,6 +21,16 @@
 #     (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET.
 #     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment under vars:. Role-prefixed names
+# (apply_security_updates_*) also work; see roles/apply_security_updates/README.md.
+#
+#   patchmon_try_listed_security: false   # apt/pacman listed security path
+#   patchmon_ignore_packages: []          # package names to skip
+#   patchmon_update_severity: [security]  # dnf/dnf5: security, bugfix, enhancement
+#   patchmon_pkg_lock_timeout: 0          # seconds; 0 = no wait
+#   patchmon_pkg_force: false             # wait for locks when timeout > 0
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/apply_security_updates.yml
@@ -34,6 +44,11 @@
   become: true
   vars:
     patchmon_try_listed_security: false
+    # patchmon_ignore_packages: []
+    # patchmon_update_severity:
+    #   - security
+    # patchmon_pkg_lock_timeout: 0
+    # patchmon_pkg_force: false
 
   tasks:
     - name: Apply security updates

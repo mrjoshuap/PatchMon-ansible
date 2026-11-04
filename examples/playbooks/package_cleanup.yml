@@ -3,14 +3,31 @@
 # patchmon_cleanup_packages / package_cleanup_enabled.
 # Run against a stats inventory. Skips patchmon_manual.
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment vars: under the play.
+# See roles/package_cleanup/README.md.
+#
+#   patchmon_cleanup_packages: false     # true to autoremove
+#   patchmon_cleanup_cache: never        # never | pre | post | both
+#   package_cleanup_report: true         # agent report after a change
+#
+# Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/package_cleanup.yml \
 #     -e patchmon_cleanup_packages=true
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/package_cleanup.yml \
+#     -e patchmon_cleanup_packages=true \
+#     -e patchmon_cleanup_cache=post
 
 - name: Clean unused packages for PatchMon hosts
   hosts: patchmon_automated:patchmon_no_reboot
   gather_facts: true
   become: true
+  # vars:
+  #   patchmon_cleanup_packages: true
+  #   patchmon_cleanup_cache: never
+  #   package_cleanup_report: true
 
   tasks:
     - name: Autoremove unused packages

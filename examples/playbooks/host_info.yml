@@ -9,6 +9,13 @@
 #   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
 #     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
+# Configuration (defaults). Credentials come from the env via vars: below.
+# Edit the host_info task for gather_subset / inject_facts, or pass -e.
+#
+#   patchmon_verify_ssl: true            # or PATCHMON_VERIFY_SSL
+#   gather_subset: [info, stats, system] # also: all, network, packages, …
+#   inject_facts: true                   # ansible_facts.patchmon
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/host_info.yml
@@ -25,6 +32,7 @@
     patchmon_api_key: "{{ lookup('env', 'PATCHMON_API_KEY') }}"
     patchmon_api_secret: "{{ lookup('env', 'PATCHMON_API_SECRET') }}"
     patchmon_verify_ssl: "{{ lookup('env', 'PATCHMON_VERIFY_SSL') | default(true, true) }}"
+    # patchmon_verify_ssl: false
 
   tasks:
     - name: Require PatchMon host UUID from inventory

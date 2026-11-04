@@ -9,14 +9,32 @@
 #
 # Requires a stats inventory (examples/patchmon_inventory_stats.yml).
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment vars: under the play. Role-prefixed names
+# (apply_all_updates_*) also work; see roles/apply_all_updates/README.md.
+#
+#   patchmon_ignore_packages: []     # package names to skip
+#   patchmon_apt_upgrade: safe       # safe | full (apt only)
+#   patchmon_pkg_lock_timeout: 0     # seconds; 0 = no wait
+#   patchmon_pkg_force: false        # wait for locks when timeout > 0
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/apply_all_updates.yml
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/apply_all_updates.yml \
+#     -e '{"patchmon_ignore_packages":["linux-image-generic"]}' \
+#     -e patchmon_apt_upgrade=full
 
 - name: Apply all pending upgrades on Automated and No Reboot hosts
   hosts: patchmon_automated:patchmon_no_reboot
   gather_facts: true
   become: true
+  # vars:
+  #   patchmon_ignore_packages: []
+  #   patchmon_apt_upgrade: safe
+  #   patchmon_pkg_lock_timeout: 0
+  #   patchmon_pkg_force: false
 
   tasks:
     - name: Apply all pending upgrades

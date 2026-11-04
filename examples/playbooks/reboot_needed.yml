@@ -8,15 +8,25 @@
 #
 # Requires a stats inventory (examples/patchmon_inventory_stats.yml).
 #
+# Configuration (defaults). Pass -e, or uncomment vars: under the play.
+# See roles/reboot_needed/README.md.
+#
+#   reboot_needed_timeout: 600           # seconds waiting for the host back
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/reboot_needed.yml
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/reboot_needed.yml \
+#     -e reboot_needed_timeout=900
 
 - name: Reboot automated hosts that PatchMon reports need a reboot
   hosts: patchmon_automated
   gather_facts: false
   become: true
   serial: 1
+  # vars:
+  #   reboot_needed_timeout: 600
 
   tasks:
     - name: Reboot hosts that need a reboot

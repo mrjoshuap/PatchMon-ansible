@@ -2,14 +2,33 @@
 # Remove old kernels after checking /boot free space. Defaults stay off
 # unless you set patchmon_kernel_cleanup / kernel_cleanup_enabled.
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment vars: under the play.
+# See roles/kernel_cleanup/README.md.
+#
+#   patchmon_kernel_cleanup: false       # true to remove old kernels
+#   patchmon_kernel_keep: 2              # newest kernels to keep
+#   patchmon_boot_min_free_mb: 256       # /boot free-space warning (MiB)
+#   kernel_cleanup_report: true          # agent report after a change
+#
+# Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/kernel_cleanup.yml \
 #     -e patchmon_kernel_cleanup=true
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/kernel_cleanup.yml \
+#     -e patchmon_kernel_cleanup=true \
+#     -e patchmon_kernel_keep=3
 
 - name: Clean old kernels for PatchMon hosts
   hosts: patchmon_automated:patchmon_no_reboot
   gather_facts: true
   become: true
+  # vars:
+  #   patchmon_kernel_cleanup: true
+  #   patchmon_kernel_keep: 2
+  #   patchmon_boot_min_free_mb: 256
+  #   kernel_cleanup_report: true
 
   tasks:
     - name: Remove old kernels

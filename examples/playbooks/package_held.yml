@@ -1,6 +1,9 @@
 ---
 # Detect APT holds and DNF versionlocks. Local only; does not update PatchMon.
+# No role configuration knobs — detection is always on for targeted hosts.
+# See roles/package_held/README.md.
 #
+# Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/package_held.yml
 

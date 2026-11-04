@@ -1,16 +1,33 @@
 ---
 # Restart configured services after patching when they are running.
 # Set patchmon_restart_services and/or patchmon_restart_services_map
-# in inventory or extra vars.
+# in inventory or extra vars. With empty defaults this play is a no-op.
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment vars: under the play.
+# See roles/restart_services/README.md.
+#
+#   patchmon_restart_services: []        # e.g. ["nginx", "sshd"]
+#   patchmon_restart_services_map: {}    # package name → [services]
+#   patchmon_restart_needrestart: false  # run needrestart when installed
+#
+# Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/restart_services.yml \
 #     -e '{"patchmon_restart_services":["nginx"]}'
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/restart_services.yml \
+#     -e patchmon_restart_needrestart=true
 
 - name: Restart services for PatchMon hosts
   hosts: patchmon_automated:patchmon_no_reboot
   gather_facts: false
   become: true
+  # vars:
+  #   patchmon_restart_services:
+  #     - nginx
+  #   patchmon_restart_services_map: {}
+  #   patchmon_restart_needrestart: false
 
   tasks:
     - name: Restart configured services

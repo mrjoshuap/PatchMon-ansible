@@ -12,14 +12,29 @@
 #   - Env: PATCHMON_SERVER_URL (preferred), PATCHMON_API_KEY, PATCHMON_API_SECRET
 #     PATCHMON_API_URL overrides the derived hosts URL and is discouraged.
 #
+# Configuration (defaults). Prefer inventory host_vars / group_vars for fleet
+# defaults. Pass -e, or uncomment vars: under the play.
+# See roles/report_health/README.md. Credentials come from the env by default.
+#
+#   report_health_limit: 10              # package_reports limit query param
+#   report_health_timeout: 30            # HTTP timeout (seconds)
+#   report_health_verify_ssl: true       # or PATCHMON_VERIFY_SSL
+#
 # Example:
 #   ansible-playbook -i inventories/patchmon.yml \
 #     examples/playbooks/report_health.yml
+#   ansible-playbook -i inventories/patchmon.yml \
+#     examples/playbooks/report_health.yml \
+#     -e report_health_limit=25
 
 - name: Check PatchMon package report health
   hosts: patchmon_automated:patchmon_no_reboot
   gather_facts: false
   connection: local
+  # vars:
+  #   report_health_limit: 10
+  #   report_health_timeout: 30
+  #   report_health_verify_ssl: true
 
   tasks:
     - name: Check newest PatchMon package report

@@ -15,6 +15,11 @@ Heavily commented: required options are active; everything else is commented wit
 
 ## Playbooks (modules and lookup)
 
+Each playbook header has a **Configuration** comment block: defaults, `-e`
+examples, and a commented `vars:` section you can uncomment. Prefer inventory
+`host_vars` / `group_vars` for fleet defaults. Role-prefixed names also work;
+see each role README under `roles/`.
+
 | File | What it demonstrates |
 |------|----------------------|
 | [`playbooks/host_info.yml`](playbooks/host_info.yml) | `host_info` against inventory hosts (`patchmon_id`) |
