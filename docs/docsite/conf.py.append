@@ -53,7 +53,7 @@ def _insert_markdown(app, docname, source):
         "docsite/automator_guide": ("automator-guide.md", "Automator guide"),
         "docsite/developer_guide": ("developer-guide.md", "Developer guide"),
         "docsite/changelog": ("CHANGELOG.md", "Changelog"),
-        "docsite/proposal": ("PROPOSAL.md", "Proposal"),
+        "docsite/announcement": ("ANNOUNCEMENT.md", "Announcement"),
         "docsite/patchmon_feedback": ("PATCHMON-FEEDBACK.md", "PatchMon feedback"),
     }
     page = pages.get(docname)

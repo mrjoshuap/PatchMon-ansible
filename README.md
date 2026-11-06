@@ -2,7 +2,7 @@
 
 Dynamic inventory, modules, lookups, and roles for the [PatchMon](https://patchmon.net) Integration and Auto-Enrollment APIs.
 
-The narrative for playbook authors is the **[Automator guide](docs/automator-guide.md)**. People changing this repository should read the **[Developer guide](docs/developer-guide.md)**. Published pages: [patchmon.core documentation](https://mrjoshuap.github.io/PatchMon-ansible/).
+The narrative for playbook authors is the **[Automator guide](docs/automator-guide.md)**. People changing this repository should read the **[Developer guide](docs/developer-guide.md)**. Published pages: [patchmon.core documentation](https://patchmon.github.io/PatchMon-ansible/).
 
 ## Description
 
@@ -67,7 +67,7 @@ pip install 'requests>=2.25.1'
 Tagged releases publish `patchmon-core-<version>.tar.gz` as a release asset. Download it from [Releases](https://github.com/PatchMon/PatchMon-ansible/releases), copy it to the target system, and install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-core-2.0.7.tar.gz
+ansible-galaxy collection install ./patchmon-core-2.0.9.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -75,7 +75,7 @@ When the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.7/patchmon-core-2.0.7.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.9/patchmon-core-2.0.9.tar.gz
 ```
 
 ### From source
@@ -115,14 +115,12 @@ AGPL-3.0-or-later — see [LICENSE](LICENSE).
 
 - [Automator guide](docs/automator-guide.md)
 - [Developer guide](docs/developer-guide.md)
-- [Documentation site](https://mrjoshuap.github.io/PatchMon-ansible/)
+- [Documentation site](https://patchmon.github.io/PatchMon-ansible/)
 - [Examples index](examples/README.md)
 - [Changelog](CHANGELOG.md)
-- [Proposal to adopt patchmon.core 2.0](PROPOSAL.md)
+- [Announcement](ANNOUNCEMENT.md)
 - [PatchMon feedback drafts](PATCHMON-FEEDBACK.md)
-- [Upvote: adopt patchmon.core 2.0](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma)
-- [This fork](https://github.com/mrjoshuap/PatchMon-ansible)
-- [Upstream collection](https://github.com/PatchMon/PatchMon-ansible)
+- [Repository](https://github.com/PatchMon/PatchMon-ansible)
 - [PatchMon](https://patchmon.net)
 - [PatchMon docs](https://patchmon.net/docs)
 - [PatchMon Integration API](https://patchmon.net/docs/patchmon-api-integrations-guide/integration-api-documentation)
