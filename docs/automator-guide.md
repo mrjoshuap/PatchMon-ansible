@@ -201,7 +201,7 @@ Enrollment returns a one-time host `api_key`. Treat it as a secret (`no_log` on 
 | `patchmon.core.host_token` present/absent | Admin JWT (Manage Settings) |
 | `patchmon.core.host_agent_script` install | Auto-Enrollment token (enrolls, then host install script) |
 | `patchmon.core.host_agent_script` remove | Server URL only |
-| `patchmon.core.agent` | Auto-Enrollment token (install); server URL for Windows `absent` |
+| `patchmon.core.agent` | Auto-Enrollment token (install), or existing host credentials on Windows; server URL for Windows `absent` |
 | `patchmon.core.host` role | Auto-Enrollment when `host_state=present`; Integration `host:delete` when `host_state=absent` |
 
 ## Chapter 4: First inventory
@@ -718,17 +718,21 @@ Linux install uses `GET /api/v1/auto-enrollment/script` (`direct-host` / `proxmo
 3. `GET /api/v1/hosts/install?os=windows` with the returned host `api_id` / `api_key`.
 4. Stage and run the PowerShell installer, then ensure the `PatchMonAgent` service is started.
 
+For an existing Windows host, supplying both `agent_api_id` and `agent_api_key` skips Auto-Enrollment and downloads the installer using those host credentials. These are not Integration API credentials. This supports reinstallation when Auto-Enrollment rejects a host it still considers reporting; `agent_host_id` and `agent_force_install` do not override enrollment policy. See the [reinstallation example](../roles/agent/README.md#reinstalling-an-existing-windows-host).
+
 Removal downloads `GET /api/v1/hosts/remove?os=windows` and runs it with `-RemoveAll -Force`. The PatchMon host record stays until you delete it with `patchmon.core.host`. Package-update and reboot roles do not support Windows yet (planned for 2.1.0).
 
 ### Prerequisites
 
 - Collection dependency `ansible.windows` 2.x on the controller.
-- Auto-Enrollment token for `agent_state=present` (`PATCHMON_ENROLLMENT_KEY` / `PATCHMON_ENROLLMENT_SECRET`).
+- Auto-Enrollment token for `agent_state=present` (`PATCHMON_ENROLLMENT_KEY` / `PATCHMON_ENROLLMENT_SECRET`), or both `agent_api_id` and `agent_api_key` for an existing Windows host. Store credentials in Ansible Vault.
 - `PATCHMON_SERVER_URL` for install and for Windows `absent`.
 - Administrator connection (SSH with PowerShell, or WinRM/PSRP). Gather facts and set `become: false`.
 - Add a Microsoft Defender exclusion for `C:\Program Files\PatchMon` before install; the agent binary is not code-signed yet and real-time protection can quarantine it.
 
-On October 31, 2026, start, stop, and report were validated on Windows Server 2022 Standard Evaluation (build 20348), Windows Server 2025 Standard Evaluation (build 26100), and Windows 11 Pro (build 26200), with PatchMon agent 2.1.6, Ansible Core 2.20.7, and `ansible.windows` 2.8.0 over SSH. Repeated start/stop operations made no changes, stopping preserved automatic startup, and report check mode skipped execution. Install and removal follow the documented Intune API flow and should be live-tested in your environment before production rollout. The PSRP inventory example has passed syntax checks but has not been live-tested.
+On October 31, 2026, start, stop, and report were validated on Windows Server 2022 Standard Evaluation (build 20348), Windows Server 2025 Standard Evaluation (build 26100), and Windows 11 Pro (build 26200), with PatchMon agent 2.1.6, Ansible Core 2.20.7, and `ansible.windows` 2.8.0 over SSH. Repeated start/stop operations made no changes, stopping preserved automatic startup, and report check mode skipped execution. The PSRP inventory example has passed syntax checks but has not been live-tested.
+
+On November 3–4, 2026, additional SSH testing with Ansible Core 2.20.7 and agent 2.1.7 validated full removal and reinstallation using existing host credentials on Server 2022, and fresh Auto-Enrollment installation on Server 2025. Repeat installs made zero changes; reporting, automatic service startup, installer cleanup, and server-side host identity were verified. Windows removal check mode previews the operation without downloading or executing scripts; it does not verify server connectivity or predict installer changes. WinRM and PSRP remain untested.
 
 ### Example
 

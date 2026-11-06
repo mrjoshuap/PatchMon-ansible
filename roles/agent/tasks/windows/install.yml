@@ -19,7 +19,7 @@
         and (
           (__agent_win_service_info.services | first).state
           | default('')
-          | lower == 'running'
+          | lower == 'started'
         )
         and not (agent_force_install | bool)
         and not (agent_force_new_host | bool)
@@ -37,9 +37,11 @@
   changed_when: false
   when: not (__agent_win_already_running | bool)
 
-- name: Enroll the Windows host and fetch the install script on the controller
+- name: Fetch the Windows install script, enrolling when host credentials are absent
   patchmon.core.host_agent_script:
     state: install
+    api_id: "{{ agent_api_id }}"
+    api_key: "{{ agent_api_key }}"
     server_url: "{{ agent_server_url }}"
     enrollment_key: "{{ agent_enrollment_key }}"
     enrollment_secret: "{{ agent_enrollment_secret }}"

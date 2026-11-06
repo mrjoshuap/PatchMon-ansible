@@ -6,7 +6,7 @@
 - name: Preview PatchMon agent installation
   ansible.builtin.debug:
     msg: >-
-      Check mode only: a normal run would download and execute the enrollment
+      Check mode only: a normal run would download and execute the agent
       installer, then start and enable the agent service{{ ' and request a report' if agent_report | bool else '' }}.
       The installer and dependent service/report tasks are skipped.
       Installer changes cannot be predicted; installation success and API
@@ -62,10 +62,24 @@
     - agent_state == 'report' or (agent_state == 'present' and agent_report | bool)
     - not (agent_state == 'present' and ansible_check_mode)
 
+- name: Preview PatchMon agent removal on Windows
+  ansible.builtin.debug:
+    msg: >-
+      Check mode only: a normal run would download and execute the Windows
+      agent removal script with -RemoveAll -Force, then remove the staged script.
+      Download, staging, execution, and script cleanup are skipped.
+      Removal script changes cannot be predicted; removal success and server
+      connectivity have not been verified. The PatchMon host record is retained.
+  when:
+    - agent_state == 'absent'
+    - ansible_check_mode
+    - ansible_facts['os_family'] | default('') == 'Windows'
+
 - name: Remove PatchMon agent on Windows
   ansible.builtin.include_tasks: windows/absent.yml
   when:
     - agent_state == 'absent'
+    - not ansible_check_mode
     - ansible_facts['os_family'] | default('') == 'Windows'
 
 - name: Remove PatchMon agent

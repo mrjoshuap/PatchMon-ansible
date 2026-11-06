@@ -6,6 +6,8 @@ All notable changes to this collection are documented in this file.
 
 ### Added
 
+- Optional Windows `agent_api_id` and `agent_api_key` allow host-specific installation without Auto-Enrollment, including reinstallation of an existing host.
+
 - `patchmon.core.package_cleanup` — autoremove unused packages (apt, dnf,
   dnf5, pacman orphans) and optional cache clean (`patchmon_cleanup_cache`:
   never / pre / post / both). Defaults off via `patchmon_cleanup_packages`.
@@ -40,6 +42,11 @@ All notable changes to this collection are documented in this file.
   GitHub Releases (`X.Y.Z-dev.<UTC timestamp>` for development). Requires
   repository secret `GALAXY_API_KEY`. CI no longer creates development
   prereleases; `release.yml` is removed.
+
+### Fixed
+
+- Skip Windows agent reinstallation when `win_service_info` reports `started`, unless a force option is enabled.
+- Preview Windows agent removal in check mode without requiring a downloaded removal script or invoking script cleanup.
 
 ## [2.0.9] - 2026-11-03
 
