@@ -7,5 +7,5 @@ sections:
   - title: Project
     toctree:
       - changelog
-      - proposal
+      - announcement
       - patchmon_feedback

@@ -24,7 +24,7 @@ antsibull-docs sphinx-init --use-current --squash-hierarchy --fail-on-error \
   --title "patchmon.core" \
   --html-short-title "patchmon.core" \
   --copyright "PatchMon contributors" \
-  --extra-html-theme-options "documentation_home_url=https://mrjoshuap.github.io/PatchMon-ansible/" \
+  --extra-html-theme-options "documentation_home_url=https://patchmon.github.io/PatchMon-ansible/" \
   patchmon.core --dest-dir built-docs
 
 cat docs/docsite/conf.py.append >> built-docs/conf.py
