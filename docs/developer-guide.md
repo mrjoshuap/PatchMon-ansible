@@ -66,7 +66,7 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 
 Unit tests and local Ansible both import this checkout through `.collections`. The pre-commit ansible-lint hook installs this collection under `.ansible/collections` and points galaxy at that copy. It lints the playbook files under `examples/playbooks/` and `playbooks/`.
 
-Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) runs the same suite, then publishes. A tag `vX.Y.Z` that matches `galaxy.yml` publishes that version to Ansible Galaxy and a GitHub Release. A path-filtered push to `main` publishes `{version}-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease. The committed `galaxy.yml` stays on the next release (`X.Y.Z`). Set repository secret `GALAXY_API_KEY` (Galaxy → Preferences → API token). This repository uses immutable releases: the workflow creates a draft, attaches the tarball, then publishes. The Gitea publish workflow does not build or test. It downloads that GitHub Release tarball. A full `vX.Y.Z` tag goes to Automation Hub staging. A `vX.Y.Z-dev.<timestamp>` tag goes to the development repository.
+Pull requests and pushes to `main` run [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which calls [`.github/workflows/checks.yml`](../.github/workflows/checks.yml). That suite is pytest, the pre-commit config above, and `antsibull-docs` lint. [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) runs the same suite, then publishes. A tag `vX.Y.Z` that matches `galaxy.yml` publishes that version to Ansible Galaxy and a GitHub Release. A path-filtered push to `main` publishes `{version}-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease. The committed `galaxy.yml` stays on the next release (`X.Y.Z`). Set repository secret `GALAXY_API_KEY` (Galaxy → Preferences → API token). This repository uses immutable releases: the workflow creates a draft, attaches the tarball, then publishes.
 
 ## Chapter 4: Where documentation lives
 
@@ -76,7 +76,7 @@ Write each fact once.
 - Options and return values go in plugin `DOCUMENTATION`, `EXAMPLES`, and `RETURN` strings, and in role READMEs. antsibull builds those pages. Guides link to them. Role READMEs stay short: variables, credentials, one example.
 - Runnable plays go in [`examples/playbooks/`](../examples/playbooks/). Guides name the file. They do not fork the YAML.
 - PatchMon product behavior stays in the upstream books linked from the automator guide: admin, operator, and API integrations. Do not copy those books into this repository. Chapter 3 of the API integrations guide is the 1.0 inventory plugin.
-- The adoption proposal is [`PROPOSAL.md`](../PROPOSAL.md). Paste-ready API gap drafts are [`PATCHMON-FEEDBACK.md`](../PATCHMON-FEEDBACK.md). The changelog is [`CHANGELOG.md`](../CHANGELOG.md). Those are project records, not learning paths.
+- The collection announcement is [`ANNOUNCEMENT.md`](../ANNOUNCEMENT.md). Paste-ready API gap drafts are [`PATCHMON-FEEDBACK.md`](../PATCHMON-FEEDBACK.md). The changelog is [`CHANGELOG.md`](../CHANGELOG.md). Those are project records, not learning paths.
 
 [`README.md`](../README.md) is the Galaxy readme: description, requirements, install, one inventory snippet, the content table, and links. [`examples/README.md`](../examples/README.md) is a file index.
 
@@ -84,7 +84,7 @@ When a procedure moves, update the guide and delete the old page. Do not leave a
 
 ## Chapter 5: Docsite build
 
-The published site is GitHub Pages for this fork. [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) builds the site and deploys on push to `main`. Pull requests build only. Collection doc lint is in [`.github/workflows/checks.yml`](../.github/workflows/checks.yml), which gates tagged and development releases. The Pages build does not.
+The published site is GitHub Pages for [PatchMon/PatchMon-ansible](https://github.com/PatchMon/PatchMon-ansible). [`.github/workflows/docs.yml`](../.github/workflows/docs.yml) builds the site and deploys on push to `main`. Pull requests build only. Collection doc lint is in [`.github/workflows/checks.yml`](../.github/workflows/checks.yml), which gates tagged and development releases. The Pages build does not.
 
 Local build:
 
@@ -99,7 +99,7 @@ bash docs/build-docsite.sh
 Navigation is [`docs/docsite/extra-docs.yml`](docsite/extra-docs.yml):
 
 - **Guides:** automator guide, developer guide.
-- **Project:** changelog, proposal, PatchMon feedback.
+- **Project:** changelog, announcement, PatchMon feedback.
 
 antsibull adds the plugin and role index from code and from role READMEs. Mermaid fences in the automator guide render through `sphinxcontrib-mermaid`.
 
@@ -119,13 +119,13 @@ antsibull-docs lint-collection-docs --plugin-docs --skip-rstcheck .
 2. Tag that commit. The tag must match `galaxy.yml`, with a `v` prefix. [publish](../.github/workflows/publish.yml) runs [the shared checks](../.github/workflows/checks.yml) on that commit before it builds.
 
 ```bash
-git tag -a v2.0.7 -m "patchmon.core 2.0.7"
-git push origin v2.0.7
+git tag -a v2.0.9 -m "patchmon.core 2.0.9"
+git push origin v2.0.9
 ```
 
-3. After the checks pass, that workflow rewrites the workspace `version` only if needed, builds the collection tarball, publishes it to Ansible Galaxy, creates the GitHub Release as a **draft** with the `.tar.gz` attached, then publishes the draft. Draft-then-publish is required because this repository uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases): assets cannot be added after a release is published. The Gitea mirror downloads that asset and publishes it to Automation Hub staging. Approve it into published from Automation Content.
+3. After the checks pass, that workflow rewrites the workspace `version` only if needed, builds the collection tarball, publishes it to Ansible Galaxy, creates the GitHub Release as a **draft** with the `.tar.gz` attached, then publishes the draft. Draft-then-publish is required because this repository uses [immutable releases](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases): assets cannot be added after a release is published.
 
-A path-filtered push to `main` publishes a development build `X.Y.Z-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease `vX.Y.Z-dev.<timestamp>` the same way (draft, attach tarball, publish). The committed `galaxy.yml` stays on `X.Y.Z`. That prerelease sorts before the stable release and is not the stable release. Tags containing `-dev.` are skipped by the version script and do not start a second publish. The Gitea mirror downloads that asset and publishes it to the development Automation Hub repository, which has no approval pipeline.
+A path-filtered push to `main` publishes a development build `X.Y.Z-dev.<UTC timestamp>` to Galaxy and a GitHub prerelease `vX.Y.Z-dev.<timestamp>` the same way (draft, attach tarball, publish). The committed `galaxy.yml` stays on `X.Y.Z`. That prerelease sorts before the stable release and is not the stable release. Tags containing `-dev.` are skipped by the version script and do not start a second publish.
 
 Install the newest development build of the current line:
 

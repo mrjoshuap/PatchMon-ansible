@@ -34,20 +34,20 @@ People changing this repository should read the [developer guide](developer-guid
 
 | Type | FQCN | Purpose |
 |------|------|---------|
-| Inventory | [`patchmon.core.inventory`](https://mrjoshuap.github.io/PatchMon-ansible/inventory_inventory.html) | List hosts, groups, and stats hostvars |
-| Module | [`patchmon.core.host_info`](https://mrjoshuap.github.io/PatchMon-ansible/host_info_module.html) | Aggregate `/info`, `/stats`, `/notes`, `/package_reports`, `/agent_queue`, and related routes |
-| Module | [`patchmon.core.host_packages`](https://mrjoshuap.github.io/PatchMon-ansible/host_packages_module.html) | List packages, optionally updates only |
-| Module | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_module.html) | Enroll or delete a host entry |
-| Module | [`patchmon.core.host_token`](https://mrjoshuap.github.io/PatchMon-ansible/host_token_module.html) | Enrollment script and admin token CRUD |
-| Module | [`patchmon.core.host_agent_script`](https://mrjoshuap.github.io/PatchMon-ansible/host_agent_script_module.html) | Per-host install/remove scripts (Windows enroll + `hosts/install`) |
-| Lookup | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_lookup.html) | Ad-hoc per-host API lookups |
-| Lookup | [`patchmon.core.endpoint`](https://mrjoshuap.github.io/PatchMon-ansible/endpoint_lookup.html) | Derive the hosts and auto-enrollment URLs |
-| Role | [`patchmon.core.agent`](https://mrjoshuap.github.io/PatchMon-ansible/agent_role.html) | Install, start, stop, report, or remove the agent |
-| Role | [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_role.html) | Create or delete host entries |
-| Role | [`patchmon.core.report_health`](https://mrjoshuap.github.io/PatchMon-ansible/report_health_role.html) | Fail unless the newest package report succeeded |
-| Role | [`patchmon.core.apply_security_updates`](https://mrjoshuap.github.io/PatchMon-ansible/apply_security_updates_role.html) | Security-only package updates, then a local agent report |
-| Role | [`patchmon.core.apply_all_updates`](https://mrjoshuap.github.io/PatchMon-ansible/apply_all_updates_role.html) | All pending package upgrades, then a local agent report |
-| Role | [`patchmon.core.reboot_needed`](https://mrjoshuap.github.io/PatchMon-ansible/reboot_needed_role.html) | Reboot when `patchmon_needs_reboot` is true, then a local agent report |
+| Inventory | [`patchmon.core.inventory`](https://patchmon.github.io/PatchMon-ansible/inventory_inventory.html) | List hosts, groups, and stats hostvars |
+| Module | [`patchmon.core.host_info`](https://patchmon.github.io/PatchMon-ansible/host_info_module.html) | Aggregate `/info`, `/stats`, `/notes`, `/package_reports`, `/agent_queue`, and related routes |
+| Module | [`patchmon.core.host_packages`](https://patchmon.github.io/PatchMon-ansible/host_packages_module.html) | List packages, optionally updates only |
+| Module | [`patchmon.core.host`](https://patchmon.github.io/PatchMon-ansible/host_module.html) | Enroll or delete a host entry |
+| Module | [`patchmon.core.host_token`](https://patchmon.github.io/PatchMon-ansible/host_token_module.html) | Enrollment script and admin token CRUD |
+| Module | [`patchmon.core.host_agent_script`](https://patchmon.github.io/PatchMon-ansible/host_agent_script_module.html) | Per-host install/remove scripts (Windows enroll + `hosts/install`) |
+| Lookup | [`patchmon.core.host`](https://patchmon.github.io/PatchMon-ansible/host_lookup.html) | Ad-hoc per-host API lookups |
+| Lookup | [`patchmon.core.endpoint`](https://patchmon.github.io/PatchMon-ansible/endpoint_lookup.html) | Derive the hosts and auto-enrollment URLs |
+| Role | [`patchmon.core.agent`](https://patchmon.github.io/PatchMon-ansible/agent_role.html) | Install, start, stop, report, or remove the agent |
+| Role | [`patchmon.core.host`](https://patchmon.github.io/PatchMon-ansible/host_role.html) | Create or delete host entries |
+| Role | [`patchmon.core.report_health`](https://patchmon.github.io/PatchMon-ansible/report_health_role.html) | Fail unless the newest package report succeeded |
+| Role | [`patchmon.core.apply_security_updates`](https://patchmon.github.io/PatchMon-ansible/apply_security_updates_role.html) | Security-only package updates, then a local agent report |
+| Role | [`patchmon.core.apply_all_updates`](https://patchmon.github.io/PatchMon-ansible/apply_all_updates_role.html) | All pending package upgrades, then a local agent report |
+| Role | [`patchmon.core.reboot_needed`](https://patchmon.github.io/PatchMon-ansible/reboot_needed_role.html) | Reboot when `patchmon_needs_reboot` is true, then a local agent report |
 
 With `include_stats: true`, the inventory exposes reboot, update, security, OS, and reporting metadata as host variables and optional auto groups. A play can target a fleet with `--limit patchmon_security_required` or with Constructable expressions.
 
@@ -72,12 +72,12 @@ pip install 'requests>=2.25.1'
 
 Tagged releases publish `patchmon-core-<version>.tar.gz` as a release asset.
 
-1. Download the tarball from the [Releases](https://github.com/PatchMon/PatchMon-ansible/releases) page (or your fork's Releases).
+1. Download the tarball from the [Releases](https://github.com/PatchMon/PatchMon-ansible/releases) page.
 2. Copy it to the target system.
 3. Install:
 
 ```bash
-ansible-galaxy collection install ./patchmon-core-2.0.7.tar.gz
+ansible-galaxy collection install ./patchmon-core-2.0.9.tar.gz
 pip install 'requests>=2.25.1'
 ```
 
@@ -85,7 +85,7 @@ When the controller can reach GitHub:
 
 ```bash
 ansible-galaxy collection install \
-  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.7/patchmon-core-2.0.7.tar.gz
+  https://github.com/PatchMon/PatchMon-ansible/releases/download/v2.0.9/patchmon-core-2.0.9.tar.gz
 ```
 
 ### From source
@@ -269,7 +269,7 @@ You can turn the minimal file into a stats inventory by setting `include_stats: 
 
 ## Chapter 5: Hostvars, groups, and limits
 
-These options are collection behavior. The generated [inventory plugin page](https://mrjoshuap.github.io/PatchMon-ansible/inventory_inventory.html) is the field reference. This chapter is how the values are meant to be used.
+These options are collection behavior. The generated [inventory plugin page](https://patchmon.github.io/PatchMon-ansible/inventory_inventory.html) is the field reference. This chapter is how the values are meant to be used.
 
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
@@ -537,12 +537,12 @@ ansible-playbook examples/playbooks/lookup_system.yml \
 
 | Module / lookup | Role | Access |
 |-----------------|------|--------|
-| [`patchmon.core.host_info`](https://mrjoshuap.github.io/PatchMon-ansible/host_info_module.html) | Aggregate host detail via `gather_subset`. `inject_facts: true` sets `ansible_facts.patchmon` | Integration `host:get` |
-| [`patchmon.core.host_packages`](https://mrjoshuap.github.io/PatchMon-ansible/host_packages_module.html) | List packages. `updates_only: true` for pending updates | Integration `host:get` |
-| [`patchmon.core.host`](https://mrjoshuap.github.io/PatchMon-ansible/host_module.html) | Enroll (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
-| [`patchmon.core.host_token`](https://mrjoshuap.github.io/PatchMon-ansible/host_token_module.html) | Fetch the Linux enrollment script or manage enrollment tokens | Auto-Enrollment / admin JWT |
-| [`patchmon.core.host_agent_script`](https://mrjoshuap.github.io/PatchMon-ansible/host_agent_script_module.html) | Enroll + fetch per-host install script, or fetch remove script | Auto-Enrollment / none |
-| [`lookup('patchmon.core.host')`](https://mrjoshuap.github.io/PatchMon-ansible/host_lookup.html) | One-shot JSON | Integration `host:get` |
+| [`patchmon.core.host_info`](https://patchmon.github.io/PatchMon-ansible/host_info_module.html) | Aggregate host detail via `gather_subset`. `inject_facts: true` sets `ansible_facts.patchmon` | Integration `host:get` |
+| [`patchmon.core.host_packages`](https://patchmon.github.io/PatchMon-ansible/host_packages_module.html) | List packages. `updates_only: true` for pending updates | Integration `host:get` |
+| [`patchmon.core.host`](https://patchmon.github.io/PatchMon-ansible/host_module.html) | Enroll (`state=present`) or delete (`state=absent`) | Auto-Enrollment / `host:delete` |
+| [`patchmon.core.host_token`](https://patchmon.github.io/PatchMon-ansible/host_token_module.html) | Fetch the Linux enrollment script or manage enrollment tokens | Auto-Enrollment / admin JWT |
+| [`patchmon.core.host_agent_script`](https://patchmon.github.io/PatchMon-ansible/host_agent_script_module.html) | Enroll + fetch per-host install script, or fetch remove script | Auto-Enrollment / none |
+| [`lookup('patchmon.core.host')`](https://patchmon.github.io/PatchMon-ansible/host_lookup.html) | One-shot JSON | Integration `host:get` |
 
 `lookup('patchmon.core.host', patchmon_id, resource='system')` accepts `resource` of `info`, `stats`, `system`, `network`, `integrations`, `packages`, `notes`, `package_reports`, or `agent_queue`. For packages with updates only, pass `updates_only=true`. `package_reports` and `agent_queue` take `limit` (default 10).
 
@@ -593,7 +593,7 @@ This is a breaking upgrade from `patchmon.dynamic_inventory` 1.0.0. There are no
 ```bash
 ansible-galaxy collection install patchmon.core
 # or from a release tarball:
-# ansible-galaxy collection install ./patchmon-core-2.0.7.tar.gz
+# ansible-galaxy collection install ./patchmon-core-2.0.9.tar.gz
 ```
 
 Remove the old collection if it is still installed:
@@ -695,9 +695,7 @@ Paste-ready requests for those gaps are in [PATCHMON-FEEDBACK.md](../PATCHMON-FE
 
 ### Feedback this collection addresses
 
-PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go, and how to upvote.
-
-Please upvote [Adopt patchmon.core 2.0 as the official Ansible collection](https://feedback.patchmon.net/b/feature-requests/posts/post_01m5fj33qte04r3x9v6527stma). The write-up is [PROPOSAL.md](../PROPOSAL.md).
+PatchMon feature requests live on the [feedback portal](https://feedback.patchmon.net/). [How the portal works](https://feedback.patchmon.net/hc/en/articles/9-how-the-feedback-portal-works) explains where bugs, questions, and ideas each go, and how to upvote. The historical write-up for adopting this collection is [ANNOUNCEMENT.md](../ANNOUNCEMENT.md).
 
 | Request | What this collection provides |
 |---------|-------------------------------|

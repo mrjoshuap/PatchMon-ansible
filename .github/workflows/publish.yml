@@ -8,8 +8,7 @@
 # vX.Y.Z-dev.<timestamp> does not match it. A dev tag that does arrive is skipped.
 #
 # This repository uses immutable releases: create the GitHub Release as a draft,
-# attach the tarball, then publish. The Gitea mirror downloads that asset for
-# private Automation Hub (staging or development).
+# attach the tarball, then publish.
 #
 # Repository secret GALAXY_API_KEY is the token from Galaxy → Preferences.
 name: publish
@@ -118,7 +117,7 @@ jobs:
           echo "Published ${artifact} to galaxy.ansible.com"
 
       # Immutable releases lock assets at publish time. Create as a draft so
-      # the tarball attaches, then publish. The Gitea mirror downloads that asset.
+      # the tarball attaches, then publish.
       - name: Create GitHub release draft
         if: steps.version.outputs.channel != 'skip'
         env:

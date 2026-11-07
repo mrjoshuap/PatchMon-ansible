@@ -8,15 +8,15 @@ import posixpath
 import re
 import sys
 
-GITHUB_BLOB = "https://github.com/mrjoshuap/PatchMon-ansible/blob/main/"
-GITHUB_TREE = "https://github.com/mrjoshuap/PatchMon-ansible/tree/main/"
+GITHUB_BLOB = "https://github.com/PatchMon/PatchMon-ansible/blob/main/"
+GITHUB_TREE = "https://github.com/PatchMon/PatchMon-ansible/tree/main/"
 # Paths are relative to the repository root. Docsite pages are siblings under
 # docsite/, so the rewrite target is the HTML filename Sphinx emits.
 DOC_LINKS = {
     "docs/automator-guide.md": "automator_guide.html",
     "docs/developer-guide.md": "developer_guide.html",
     "CHANGELOG.md": "changelog.html",
-    "PROPOSAL.md": "proposal.html",
+    "ANNOUNCEMENT.md": "announcement.html",
     "PATCHMON-FEEDBACK.md": "patchmon_feedback.html",
     "docs/permissions.md": "automator_guide.html#chapter-3-credentials",
     "docs/migrating_to_2.0.md": "automator_guide.html#chapter-9-migrating-from-1-0",
@@ -24,7 +24,7 @@ DOC_LINKS = {
 # (repo-relative markdown path, directory used to resolve relative links)
 SOURCES = (
     ("CHANGELOG.md", ""),
-    ("PROPOSAL.md", ""),
+    ("ANNOUNCEMENT.md", ""),
     ("PATCHMON-FEEDBACK.md", ""),
     ("docs/automator-guide.md", "docs"),
     ("docs/developer-guide.md", "docs"),

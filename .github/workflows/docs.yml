@@ -1,5 +1,5 @@
 ---
-# Build the patchmon.core docsite and publish it to GitHub Pages on this fork.
+# Build the patchmon.core docsite and publish it to GitHub Pages.
 # Pull requests build only. Push to main and workflow_dispatch deploy.
 # Collection doc lint is in checks.yml and gates releases.
 name: Documentation

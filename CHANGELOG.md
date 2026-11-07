@@ -37,6 +37,9 @@ All notable changes to this collection are documented in this file.
 - `pending_updates.yml` shows packages skipped by `patchmon_ignore_packages`.
 - Example playbooks document role / inventory configuration knobs in header
   comments and commented `vars:` blocks.
+- Docs and docsite reframed for the official Galaxy collection: `PROPOSAL.md`
+  becomes `ANNOUNCEMENT.md`, proposal/upvote banners become announcement and
+  migration notes, and install/docs URLs target `PatchMon/PatchMon-ansible`.
 - GitHub publish consolidated in `.github/workflows/publish.yml`: stable
   `vX.Y.Z` tags and path-filtered `main` pushes publish to Ansible Galaxy and
   GitHub Releases (`X.Y.Z-dev.<UTC timestamp>` for development). Requires

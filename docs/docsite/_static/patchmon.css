@@ -436,8 +436,8 @@ html.writer-html4 .rst-content dl:not(.docutils) dl > dt {
   border-color: #f87171 !important;
 }
 
-.patchmon-proposal-banner,
-.patchmon-proposal-bar {
+.patchmon-announce-banner,
+.patchmon-announce-bar {
   background: #14532d !important;
   border: 1px solid var(--patchmon-green);
   border-radius: 8px;
@@ -445,42 +445,29 @@ html.writer-html4 .rst-content dl:not(.docutils) dl > dt {
   padding: 0.75rem 1rem;
 }
 
-.patchmon-proposal-banner {
+.patchmon-announce-banner {
   border-width: 2px;
   padding: 1.15rem 1.35rem;
 }
 
-.patchmon-proposal-banner p,
-.patchmon-proposal-bar p {
+.patchmon-announce-banner p,
+.patchmon-announce-bar p {
   color: var(--patchmon-text) !important;
   margin-bottom: 0.65rem;
 }
 
-.patchmon-proposal-banner p:last-child,
-.patchmon-proposal-bar p:last-child {
+.patchmon-announce-banner p:last-child,
+.patchmon-announce-bar p:last-child {
   margin-bottom: 0;
 }
 
-.patchmon-proposal-banner a,
-.patchmon-proposal-bar a {
+.patchmon-announce-banner a,
+.patchmon-announce-bar a {
   color: #ecfdf5 !important;
   font-weight: 700;
   text-decoration: underline;
 }
 
-.patchmon-proposal-banner a.patchmon-upvote,
-.patchmon-proposal-bar a.patchmon-upvote {
-  background: var(--patchmon-green);
-  border-radius: 6px;
-  color: #022c22 !important;
-  display: inline-block;
-  margin-right: 1rem;
-  padding: 0.35rem 0.8rem;
-  text-decoration: none !important;
-}
-
-.patchmon-proposal-banner a.patchmon-upvote:hover,
-.patchmon-proposal-bar a.patchmon-upvote:hover {
-  background: #4ade80;
-  color: #022c22 !important;
+.patchmon-announce-banner a + a {
+  margin-left: 1rem;
 }
